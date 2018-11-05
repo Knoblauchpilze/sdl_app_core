@@ -168,7 +168,6 @@ namespace sdl {
           SDL_Texture* texture = widget->draw(m_renderer);
           const Boxf& render = widget->getRenderingArea();
           SDL_Rect dstArea = render.toSDLRect();
-
           drawTexture(texture, nullptr, &dstArea);
         }
         catch (const SdlException& e) {
