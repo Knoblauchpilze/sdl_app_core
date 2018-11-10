@@ -92,6 +92,7 @@ namespace sdl {
       }
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets[widget->getName()] = widget;
+      m_eventsHandler.addListener(widget.get());
     }
 
     inline
@@ -102,6 +103,7 @@ namespace sdl {
       }
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets.erase(widget->getName());
+      m_eventsHandler.removeListener(widget.get());
     }
 
     inline
@@ -156,7 +158,7 @@ namespace sdl {
     SdlApplication::renderWidgets() {
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
 
-      std::cout << "[APP] Performing rendering (" << m_widgets.size() << " widgets)" << std::endl;
+      // std::cout << "[APP] Performing rendering (" << m_widgets.size() << " widgets)" << std::endl;
 
       for (std::unordered_map<std::string, SdlWidgetShPtr>::iterator widgetsIterator = m_widgets.begin() ;
           widgetsIterator != m_widgets.end() ;

@@ -11,7 +11,6 @@ find_package (SDL2_ttf REQUIRED)
 set (SOURCES
   SdlApplication.cc
   SdlEventHandler.cc
-  SdlEventListener.cc
   )
 
 add_library (sdl_app_core SHARED

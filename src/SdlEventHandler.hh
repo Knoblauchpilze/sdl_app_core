@@ -7,7 +7,7 @@
 # include <mutex>
 # include <SDL2/SDL.h>
 
-# include "SdlEventListener.hh"
+# include <sdl_core/SdlEventListener.hh>
 
 namespace sdl {
   namespace core {

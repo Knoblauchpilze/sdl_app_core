@@ -49,7 +49,7 @@ namespace sdl {
       bool eventsStillInQueue = true;
 
       const unsigned int startingHandlingTime = SDL_GetTicks();
-      std::cout << "[EVN] Performing events handling" << std::endl;
+      // std::cout << "[EVN] Performing events handling" << std::endl;
 
       const unsigned int handlingDuration = SDL_GetTicks() - startingHandlingTime;
 

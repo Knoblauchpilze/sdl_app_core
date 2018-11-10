@@ -6,8 +6,8 @@
 # include <unordered_map>
 # include <SDL2/SDL.h>
 # include <sdl_core/SdlWidget.hh>
+# include <sdl_core/SdlEventListener.hh>
 # include "SdlEventHandler.hh"
-# include "SdlEventListener.hh"
 
 namespace sdl {
   namespace core {
