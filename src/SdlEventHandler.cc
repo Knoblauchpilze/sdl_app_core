@@ -5,9 +5,11 @@
 namespace sdl {
   namespace core {
 
-    SdlEventHandler::SdlEventHandler(const float& eventHandlingRate):
+    SdlEventHandler::SdlEventHandler(const float& eventHandlingRate,
+                                     const bool exitOnEscape):
       m_framerate(std::max(0.1f, eventHandlingRate)),
       m_frameDuration(1000.0f / m_framerate),
+      m_exitOnEscape(exitOnEscape),
 
       m_eventsRunning(false),
       m_locker(),

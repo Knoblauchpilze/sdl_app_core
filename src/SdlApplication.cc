@@ -9,7 +9,8 @@ namespace sdl {
                                    const int& width,
                                    const int& height,
                                    const float& framerate,
-                                   const float& eventFramerate):
+                                   const float& eventFramerate,
+                                   const bool exitOnEscape):
       SdlEventListener(SdlEventListener::Interaction::FullInteraction),
       m_title(title),
       m_icon(),
@@ -17,7 +18,7 @@ namespace sdl {
       m_frameDuration(1000.0f / m_framerate),
       m_window(nullptr),
       m_renderer(nullptr),
-      m_eventsHandler(eventFramerate),
+      m_eventsHandler(eventFramerate, exitOnEscape),
 
       m_renderingRunning(false),
       m_locker(),

@@ -16,7 +16,8 @@ namespace sdl {
       public:
 
         explicit
-        SdlEventHandler(const float& eventHandlingRate = 30.0f);
+        SdlEventHandler(const float& eventHandlingRate = 30.0f,
+                        const bool exitOnEscape = true);
 
         ~SdlEventHandler();
 
@@ -76,7 +77,8 @@ namespace sdl {
       private:
 
         float m_framerate;
-        float m_frameDuration;;
+        float m_frameDuration;
+        bool m_exitOnEscape;
 
         bool m_eventsRunning;
         std::mutex m_locker;

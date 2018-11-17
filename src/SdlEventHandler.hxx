@@ -97,6 +97,15 @@ namespace sdl {
     inline
     void
     SdlEventHandler::processKeyReleasedEvent(const SDL_KeyboardEvent& event) {
+      // Check for exit.
+      if (event.keysym.sym == SDLK_ESCAPE && m_exitOnEscape) {
+        processQuitEvent(SDL_QuitEvent{
+          SDL_QUIT,
+          event.timestamp
+        });
+        return;
+      }
+
       for (std::vector<SdlEventListener*>::iterator listener = m_listeners.begin() ;
            listener != m_listeners.end() ;
            ++listener)

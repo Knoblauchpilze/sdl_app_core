@@ -21,7 +21,8 @@ namespace sdl {
                        const int& width = 640,
                        const int& height = 480,
                        const float& framerate = 60.0f,
-                       const float& eventFramerate = 30.0f);
+                       const float& eventFramerate = 30.0f,
+                       const bool exitOnEscape = true);
 
         virtual ~SdlApplication();
 
