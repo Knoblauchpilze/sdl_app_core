@@ -49,7 +49,7 @@ namespace sdl {
 
     inline
     void
-    SdlEventHandler::addListener(SdlEventListener* listener) {
+    SdlEventHandler::addListener(EventListener* listener) {
       if (listener == nullptr) {
         throw SdlException(std::string("Cannot add null event listener"));
       }
@@ -59,13 +59,13 @@ namespace sdl {
 
     inline
     void
-    SdlEventHandler::removeListener(SdlEventListener* listener) {
+    SdlEventHandler::removeListener(EventListener* listener) {
       if (listener == nullptr) {
         throw SdlException(std::string("Cannot remove null event listener"));
       }
       std::lock_guard<std::mutex> guard(m_listenersLocker);
       std::remove_if(m_listeners.begin(), m_listeners.end(),
-        [&listener](SdlEventListener* internalListener) {
+        [&listener](EventListener* internalListener) {
           return &*(listener) == &(*internalListener);
         }
       );
@@ -86,7 +86,7 @@ namespace sdl {
     inline
     void
     SdlEventHandler::processKeyPressedEvent(const SDL_KeyboardEvent& event) {
-      for (std::vector<SdlEventListener*>::iterator listener = m_listeners.begin() ;
+      for (std::vector<EventListener*>::iterator listener = m_listeners.begin() ;
            listener != m_listeners.end() ;
            ++listener)
       {
@@ -106,7 +106,7 @@ namespace sdl {
         return;
       }
 
-      for (std::vector<SdlEventListener*>::iterator listener = m_listeners.begin() ;
+      for (std::vector<EventListener*>::iterator listener = m_listeners.begin() ;
            listener != m_listeners.end() ;
            ++listener)
       {
@@ -117,7 +117,7 @@ namespace sdl {
     inline
     void
     SdlEventHandler::processMouseMotionEvent(const SDL_MouseMotionEvent& event) {
-      for (std::vector<SdlEventListener*>::iterator listener = m_listeners.begin() ;
+      for (std::vector<EventListener*>::iterator listener = m_listeners.begin() ;
            listener != m_listeners.end() ;
            ++listener)
       {
@@ -128,7 +128,7 @@ namespace sdl {
     inline
     void
     SdlEventHandler::processMouseButtonPressedEvent(const SDL_MouseButtonEvent& event) {
-      for (std::vector<SdlEventListener*>::iterator listener = m_listeners.begin() ;
+      for (std::vector<EventListener*>::iterator listener = m_listeners.begin() ;
            listener != m_listeners.end() ;
            ++listener)
       {
@@ -139,7 +139,7 @@ namespace sdl {
     inline
     void
     SdlEventHandler::processMouseButtonReleasedEvent(const SDL_MouseButtonEvent& event) {
-      for (std::vector<SdlEventListener*>::iterator listener = m_listeners.begin() ;
+      for (std::vector<EventListener*>::iterator listener = m_listeners.begin() ;
            listener != m_listeners.end() ;
            ++listener)
       {
@@ -150,7 +150,7 @@ namespace sdl {
     inline
     void
     SdlEventHandler::processMouseWheelEvent(const SDL_MouseWheelEvent& event) {
-      for (std::vector<SdlEventListener*>::iterator listener = m_listeners.begin() ;
+      for (std::vector<EventListener*>::iterator listener = m_listeners.begin() ;
            listener != m_listeners.end() ;
            ++listener)
       {
@@ -161,7 +161,7 @@ namespace sdl {
     inline
     void
     SdlEventHandler::processQuitEvent(const SDL_QuitEvent& event) {
-      for (std::vector<SdlEventListener*>::iterator listener = m_listeners.begin() ;
+      for (std::vector<EventListener*>::iterator listener = m_listeners.begin() ;
            listener != m_listeners.end() ;
            ++listener)
       {

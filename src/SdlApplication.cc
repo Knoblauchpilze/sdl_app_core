@@ -11,7 +11,7 @@ namespace sdl {
                                    const float& framerate,
                                    const float& eventFramerate,
                                    const bool exitOnEscape):
-      SdlEventListener(SdlEventListener::Interaction::FullInteraction),
+      EventListener(EventListener::Interaction::FullInteraction),
       m_title(title),
       m_icon(),
       m_framerate(std::max(0.1f, framerate)),

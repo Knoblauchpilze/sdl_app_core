@@ -7,7 +7,7 @@
 # include <mutex>
 # include <SDL2/SDL.h>
 
-# include <sdl_core/SdlEventListener.hh>
+# include <sdl_core/EventListener.hh>
 
 namespace sdl {
   namespace core {
@@ -31,10 +31,10 @@ namespace sdl {
         isRunning();
 
         void
-        addListener(SdlEventListener* listener);
+        addListener(EventListener* listener);
 
         void
-        removeListener(SdlEventListener* listener);
+        removeListener(EventListener* listener);
 
       private:
 
@@ -84,7 +84,7 @@ namespace sdl {
         std::mutex m_locker;
         std::shared_ptr<std::thread> m_executionThread;
 
-        std::vector<SdlEventListener*> m_listeners;
+        std::vector<EventListener*> m_listeners;
         std::mutex m_listenersLocker;
     };
 

@@ -6,13 +6,13 @@
 # include <unordered_map>
 # include <SDL2/SDL.h>
 # include <sdl_core/SdlWidget.hh>
-# include <sdl_core/SdlEventListener.hh>
+# include <sdl_core/EventListener.hh>
 # include "SdlEventHandler.hh"
 
 namespace sdl {
   namespace core {
 
-    class SdlApplication : public SdlEventListener {
+    class SdlApplication : public EventListener {
       public:
 
         explicit
