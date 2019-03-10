@@ -35,7 +35,7 @@ namespace sdl {
       // Initialize the logger.
       // TODO: Refactor the logger to use a so called `LoggingDevice` so that all
       // loggers share the same device and we can use several loggers with various names.
-      ::core::utils::Logger::getInstance().setName(getName());
+      utils::core::Logger::getInstance().setName(getName());
     }
 
     void

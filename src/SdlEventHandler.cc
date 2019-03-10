@@ -64,7 +64,7 @@ namespace sdl {
 
         eventsStillInQueue = SDL_PollEvent(&event);
 
-        ::core::utils::launchProtected(
+        utils::core::launchProtected(
           [&event, this]() {
             processSingleEvent(event);
           },
@@ -74,7 +74,7 @@ namespace sdl {
       }
 
       if (handlingDuration > m_frameDuration) {
-        ::core::utils::Logger::getInstance().logWarning(
+        utils::core::Logger::getInstance().logWarning(
           std::string("Event handling took ") + std::to_string(handlingDuration) + "ms " +
           "which is greater than the " + std::to_string(m_frameDuration) + "ms " +
           " authorized to maintain " + std::to_string(m_framerate) + "fps",

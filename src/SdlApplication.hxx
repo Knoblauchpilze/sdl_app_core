@@ -151,7 +151,7 @@ namespace sdl {
       const unsigned int renderingDuration = SDL_GetTicks() - startingRenderingTime;
 
       if (renderingDuration > m_frameDuration) {
-        ::core::utils::Logger::getInstance().logWarning(
+        utils::core::Logger::getInstance().logWarning(
           std::string("Frame took ") + std::to_string(renderingDuration) + "ms " +
           "which is greater than the " + std::to_string(m_frameDuration) + "ms " +
           " authorized to maintain " + std::to_string(m_framerate) + "fps",
@@ -179,11 +179,11 @@ namespace sdl {
 
         // Draw this object (caching is handled by the object itself).
         SDL_Renderer* renderer = m_renderer;
-        ::core::utils::launchProtected(
+        utils::core::launchProtected(
           [renderer, widget]() {
             SDL_Texture* texture = widget->draw(renderer);
-            const sdl::utils::Boxf render = widget->getRenderingArea();
-            SDL_Rect dstArea = render.toSDLRect();
+            const utils::maths::Boxf render = widget->getRenderingArea();
+            SDL_Rect dstArea = utils::sdl::toSDLRect(render);
             SDL_RenderCopy(renderer, texture, nullptr, &dstArea);
           },
           std::string("draw_widget"),
