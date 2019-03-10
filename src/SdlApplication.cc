@@ -35,8 +35,6 @@ namespace sdl {
       m_eventsHandler.addListener(this);
 
       // Initialize the logger.
-      // TODO: Refactor the logger to use a so called `LoggingDevice` so that all
-      // loggers share the same device and we can use several loggers with various names.
       if (logger != nullptr) {
         m_logger->setName(getName());
       }
