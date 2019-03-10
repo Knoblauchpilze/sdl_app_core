@@ -4,9 +4,14 @@
 # include <mutex>
 # include <memory>
 # include <unordered_map>
+
 # include <SDL2/SDL.h>
+
+# include <maths_utils/Size.hh>
+# include <core_utils/CoreLogger.hh>
 # include <sdl_core/SdlWidget.hh>
 # include <sdl_core/EventListener.hh>
+
 # include "SdlEventHandler.hh"
 
 namespace sdl {
@@ -19,11 +24,11 @@ namespace sdl {
         SdlApplication(const std::string& name,
                        const std::string& title,
                        const std::string& icon,
-                       const int& width = 640,
-                       const int& height = 480,
+                       const utils::maths::Size<int>& size = utils::maths::Size<int>(640, 480),
                        const float& framerate = 60.0f,
                        const float& eventFramerate = 30.0f,
-                       const bool exitOnEscape = true);
+                       const bool exitOnEscape = true,
+                       utils::core::LoggerShPtr logger = nullptr);
 
         virtual ~SdlApplication();
 
@@ -60,7 +65,7 @@ namespace sdl {
         initializeSdlLib() const;
 
         void
-        createWindow(const int& width, const int& height);
+        createWindow(const utils::maths::Size<int>& size);
 
         void
         lock();
@@ -93,9 +98,11 @@ namespace sdl {
 
         std::unordered_map<std::string, sdl::core::SdlWidgetShPtr> m_widgets;
         std::mutex m_widgetsLocker;
+
+        utils::core::LoggerShPtr m_logger;
     };
 
-    using BasicSdlWindowShPtr = std::shared_ptr<SdlApplication>;
+    using SdlApplicationShPtr = std::shared_ptr<SdlApplication>;
   }
 }
 

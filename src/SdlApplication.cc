@@ -7,11 +7,11 @@ namespace sdl {
     SdlApplication::SdlApplication(const std::string& name,
                                    const std::string& title,
                                    const std::string& icon,
-                                   const int& width,
-                                   const int& height,
+                                   const utils::maths::Size<int>& size,
                                    const float& framerate,
                                    const float& eventFramerate,
-                                   const bool exitOnEscape):
+                                   const bool exitOnEscape,
+                                   utils::core::LoggerShPtr logger):
       sdl::core::EventListener(EventListener::Interaction::FullInteraction),
       m_name(name),
       m_title(title),
@@ -26,20 +26,24 @@ namespace sdl {
       m_locker(),
 
       m_widgets(),
-      m_widgetsLocker()
+      m_widgetsLocker(),
+
+      m_logger(logger)
     {
-      createWindow(width, height);
+      createWindow(size);
       setIcon(icon);
       m_eventsHandler.addListener(this);
 
       // Initialize the logger.
       // TODO: Refactor the logger to use a so called `LoggingDevice` so that all
       // loggers share the same device and we can use several loggers with various names.
-      utils::core::Logger::getInstance().setName(getName());
+      if (logger != nullptr) {
+        m_logger->setName(getName());
+      }
     }
 
     void
-    SdlApplication::createWindow(const int& width, const int& height) {
+    SdlApplication::createWindow(const utils::maths::Size<int>& size) {
       // Initialize sdl lib.
       initializeSdlLib();
 
@@ -48,8 +52,8 @@ namespace sdl {
         getTitle().c_str(),
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        width,
-        height,
+        size.w(),
+        size.h(),
         SDL_WINDOW_SHOWN
       );
       if (m_window == nullptr) {
