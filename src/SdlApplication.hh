@@ -16,7 +16,8 @@ namespace sdl {
       public:
 
         explicit
-        SdlApplication(const std::string& title,
+        SdlApplication(const std::string& name,
+                       const std::string& title,
                        const std::string& icon,
                        const int& width = 640,
                        const int& height = 480,
@@ -37,6 +38,9 @@ namespace sdl {
 
         void
         setIcon(const std::string& icon);
+
+        std::string
+        getName() const noexcept;
 
         void
         run();
@@ -73,11 +77,9 @@ namespace sdl {
         void
         renderWidgets();
 
-        void
-        drawTexture(SDL_Texture* texture, SDL_Rect* srcArea, SDL_Rect* dstArea);
-
       private:
 
+        std::string m_name;
         std::string m_title;
         std::string m_icon;
         float m_framerate;
@@ -97,6 +99,6 @@ namespace sdl {
   }
 }
 
-#include "SdlApplication.hxx"
+# include "SdlApplication.hxx"
 
 #endif    /* SDLAPPLICATION_HH */

@@ -1,6 +1,8 @@
 
-# include <iostream>
 # include "SdlEventHandler.hh"
+
+# include <core_utils/CoreLogger.hh>
+# include <core_utils/CoreWrapper.hh>
 
 namespace sdl {
   namespace core {
@@ -51,7 +53,6 @@ namespace sdl {
       bool eventsStillInQueue = true;
 
       const unsigned int startingHandlingTime = SDL_GetTicks();
-      // std::cout << "[EVN] Performing events handling" << std::endl;
 
       const unsigned int handlingDuration = SDL_GetTicks() - startingHandlingTime;
 
@@ -62,11 +63,23 @@ namespace sdl {
         }
 
         eventsStillInQueue = SDL_PollEvent(&event);
-        processSingleEvent(event);
+
+        ::core::utils::launchProtected(
+          [&event, this]() {
+            processSingleEvent(event);
+          },
+          std::string("process_single_event"),
+          std::string("sdl_eventhandler")
+        );
       }
 
       if (handlingDuration > m_frameDuration) {
-        std::cerr << "Event handling took " << handlingDuration << "ms which is greater than the " << m_frameDuration << "ms authorized to maintain " << m_framerate << "fps" << std::endl;
+        ::core::utils::Logger::getInstance().logWarning(
+          std::string("Event handling took ") + std::to_string(handlingDuration) + "ms " +
+          "which is greater than the " + std::to_string(m_frameDuration) + "ms " +
+          " authorized to maintain " + std::to_string(m_framerate) + "fps",
+          std::string("sdl_eventhandler")
+        );
       }
       else {
         const unsigned int remainingDuration = m_frameDuration - handlingDuration;

@@ -24,6 +24,7 @@ set(SDL_APP_CORE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" PARENT_SCOPE)
 target_link_libraries(sdl_app_core
   ${SDL2_LIBRARY}
   ${SDL2_TTF_LIBRARIES}
+  core_utils
   sdl_core
   sdl_graphic
   )

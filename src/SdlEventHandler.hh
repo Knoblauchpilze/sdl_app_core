@@ -92,6 +92,6 @@ namespace sdl {
   }
 }
 
-#include "SdlEventHandler.hxx"
+# include "SdlEventHandler.hxx"
 
 #endif    /* SDLEVENTHANDLER_HH */

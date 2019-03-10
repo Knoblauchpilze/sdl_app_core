@@ -4,7 +4,8 @@
 namespace sdl {
   namespace core {
 
-    SdlApplication::SdlApplication(const std::string& title,
+    SdlApplication::SdlApplication(const std::string& name,
+                                   const std::string& title,
                                    const std::string& icon,
                                    const int& width,
                                    const int& height,
@@ -12,6 +13,7 @@ namespace sdl {
                                    const float& eventFramerate,
                                    const bool exitOnEscape):
       EventListener(EventListener::Interaction::FullInteraction),
+      m_name(name),
       m_title(title),
       m_icon(),
       m_framerate(std::max(0.1f, framerate)),
@@ -29,6 +31,11 @@ namespace sdl {
       createWindow(width, height);
       setIcon(icon);
       m_eventsHandler.addListener(this);
+
+      // Initialize the logger.
+      // TODO: Refactor the logger to use a so called `LoggingDevice` so that all
+      // loggers share the same device and we can use several loggers with various names.
+      ::core::utils::Logger::getInstance().setName(getName());
     }
 
     void
