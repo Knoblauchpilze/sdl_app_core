@@ -2,7 +2,7 @@
 # include "SdlApplication.hh"
 
 namespace sdl {
-  namespace core {
+  namespace app {
 
     SdlApplication::SdlApplication(const std::string& name,
                                    const std::string& title,
@@ -12,7 +12,7 @@ namespace sdl {
                                    const float& framerate,
                                    const float& eventFramerate,
                                    const bool exitOnEscape):
-      EventListener(EventListener::Interaction::FullInteraction),
+      sdl::core::EventListener(EventListener::Interaction::FullInteraction),
       m_name(name),
       m_title(title),
       m_icon(),
@@ -53,7 +53,7 @@ namespace sdl {
         SDL_WINDOW_SHOWN
       );
       if (m_window == nullptr) {
-        throw SdlException(std::string("Could not create main window \"") + getTitle() + "\" (err: \"" + SDL_GetError() + "\")");
+        throw AppException(std::string("Could not create main window \"") + getTitle() + "\" (err: \"" + SDL_GetError() + "\")");
       }
 
       m_renderer = SDL_CreateRenderer(
@@ -62,7 +62,7 @@ namespace sdl {
         SDL_RENDERER_ACCELERATED
       );
       if (m_renderer == nullptr) {
-        throw SdlException(std::string("Could not create main renderer for \"") + getTitle() + "\" (err: \"" + SDL_GetError() + "\")");
+        throw AppException(std::string("Could not create main renderer for \"") + getTitle() + "\" (err: \"" + SDL_GetError() + "\")");
       }
     }
 

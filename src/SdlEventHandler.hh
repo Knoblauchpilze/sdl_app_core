@@ -10,7 +10,7 @@
 # include <sdl_core/EventListener.hh>
 
 namespace sdl {
-  namespace core {
+  namespace app {
 
     class SdlEventHandler {
       public:
@@ -31,10 +31,10 @@ namespace sdl {
         isRunning();
 
         void
-        addListener(EventListener* listener);
+        addListener(sdl::core::EventListener* listener);
 
         void
-        removeListener(EventListener* listener);
+        removeListener(sdl::core::EventListener* listener);
 
       private:
 
@@ -84,7 +84,7 @@ namespace sdl {
         std::mutex m_locker;
         std::shared_ptr<std::thread> m_executionThread;
 
-        std::vector<EventListener*> m_listeners;
+        std::vector<sdl::core::EventListener*> m_listeners;
         std::mutex m_listenersLocker;
     };
 

@@ -10,9 +10,9 @@
 # include "SdlEventHandler.hh"
 
 namespace sdl {
-  namespace core {
+  namespace app {
 
-    class SdlApplication : public EventListener {
+    class SdlApplication : public sdl::core::EventListener {
       public:
 
         explicit
@@ -49,10 +49,10 @@ namespace sdl {
         onQuitEvent(const SDL_QuitEvent& event) override;
 
         void
-        addWidget(SdlWidgetShPtr widget);
+        addWidget(sdl::core::SdlWidgetShPtr widget);
 
         void
-        removeWidget(SdlWidgetShPtr widget);
+        removeWidget(sdl::core::SdlWidgetShPtr widget);
 
       private:
 
@@ -91,7 +91,7 @@ namespace sdl {
         bool m_renderingRunning;
         std::mutex m_locker;
 
-        std::unordered_map<std::string, SdlWidgetShPtr> m_widgets;
+        std::unordered_map<std::string, sdl::core::SdlWidgetShPtr> m_widgets;
         std::mutex m_widgetsLocker;
     };
 

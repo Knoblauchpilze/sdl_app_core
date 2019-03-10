@@ -8,7 +8,7 @@
 # include <sdl_core/SdlException.hh>
 
 namespace sdl {
-  namespace core {
+  namespace app {
 
     inline
     SdlApplication::~SdlApplication() {
@@ -25,7 +25,7 @@ namespace sdl {
     int
     SdlApplication::getWidth() const {
       if (m_window == nullptr) {
-        throw SdlException(std::string("Cannot retrieve height for invalid sdl window \"") + getTitle() + "\"");
+        throw AppException(std::string("Cannot retrieve height for invalid sdl window \"") + getTitle() + "\"");
       }
 
       int width = 0;
@@ -37,7 +37,7 @@ namespace sdl {
     int
     SdlApplication::getHeight() const {
       if (m_window == nullptr) {
-        throw SdlException(std::string("Cannot retrieve height for invalid sdl window \"") + getTitle() + "\"");
+        throw AppException(std::string("Cannot retrieve height for invalid sdl window \"") + getTitle() + "\"");
       }
 
       int height = 0;
@@ -55,13 +55,13 @@ namespace sdl {
     void
     SdlApplication::setIcon(const std::string& icon) {
       if (m_window == nullptr) {
-        throw SdlException(std::string("Could not set icon for invalid sdl window"));
+        throw AppException(std::string("Could not set icon for invalid sdl window"));
       }
 
       // Load this icon.
       SDL_Surface* iconAsSurface = SDL_LoadBMP(icon.c_str());
       if (iconAsSurface == nullptr) {
-        throw SdlException(std::string("Could not load icon \"") + icon + "\" (err: \"" + SDL_GetError() + "\")");
+        throw AppException(std::string("Could not load icon \"") + icon + "\" (err: \"" + SDL_GetError() + "\")");
       }
 
       SDL_SetWindowIcon(m_window, iconAsSurface);
@@ -94,10 +94,11 @@ namespace sdl {
 
     inline
     void
-    SdlApplication::addWidget(SdlWidgetShPtr widget) {
+    SdlApplication::addWidget(sdl::core::SdlWidgetShPtr widget) {
       if (widget == nullptr) {
-        throw SdlException(std::string("Cannot add null widget"));
+        throw AppException(std::string("Cannot add null widget"));
       }
+
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets[widget->getName()] = widget;
       m_eventsHandler.addListener(widget.get());
@@ -105,10 +106,11 @@ namespace sdl {
 
     inline
     void
-    SdlApplication::removeWidget(SdlWidgetShPtr widget) {
+    SdlApplication::removeWidget(sdl::core::SdlWidgetShPtr widget) {
       if (widget == nullptr) {
-        throw SdlException(std::string("Cannot remove null widget"));
+        throw AppException(std::string("Cannot remove null widget"));
       }
+
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets.erase(widget->getName());
       m_eventsHandler.removeListener(widget.get());
@@ -123,7 +125,7 @@ namespace sdl {
 
       int initStatus = SDL_Init(SDL_INIT_VIDEO);
       if (initStatus != 0) {
-        throw SdlException(std::string("Could not initialize SDL library (err: \"") + SDL_GetError() + "\")");
+        throw AppException(std::string("Could not initialize SDL library (err: \"") + SDL_GetError() + "\")");
       }
     }
 
@@ -171,11 +173,11 @@ namespace sdl {
     SdlApplication::renderWidgets() {
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
 
-      for (std::unordered_map<std::string, SdlWidgetShPtr>::iterator widgetsIterator = m_widgets.begin() ;
+      for (std::unordered_map<std::string, sdl::core::SdlWidgetShPtr>::iterator widgetsIterator = m_widgets.begin() ;
           widgetsIterator != m_widgets.end() ;
           ++widgetsIterator)
       {
-        SdlWidgetShPtr widget = widgetsIterator->second;
+        sdl::core::SdlWidgetShPtr widget = widgetsIterator->second;
 
         // Draw this object (caching is handled by the object itself).
         SDL_Renderer* renderer = m_renderer;

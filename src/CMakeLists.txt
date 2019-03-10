@@ -9,6 +9,7 @@ find_package (SDL2 REQUIRED)
 find_package (SDL2_ttf REQUIRED)
 
 set (SOURCES
+  AppException.cc
   SdlApplication.cc
   SdlEventHandler.cc
   )

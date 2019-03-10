@@ -5,7 +5,7 @@
 # include <core_utils/CoreWrapper.hh>
 
 namespace sdl {
-  namespace core {
+  namespace app {
 
     SdlEventHandler::SdlEventHandler(const float& eventHandlingRate,
                                      const bool exitOnEscape):
