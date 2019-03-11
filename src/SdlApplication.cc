@@ -7,10 +7,9 @@ namespace sdl {
     SdlApplication::SdlApplication(const std::string& name,
                                    const std::string& title,
                                    const std::string& icon,
-                                   const utils::maths::Size<int>& size,
+                                   const utils::maths::Sizei& size,
                                    const float& framerate,
                                    const float& eventFramerate,
-                                   const bool exitOnEscape,
                                    utils::core::LoggerShPtr logger):
       sdl::core::EventListener(EventListener::Interaction::FullInteraction),
       m_name(name),
@@ -20,7 +19,7 @@ namespace sdl {
       m_frameDuration(1000.0f / m_framerate),
       m_window(nullptr),
       m_renderer(nullptr),
-      m_eventsHandler(eventFramerate, exitOnEscape),
+      m_eventsHandler(eventFramerate, true),
 
       m_renderingRunning(false),
       m_locker(),
@@ -41,7 +40,7 @@ namespace sdl {
     }
 
     void
-    SdlApplication::createWindow(const utils::maths::Size<int>& size) {
+    SdlApplication::createWindow(const utils::maths::Sizei& size) {
       // Initialize sdl lib.
       initializeSdlLib();
 

@@ -24,10 +24,9 @@ namespace sdl {
         SdlApplication(const std::string& name,
                        const std::string& title,
                        const std::string& icon,
-                       const utils::maths::Size<int>& size = utils::maths::Size<int>(640, 480),
+                       const utils::maths::Sizei& size = utils::maths::Sizei(640, 480),
                        const float& framerate = 60.0f,
                        const float& eventFramerate = 30.0f,
-                       const bool exitOnEscape = true,
                        utils::core::LoggerShPtr logger = nullptr);
 
         virtual ~SdlApplication();
@@ -65,7 +64,7 @@ namespace sdl {
         initializeSdlLib() const;
 
         void
-        createWindow(const utils::maths::Size<int>& size);
+        createWindow(const utils::maths::Sizei& size);
 
         void
         lock();
