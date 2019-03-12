@@ -76,6 +76,8 @@ namespace sdl {
 
       private:
 
+        static const char* sk_serviceName;
+
         float m_framerate;
         float m_frameDuration;
         bool m_exitOnEscape;

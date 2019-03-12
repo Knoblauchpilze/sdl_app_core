@@ -4,7 +4,7 @@
 namespace sdl {
   namespace app {
 
-    const char* AppException::sk_moduleName = "app";
+    const char* AppException::sk_serviceName = "app";
 
   }
 }

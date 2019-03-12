@@ -4,13 +4,14 @@
 namespace sdl {
   namespace app {
 
+    const char* SdlApplication::sk_serviceName = "app";
+
     SdlApplication::SdlApplication(const std::string& name,
                                    const std::string& title,
                                    const std::string& icon,
-                                   const utils::maths::Sizei& size,
+                                   const utils::Sizei& size,
                                    const float& framerate,
-                                   const float& eventFramerate,
-                                   utils::core::LoggerShPtr logger):
+                                   const float& eventFramerate):
       sdl::core::EventListener(EventListener::Interaction::FullInteraction),
       m_name(name),
       m_title(title),
@@ -25,22 +26,15 @@ namespace sdl {
       m_locker(),
 
       m_widgets(),
-      m_widgetsLocker(),
-
-      m_logger(logger)
+      m_widgetsLocker()
     {
       createWindow(size);
       setIcon(icon);
       m_eventsHandler.addListener(this);
-
-      // Initialize the logger.
-      if (logger != nullptr) {
-        m_logger->setName(getName());
-      }
     }
 
     void
-    SdlApplication::createWindow(const utils::maths::Sizei& size) {
+    SdlApplication::createWindow(const utils::Sizei& size) {
       // Initialize sdl lib.
       initializeSdlLib();
 
@@ -54,7 +48,10 @@ namespace sdl {
         SDL_WINDOW_SHOWN
       );
       if (m_window == nullptr) {
-        throw AppException(std::string("Could not create main window \"") + getTitle() + "\" (err: \"" + SDL_GetError() + "\")");
+        throw AppException(
+          std::string("Could not create main window (err: \"") + SDL_GetError() + "\")",
+          getName()
+        );
       }
 
       m_renderer = SDL_CreateRenderer(
@@ -63,7 +60,10 @@ namespace sdl {
         SDL_RENDERER_ACCELERATED
       );
       if (m_renderer == nullptr) {
-        throw AppException(std::string("Could not create main renderer for \"") + getTitle() + "\" (err: \"" + SDL_GetError() + "\")");
+        throw AppException(
+          std::string("Could not create main renderer (err: \"") + SDL_GetError() + "\")",
+          getName()
+        );
       }
     }
 

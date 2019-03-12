@@ -2,8 +2,7 @@
 # define   SDLAPPLICATION_HXX
 
 # include "SdlApplication.hh"
-
-# include <core_utils/CoreLogger.hh>
+# include <core_utils/LoggerLocator.hh>
 # include <core_utils/CoreWrapper.hh>
 # include <sdl_core/SdlException.hh>
 
@@ -25,7 +24,10 @@ namespace sdl {
     int
     SdlApplication::getWidth() const {
       if (m_window == nullptr) {
-        throw AppException(std::string("Cannot retrieve height for invalid sdl window \"") + getTitle() + "\"");
+        throw AppException(
+          std::string("Cannot retrieve height for invalid sdl window"),
+          getName()
+        );
       }
 
       int width = 0;
@@ -37,7 +39,10 @@ namespace sdl {
     int
     SdlApplication::getHeight() const {
       if (m_window == nullptr) {
-        throw AppException(std::string("Cannot retrieve height for invalid sdl window \"") + getTitle() + "\"");
+        throw AppException(
+          std::string("Cannot retrieve height for invalid sdl window"),
+          getName()
+        );
       }
 
       int height = 0;
@@ -55,13 +60,19 @@ namespace sdl {
     void
     SdlApplication::setIcon(const std::string& icon) {
       if (m_window == nullptr) {
-        throw AppException(std::string("Could not set icon for invalid sdl window"));
+        throw AppException(
+          std::string("Could not set icon for invalid sdl window"),
+          getName()
+        );
       }
 
       // Load this icon.
       SDL_Surface* iconAsSurface = SDL_LoadBMP(icon.c_str());
       if (iconAsSurface == nullptr) {
-        throw AppException(std::string("Could not load icon \"") + icon + "\" (err: \"" + SDL_GetError() + "\")");
+        throw AppException(
+          std::string("Could not load icon \"") + icon + "\" (err: \"" + SDL_GetError() + "\")",
+          getName()
+        );
       }
 
       SDL_SetWindowIcon(m_window, iconAsSurface);
@@ -96,7 +107,10 @@ namespace sdl {
     void
     SdlApplication::addWidget(sdl::core::SdlWidgetShPtr widget) {
       if (widget == nullptr) {
-        throw AppException(std::string("Cannot add null widget"));
+        throw AppException(
+          std::string("Cannot add null widget"),
+          getName()
+        );
       }
 
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
@@ -108,7 +122,10 @@ namespace sdl {
     void
     SdlApplication::removeWidget(sdl::core::SdlWidgetShPtr widget) {
       if (widget == nullptr) {
-        throw AppException(std::string("Cannot remove null widget"));
+        throw AppException(
+          std::string("Cannot remove null widget"),
+          getName()
+        );
       }
 
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
@@ -125,7 +142,10 @@ namespace sdl {
 
       int initStatus = SDL_Init(SDL_INIT_VIDEO);
       if (initStatus != 0) {
-        throw AppException(std::string("Could not initialize SDL library (err: \"") + SDL_GetError() + "\")");
+        throw AppException(
+          std::string("Could not initialize SDL library (err: \"") + SDL_GetError() + "\")",
+          getName()
+        );
       }
     }
 
@@ -153,11 +173,11 @@ namespace sdl {
       const unsigned int renderingDuration = SDL_GetTicks() - startingRenderingTime;
 
       if (renderingDuration > m_frameDuration) {
-        utils::core::Logger::getInstance().logWarning(
+        log(
           std::string("Frame took ") + std::to_string(renderingDuration) + "ms " +
           "which is greater than the " + std::to_string(m_frameDuration) + "ms " +
           " authorized to maintain " + std::to_string(m_framerate) + "fps",
-          std::string("sdl_application")
+          utils::Level::Warning
         );
       }
       else {
@@ -181,17 +201,31 @@ namespace sdl {
 
         // Draw this object (caching is handled by the object itself).
         SDL_Renderer* renderer = m_renderer;
-        utils::core::launchProtected(
+        utils::launchProtected(
           [renderer, widget]() {
             SDL_Texture* texture = widget->draw(renderer);
-            const utils::maths::Boxf render = widget->getRenderingArea();
-            SDL_Rect dstArea = utils::sdl::toSDLRect(render);
+            const utils::Boxf render = widget->getRenderingArea();
+            SDL_Rect dstArea = utils::toSDLRect(render);
             SDL_RenderCopy(renderer, texture, nullptr, &dstArea);
           },
           std::string("draw_widget"),
-          std::string("sdl_application")
+          getName(),
+          sk_serviceName
         );
       }
+    }
+
+    inline
+    void
+    SdlApplication::log(const std::string& message,
+                        const utils::Level& level) const noexcept
+    {
+      utils::LoggerLocator::getLogger().logMessage(
+        level,
+        message,
+        sk_serviceName,
+        getName()
+      );
     }
 
   }

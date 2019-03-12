@@ -8,7 +8,6 @@
 # include <SDL2/SDL.h>
 
 # include <maths_utils/Size.hh>
-# include <core_utils/CoreLogger.hh>
 # include <sdl_core/SdlWidget.hh>
 # include <sdl_core/EventListener.hh>
 
@@ -24,10 +23,9 @@ namespace sdl {
         SdlApplication(const std::string& name,
                        const std::string& title,
                        const std::string& icon,
-                       const utils::maths::Sizei& size = utils::maths::Sizei(640, 480),
+                       const utils::Sizei& size = utils::Sizei(640, 480),
                        const float& framerate = 60.0f,
-                       const float& eventFramerate = 30.0f,
-                       utils::core::LoggerShPtr logger = nullptr);
+                       const float& eventFramerate = 30.0f);
 
         virtual ~SdlApplication();
 
@@ -64,7 +62,7 @@ namespace sdl {
         initializeSdlLib() const;
 
         void
-        createWindow(const utils::maths::Sizei& size);
+        createWindow(const utils::Sizei& size);
 
         void
         lock();
@@ -81,7 +79,13 @@ namespace sdl {
         void
         renderWidgets();
 
+        void
+        log(const std::string& message,
+            const utils::Level& level = utils::Level::Debug) const noexcept;
+
       private:
+
+        static const char* sk_serviceName;
 
         std::string m_name;
         std::string m_title;
@@ -97,8 +101,6 @@ namespace sdl {
 
         std::unordered_map<std::string, sdl::core::SdlWidgetShPtr> m_widgets;
         std::mutex m_widgetsLocker;
-
-        utils::core::LoggerShPtr m_logger;
     };
 
     using SdlApplicationShPtr = std::shared_ptr<SdlApplication>;

@@ -6,17 +6,18 @@
 namespace sdl {
   namespace app {
 
-    class AppException: public utils::core::CoreException {
+    class AppException: public utils::CoreException {
       public:
 
         AppException(const std::string& message,
+                     const std::string& module,
                      const std::string& cause = std::string());
 
         virtual ~AppException() = default;
 
       private:
 
-        static const char* sk_moduleName;
+        static const char* sk_serviceName;
     };
 
   }

@@ -13,7 +13,10 @@ namespace sdl {
     SdlEventHandler::run() {
       std::lock_guard<std::mutex> guard(m_locker);
       if (m_executionThread != nullptr) {
-        throw AppException(std::string("Cannot start event handling, process already running"));
+        throw AppException(
+          std::string("Cannot start event handling, process already running"),
+          sk_serviceName
+        );
       }
 
       m_executionThread = std::make_shared<std::thread>(
@@ -52,7 +55,10 @@ namespace sdl {
     void
     SdlEventHandler::addListener(sdl::core::EventListener* listener) {
       if (listener == nullptr) {
-        throw AppException(std::string("Cannot add null event listener"));
+        throw AppException(
+          std::string("Cannot add null event listener"),
+          sk_serviceName
+        );
       }
 
       std::lock_guard<std::mutex> guard(m_listenersLocker);
@@ -63,7 +69,10 @@ namespace sdl {
     void
     SdlEventHandler::removeListener(sdl::core::EventListener* listener) {
       if (listener == nullptr) {
-        throw AppException(std::string("Cannot remove null event listener"));
+        throw AppException(
+          std::string("Cannot remove null event listener"),
+          sk_serviceName
+        );
       }
 
       std::lock_guard<std::mutex> guard(m_listenersLocker);
