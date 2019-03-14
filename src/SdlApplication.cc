@@ -4,16 +4,13 @@
 namespace sdl {
   namespace app {
 
-    const char* SdlApplication::sk_serviceName = "app";
-
     SdlApplication::SdlApplication(const std::string& name,
                                    const std::string& title,
                                    const std::string& icon,
                                    const utils::Sizei& size,
                                    const float& framerate,
                                    const float& eventFramerate):
-      sdl::core::EventListener(EventListener::Interaction::FullInteraction),
-      m_name(name),
+      sdl::core::EventListener(name, EventListener::Interaction::FullInteraction),
       m_title(title),
       m_icon(),
       m_framerate(std::max(0.1f, framerate)),
@@ -28,6 +25,8 @@ namespace sdl {
       m_widgets(),
       m_widgetsLocker()
     {
+      setService("app");
+
       createWindow(size);
       setIcon(icon);
       m_eventsHandler.addListener(this);
@@ -48,10 +47,7 @@ namespace sdl {
         SDL_WINDOW_SHOWN
       );
       if (m_window == nullptr) {
-        throw AppException(
-          std::string("Could not create main window (err: \"") + SDL_GetError() + "\")",
-          getName()
-        );
+        error(std::string("Could not create main window (err: \"") + SDL_GetError() + "\")");
       }
 
       m_renderer = SDL_CreateRenderer(
@@ -60,10 +56,7 @@ namespace sdl {
         SDL_RENDERER_ACCELERATED
       );
       if (m_renderer == nullptr) {
-        throw AppException(
-          std::string("Could not create main renderer (err: \"") + SDL_GetError() + "\")",
-          getName()
-        );
+        error(std::string("Could not create main renderer (err: \"") + SDL_GetError() + "\")");
       }
     }
 

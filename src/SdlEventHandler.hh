@@ -6,18 +6,19 @@
 # include <thread>
 # include <mutex>
 # include <SDL2/SDL.h>
-
+# include <core_utils/CoreObject.hh>
 # include <sdl_core/EventListener.hh>
 
 namespace sdl {
   namespace app {
 
-    class SdlEventHandler {
+    class SdlEventHandler: public utils::CoreObject {
       public:
 
         explicit
         SdlEventHandler(const float& eventHandlingRate = 30.0f,
-                        const bool exitOnEscape = true);
+                        const bool exitOnEscape = true,
+                        const std::string& name = std::string("event_handler"));
 
         ~SdlEventHandler();
 
@@ -75,8 +76,6 @@ namespace sdl {
         processQuitEvent(const SDL_QuitEvent& event);
 
       private:
-
-        static const char* sk_serviceName;
 
         float m_framerate;
         float m_frameDuration;

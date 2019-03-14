@@ -1,16 +1,15 @@
 
 # include "SdlEventHandler.hh"
 
-# include <core_utils/LoggerLocator.hh>
 # include <core_utils/CoreWrapper.hh>
 
 namespace sdl {
   namespace app {
 
-    const char* SdlEventHandler::sk_serviceName = "events";
-
     SdlEventHandler::SdlEventHandler(const float& eventHandlingRate,
-                                     const bool exitOnEscape):
+                                     const bool exitOnEscape,
+                                     const std::string& name):
+      utils::CoreObject(name),
       m_framerate(std::max(0.1f, eventHandlingRate)),
       m_frameDuration(1000.0f / m_framerate),
       m_exitOnEscape(exitOnEscape),
@@ -21,7 +20,9 @@ namespace sdl {
 
       m_listeners(),
       m_listenersLocker()
-    {}
+    {
+      setService("events");
+    }
 
     SdlEventHandler::~SdlEventHandler() {
       stop();
@@ -66,24 +67,20 @@ namespace sdl {
 
         eventsStillInQueue = SDL_PollEvent(&event);
 
-        utils::launchProtected(
+        withSafetyNet(
           [&event, this]() {
             processSingleEvent(event);
           },
-          std::string("process_single_event"),
-          std::string("handler"),
-          sk_serviceName
+          std::string("process_single_event")
         );
       }
 
       if (handlingDuration > m_frameDuration) {
-        utils::LoggerLocator::getLogger().logMessage(
-          utils::Level::Warning,
+        log(
           std::string("Event handling took ") + std::to_string(handlingDuration) + "ms " +
           "which is greater than the " + std::to_string(m_frameDuration) + "ms " +
           " authorized to maintain " + std::to_string(m_framerate) + "fps",
-          std::string("handler"),
-          sk_serviceName
+          utils::Level::Warning
         );
       }
       else {

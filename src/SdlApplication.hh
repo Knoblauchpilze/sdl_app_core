@@ -41,9 +41,6 @@ namespace sdl {
         void
         setIcon(const std::string& icon);
 
-        std::string
-        getName() const noexcept;
-
         void
         run();
 
@@ -79,15 +76,8 @@ namespace sdl {
         void
         renderWidgets();
 
-        void
-        log(const std::string& message,
-            const utils::Level& level = utils::Level::Debug) const noexcept;
-
       private:
 
-        static const char* sk_serviceName;
-
-        std::string m_name;
         std::string m_title;
         std::string m_icon;
         float m_framerate;
