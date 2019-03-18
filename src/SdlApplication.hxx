@@ -96,9 +96,9 @@ namespace sdl {
     SdlApplication::render() {
       const unsigned int startingRenderingTime = SDL_GetTicks();
 
-      SDL_RenderClear(m_renderer);
+      core::engine::EngineLocator::getEngine().clearWindow(*m_window);
       renderWidgets();
-      SDL_RenderPresent(m_renderer);
+      core::engine::EngineLocator::getEngine().renderWindow(*m_window);
 
       const unsigned int renderingDuration = SDL_GetTicks() - startingRenderingTime;
 
