@@ -4,12 +4,11 @@
 # include <mutex>
 # include <memory>
 # include <unordered_map>
-
 # include <SDL2/SDL.h>
-
 # include <maths_utils/Size.hh>
 # include <sdl_core/SdlWidget.hh>
 # include <sdl_core/EventListener.hh>
+# include <sdl_engine/Window.hh>
 
 # include "SdlEventHandler.hh"
 
@@ -28,12 +27,6 @@ namespace sdl {
                        const float& eventFramerate = 30.0f);
 
         virtual ~SdlApplication();
-
-        int
-        getWidth() const;
-
-        int
-        getHeight() const;
 
         const std::string&
         getTitle() const noexcept;
@@ -54,9 +47,6 @@ namespace sdl {
         removeWidget(sdl::core::SdlWidgetShPtr widget);
 
       private:
-
-        void
-        initializeSdlLib() const;
 
         void
         createWindow(const utils::Sizei& size);
@@ -82,8 +72,7 @@ namespace sdl {
         std::string m_icon;
         float m_framerate;
         float m_frameDuration;
-        SDL_Window* m_window;
-        SDL_Renderer* m_renderer;
+        std::shared_ptr<core::engine::Window::UUID> m_window;
         SdlEventHandler m_eventsHandler;
 
         bool m_renderingRunning;

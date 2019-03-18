@@ -14,32 +14,8 @@ namespace sdl {
       }
 
       if (m_window != nullptr) {
-        SDL_DestroyWindow(m_window);
+        core::engine::EngineLocator::getEngine().destroyWindow(*m_window);
       }
-    }
-
-    inline
-    int
-    SdlApplication::getWidth() const {
-      if (m_window == nullptr) {
-        error(std::string("Cannot retrieve height for invalid sdl window"));
-      }
-
-      int width = 0;
-      SDL_GetWindowSize(m_window, &width, nullptr);
-      return width;
-    }
-
-    inline
-    int
-    SdlApplication::getHeight() const {
-      if (m_window == nullptr) {
-        error(std::string("Cannot retrieve height for invalid sdl window"));
-      }
-
-      int height = 0;
-      SDL_GetWindowSize(m_window, nullptr, &height);
-      return height;
     }
 
     inline
@@ -56,14 +32,10 @@ namespace sdl {
       }
 
       // Load this icon.
-      SDL_Surface* iconAsSurface = SDL_LoadBMP(icon.c_str());
-      if (iconAsSurface == nullptr) {
-        error(std::string("Could not load icon \"") + icon + "\" (err: \"" + SDL_GetError() + "\")");
-      }
-
-      SDL_SetWindowIcon(m_window, iconAsSurface);
-
-      SDL_FreeSurface(iconAsSurface);
+      core::engine::EngineLocator::getEngine().setWindowIcon(
+        *m_window,
+        icon
+      );
     }
 
     inline
@@ -105,19 +77,6 @@ namespace sdl {
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets.erase(widget->getName());
       m_eventsHandler.removeListener(widget.get());
-    }
-
-    inline
-    void
-    SdlApplication::initializeSdlLib() const {
-      if (SDL_WasInit(SDL_INIT_VIDEO) != 0) {
-        return;
-      }
-
-      int initStatus = SDL_Init(SDL_INIT_VIDEO);
-      if (initStatus != 0) {
-        error(std::string("Could not initialize SDL library (err: \"") + SDL_GetError() + "\")");
-      }
     }
 
     inline
@@ -171,13 +130,16 @@ namespace sdl {
         sdl::core::SdlWidgetShPtr widget = widgetsIterator->second;
 
         // Draw this object (caching is handled by the object itself).
-        SDL_Renderer* renderer = m_renderer;
         withSafetyNet(
-          [renderer, widget]() {
-            SDL_Texture* texture = widget->draw(renderer);
-            const utils::Boxf render = widget->getRenderingArea();
-            SDL_Rect dstArea = utils::toSDLRect(render);
-            SDL_RenderCopy(renderer, texture, nullptr, &dstArea);
+          [widget]() {
+            core::engine::Texture::UUID texture = widget->draw();
+            utils::Boxf render = widget->getRenderingArea();
+
+            core::engine::EngineLocator::getEngine().drawTexture(
+              texture,
+              nullptr,
+              &render
+            );
           },
           std::string("draw_widget")
         );

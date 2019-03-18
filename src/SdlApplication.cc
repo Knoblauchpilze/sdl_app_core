@@ -1,5 +1,6 @@
 
 # include "SdlApplication.hh"
+# include <sdl_engine/EngineLocator.hh>
 
 namespace sdl {
   namespace app {
@@ -16,7 +17,6 @@ namespace sdl {
       m_framerate(std::max(0.1f, framerate)),
       m_frameDuration(1000.0f / m_framerate),
       m_window(nullptr),
-      m_renderer(nullptr),
       m_eventsHandler(eventFramerate, true),
 
       m_renderingRunning(false),
@@ -34,30 +34,12 @@ namespace sdl {
 
     void
     SdlApplication::createWindow(const utils::Sizei& size) {
-      // Initialize sdl lib.
-      initializeSdlLib();
-
-      // Create the main renderer.
-      m_window = SDL_CreateWindow(
-        getTitle().c_str(),
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        size.w(),
-        size.h(),
-        SDL_WINDOW_SHOWN
+      // Use the engine to create the window.
+      const core::engine::Window::UUID uuid = core::engine::EngineLocator::getEngine().createWindow(
+        size,
+        getTitle()
       );
-      if (m_window == nullptr) {
-        error(std::string("Could not create main window (err: \"") + SDL_GetError() + "\")");
-      }
-
-      m_renderer = SDL_CreateRenderer(
-        m_window,
-        -1,
-        SDL_RENDERER_ACCELERATED
-      );
-      if (m_renderer == nullptr) {
-        error(std::string("Could not create main renderer (err: \"") + SDL_GetError() + "\")");
-      }
+      m_window = std::make_shared<core::engine::Window::UUID>(uuid);
     }
 
     void
