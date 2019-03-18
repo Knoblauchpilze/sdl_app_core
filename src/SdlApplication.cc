@@ -40,6 +40,9 @@ namespace sdl {
         getTitle()
       );
       m_window = std::make_shared<core::engine::Window::UUID>(uuid);
+
+      // Set it as the active window.
+      core::engine::EngineLocator::getEngine().setActiveWindow(*m_window);
     }
 
     void
