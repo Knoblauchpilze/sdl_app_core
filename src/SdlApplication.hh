@@ -8,6 +8,7 @@
 # include <maths_utils/Size.hh>
 # include <sdl_core/SdlWidget.hh>
 # include <sdl_core/EventListener.hh>
+# include <sdl_engine/Engine.hh>
 # include <sdl_engine/Window.hh>
 
 # include "SdlEventHandler.hh"
@@ -49,7 +50,7 @@ namespace sdl {
       private:
 
         void
-        createWindow(const utils::Sizei& size);
+        create(const utils::Sizei& size);
 
         void
         lock();
@@ -66,20 +67,26 @@ namespace sdl {
         void
         renderWidgets();
 
-      private:
+      public:
+
+        using WidgetsMap = std::unordered_map<std::string, sdl::core::SdlWidgetShPtr>;
 
         std::string m_title;
-        std::string m_icon;
+
         float m_framerate;
         float m_frameDuration;
-        std::shared_ptr<core::engine::Window::UUID> m_window;
+
+        std::mutex m_locker;
+        bool m_renderingRunning;
+
         SdlEventHandler m_eventsHandler;
 
-        bool m_renderingRunning;
-        std::mutex m_locker;
-
-        std::unordered_map<std::string, sdl::core::SdlWidgetShPtr> m_widgets;
         std::mutex m_widgetsLocker;
+        WidgetsMap m_widgets;
+
+        core::engine::EngineShPtr m_engine;
+        std::shared_ptr<core::engine::Window::UUID> m_window;
+        std::shared_ptr<core::engine::Texture::UUID> m_canvas;
     };
 
     using SdlApplicationShPtr = std::shared_ptr<SdlApplication>;

@@ -14,7 +14,7 @@ namespace sdl {
       }
 
       if (m_window != nullptr) {
-        core::engine::EngineLocator::getEngine().destroyWindow(*m_window);
+        m_engine->destroyWindow(*m_window);
       }
     }
 
@@ -32,10 +32,7 @@ namespace sdl {
       }
 
       // Load this icon.
-      core::engine::EngineLocator::getEngine().setWindowIcon(
-        *m_window,
-        icon
-      );
+      m_engine->setWindowIcon(*m_window, icon);
     }
 
     inline
@@ -96,9 +93,7 @@ namespace sdl {
     SdlApplication::render() {
       const unsigned int startingRenderingTime = SDL_GetTicks();
 
-      core::engine::EngineLocator::getEngine().clearWindow(*m_window);
       renderWidgets();
-      core::engine::EngineLocator::getEngine().renderWindow(*m_window);
 
       const unsigned int renderingDuration = SDL_GetTicks() - startingRenderingTime;
 
@@ -123,19 +118,24 @@ namespace sdl {
     SdlApplication::renderWidgets() {
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
 
-      for (std::unordered_map<std::string, sdl::core::SdlWidgetShPtr>::iterator widgetsIterator = m_widgets.begin() ;
-          widgetsIterator != m_widgets.end() ;
-          ++widgetsIterator)
+      // Clear screen content.
+      m_engine->clearWindow(*m_window);
+
+      std::shared_ptr<core::engine::Engine> engine = m_engine;
+
+      for (WidgetsMap::iterator widgetIt = m_widgets.begin() ;
+          widgetIt != m_widgets.end() ;
+          ++widgetIt)
       {
-        sdl::core::SdlWidgetShPtr widget = widgetsIterator->second;
+        sdl::core::SdlWidgetShPtr widget = widgetIt->second;
 
         // Draw this object (caching is handled by the object itself).
         withSafetyNet(
-          [widget]() {
+          [widget, engine]() {
             core::engine::Texture::UUID texture = widget->draw();
             utils::Boxf render = widget->getRenderingArea();
 
-            core::engine::EngineLocator::getEngine().drawTexture(
+            engine->drawTexture(
               texture,
               nullptr,
               &render
@@ -144,6 +144,9 @@ namespace sdl {
           std::string("draw_widget")
         );
       }
+
+      // Display the changes.
+      m_engine->renderWindow(*m_window);
     }
 
   }
