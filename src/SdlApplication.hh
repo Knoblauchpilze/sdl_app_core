@@ -86,7 +86,7 @@ namespace sdl {
 
         core::engine::EngineShPtr m_engine;
         std::shared_ptr<core::engine::Window::UUID> m_window;
-        std::shared_ptr<core::engine::Texture::UUID> m_canvas;
+        utils::Uuid m_canvas;
     };
 
     using SdlApplicationShPtr = std::shared_ptr<SdlApplication>;
