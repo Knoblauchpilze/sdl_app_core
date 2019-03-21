@@ -13,8 +13,8 @@ namespace sdl {
         m_eventsHandler.stop();
       }
 
-      if (m_window != nullptr) {
-        m_engine->destroyWindow(*m_window);
+      if (m_window.valid()) {
+        m_engine->destroyWindow(m_window);
       }
     }
 
@@ -27,12 +27,12 @@ namespace sdl {
     inline
     void
     SdlApplication::setIcon(const std::string& icon) {
-      if (m_window == nullptr) {
+      if (!m_window.valid()) {
         error(std::string("Could not set icon for invalid sdl window"));
       }
 
       // Load this icon.
-      m_engine->setWindowIcon(*m_window, icon);
+      m_engine->setWindowIcon(m_window, icon);
     }
 
     inline

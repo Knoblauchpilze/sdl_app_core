@@ -85,7 +85,7 @@ namespace sdl {
         WidgetsMap m_widgets;
 
         core::engine::EngineShPtr m_engine;
-        std::shared_ptr<core::engine::Window::UUID> m_window;
+        utils::Uuid m_window;
         utils::Uuid m_canvas;
     };
 

@@ -27,7 +27,7 @@ namespace sdl {
       m_widgets(),
 
       m_engine(nullptr),
-      m_window(nullptr),
+      m_window(),
       m_canvas()
     {
       setService("app");
@@ -43,11 +43,10 @@ namespace sdl {
       m_engine = std::make_shared<core::engine::SdlEngine>();
 
       // Use the engine to create the window.
-      const core::engine::Window::UUID uuid = m_engine->createWindow(size, getTitle());
-      m_window = std::make_shared<core::engine::Window::UUID>(uuid);
+      m_window = m_engine->createWindow(size, getTitle());
 
       // Set it as the active window.
-      m_engine->setActiveWindow(*m_window);
+      m_engine->setActiveWindow(m_window);
 
       // Create a basic canvas which will be used as basis for the rendering.
       // TODO.
@@ -103,7 +102,7 @@ namespace sdl {
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
 
       // Clear screen content.
-      m_engine->clearWindow(*m_window);
+      m_engine->clearWindow(m_window);
 
       std::shared_ptr<core::engine::Engine> engine = m_engine;
 
@@ -130,7 +129,7 @@ namespace sdl {
       }
 
       // Display the changes.
-      m_engine->renderWindow(*m_window);
+      m_engine->renderWindow(m_window);
     }
 
   }
