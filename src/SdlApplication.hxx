@@ -27,11 +27,6 @@ namespace sdl {
     inline
     void
     SdlApplication::setIcon(const std::string& icon) {
-      if (!m_window.valid()) {
-        error(std::string("Could not set icon for invalid sdl window"));
-      }
-
-      // Load this icon.
       m_engine->setWindowIcon(m_window, icon);
     }
 
@@ -74,18 +69,6 @@ namespace sdl {
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets.erase(widget->getName());
       m_eventsHandler.removeListener(widget.get());
-    }
-
-    inline
-    void
-    SdlApplication::lock() {
-      m_locker.lock();
-    }
-
-    inline
-    void
-    SdlApplication::unlock() {
-      m_locker.unlock();
     }
 
   }

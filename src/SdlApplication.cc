@@ -45,6 +45,10 @@ namespace sdl {
       // Use the engine to create the window.
       m_window = m_engine->createWindow(size, getTitle());
 
+      if (!m_window.valid()) {
+        error(std::string("Could not create window with size " + size.toString()));
+      }
+
       // Set it as the active window.
       m_engine->setActiveWindow(m_window);
 
@@ -55,15 +59,15 @@ namespace sdl {
     void
     SdlApplication::performRendering() {
       // Start the event handling.
-      lock();
+      m_locker.lock();
       m_renderingRunning = true;
-      unlock();
+      m_locker.unlock();
 
       bool stillRunning = true;
       while (stillRunning) {
-        lock();
+        m_locker.lock();
         stillRunning = m_renderingRunning;
-        unlock();
+        m_locker.unlock();
 
         if (!stillRunning) {
           break;
@@ -75,13 +79,13 @@ namespace sdl {
 
     void
     SdlApplication::render() {
-      const unsigned int startingRenderingTime = SDL_GetTicks();
+      auto start = std::chrono::steady_clock::now();
 
       renderWidgets();
 
-      const unsigned int renderingDuration = SDL_GetTicks() - startingRenderingTime;
+      int renderingDuration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
 
-      if (renderingDuration > m_frameDuration) {
+      if (1.0f * renderingDuration > m_frameDuration) {
         log(
           std::string("Frame took ") + std::to_string(renderingDuration) + "ms " +
           "which is greater than the " + std::to_string(m_frameDuration) + "ms " +

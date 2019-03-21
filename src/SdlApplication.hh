@@ -53,12 +53,6 @@ namespace sdl {
         create(const utils::Sizei& size);
 
         void
-        lock();
-
-        void
-        unlock();
-
-        void
         performRendering();
 
         void
