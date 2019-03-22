@@ -4,13 +4,11 @@
 # include <mutex>
 # include <memory>
 # include <unordered_map>
-# include <SDL2/SDL.h>
 # include <maths_utils/Size.hh>
 # include <sdl_core/SdlWidget.hh>
 # include <sdl_core/EventListener.hh>
-# include <sdl_engine/Engine.hh>
 # include <sdl_engine/Window.hh>
-
+# include "AppDecorator.hh"
 # include "SdlEventHandler.hh"
 
 namespace sdl {
@@ -58,7 +56,8 @@ namespace sdl {
         void
         render();
 
-        void
+        // Returns the number of milliseconds elapsed when executing this function.
+        int
         renderWidgets();
 
       public:
@@ -78,7 +77,7 @@ namespace sdl {
         std::mutex m_widgetsLocker;
         WidgetsMap m_widgets;
 
-        core::engine::EngineShPtr m_engine;
+        AppDecoratorShPtr m_engine;
         utils::Uuid m_window;
         utils::Uuid m_canvas;
     };

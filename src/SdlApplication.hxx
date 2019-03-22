@@ -12,10 +12,6 @@ namespace sdl {
       if (m_eventsHandler.isRunning()) {
         m_eventsHandler.stop();
       }
-
-      if (m_window.valid()) {
-        m_engine->destroyWindow(m_window);
-      }
     }
 
     inline

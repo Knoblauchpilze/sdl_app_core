@@ -1,5 +1,7 @@
 
 # include "SdlApplication.hh"
+# include <chrono>
+# include <thread>
 # include <sdl_engine/SdlEngine.hh>
 
 namespace sdl {
@@ -40,20 +42,28 @@ namespace sdl {
     void
     SdlApplication::create(const utils::Sizei& size) {
       // Create the engine to use to perform rendering.
-      m_engine = std::make_shared<core::engine::SdlEngine>();
+      core::engine::SdlEngineShPtr engine = std::make_shared<core::engine::SdlEngine>();
 
       // Use the engine to create the window.
-      m_window = m_engine->createWindow(size, getTitle());
+      m_window = engine->createWindow(size, getTitle());
 
       if (!m_window.valid()) {
         error(std::string("Could not create window with size " + size.toString()));
       }
 
-      // Set it as the active window.
-      m_engine->setActiveWindow(m_window);
-
       // Create a basic canvas which will be used as basis for the rendering.
-      // TODO.
+      // m_canvas = engine->createTexture(m_window, size);
+
+      // if (!m_canvas.valid()) {
+      //   error(std::string("Could not create window's canvas with size " + size.toString()));
+      // }
+
+      // Finally create the engine decorator which will use the newly created
+      // window and canvas
+      m_engine = std::make_shared<AppDecorator>(engine, m_canvas, m_window);
+
+      // Add the canvas as a child of the window.
+      // TODO: Restore the canvas and add it to the window ?
     }
 
     void
@@ -79,31 +89,36 @@ namespace sdl {
 
     void
     SdlApplication::render() {
-      auto start = std::chrono::steady_clock::now();
+      // Render widgets.
+      int renderingDuration = renderWidgets();;
 
-      renderWidgets();
-
-      int renderingDuration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-
+      // Check whether the rendering time is compatible with the desired framerate.
       if (1.0f * renderingDuration > m_frameDuration) {
+        // Log this problem.
         log(
           std::string("Frame took ") + std::to_string(renderingDuration) + "ms " +
           "which is greater than the " + std::to_string(m_frameDuration) + "ms " +
           " authorized to maintain " + std::to_string(m_framerate) + "fps",
           utils::Level::Warning
         );
+
+        // Move on to the next frame.
+        return;
       }
-      else {
-        const unsigned int remainingDuration = m_frameDuration - renderingDuration;
-        if (remainingDuration > 3u) {
-          SDL_Delay(remainingDuration);
-        }
+
+      // Sleep for the remaining time to complete a frame if there's enough time left.
+      const unsigned int remainingDuration = m_frameDuration - renderingDuration;
+      if (remainingDuration > 3u) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(remainingDuration));
       }
     }
 
-    void
+    int
     SdlApplication::renderWidgets() {
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
+
+      // Start time measurement.
+      auto start = std::chrono::steady_clock::now();
 
       // Clear screen content.
       m_engine->clearWindow(m_window);
@@ -134,6 +149,9 @@ namespace sdl {
 
       // Display the changes.
       m_engine->renderWindow(m_window);
+
+      // Return the elapsed time.
+      return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
     }
 
   }
