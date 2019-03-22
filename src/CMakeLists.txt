@@ -2,7 +2,6 @@ project (sdl_app_core)
 
 set (CMAKE_CXX_STANDARD 14)
 
-#set (CMAKE_VERBOSE_MAKEFILE ON)
 set (CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package (SDL2 REQUIRED)
@@ -11,6 +10,7 @@ find_package (SDL2_ttf REQUIRED)
 set (SOURCES
   SdlApplication.cc
   SdlEventHandler.cc
+  AppDecorator.cc
   )
 
 add_library (sdl_app_core SHARED
