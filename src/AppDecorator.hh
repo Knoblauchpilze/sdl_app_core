@@ -3,6 +3,7 @@
 
 # include <memory>
 # include <sdl_engine/EngineDecorator.hh>
+# include <sdl_engine/Palette.hh>
 
 namespace sdl {
   namespace app {
@@ -12,9 +13,16 @@ namespace sdl {
 
         AppDecorator(core::engine::EngineShPtr engine,
                      const utils::Uuid& canvas,
+                     const core::engine::Palette& palette,
                      const utils::Uuid& window);
 
         virtual ~AppDecorator();
+
+        void
+        clearWindow(const utils::Uuid& uuid) override;
+
+        void
+        renderWindow(const utils::Uuid& uuid) override;
 
         utils::Uuid
         createTexture(const utils::Uuid& win,
@@ -47,6 +55,7 @@ namespace sdl {
       private:
 
         utils::Uuid m_canvas;
+        core::engine::Palette m_palette;
         utils::Uuid m_window;
     };
 

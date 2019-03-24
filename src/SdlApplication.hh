@@ -2,12 +2,14 @@
 # define   SDLAPPLICATION_HH
 
 # include <mutex>
+# include <thread>
 # include <memory>
 # include <unordered_map>
 # include <maths_utils/Size.hh>
 # include <sdl_core/SdlWidget.hh>
 # include <sdl_core/EventListener.hh>
 # include <sdl_engine/Window.hh>
+# include <sdl_engine/Palette.hh>
 # include "AppDecorator.hh"
 # include "SdlEventHandler.hh"
 
@@ -51,14 +53,17 @@ namespace sdl {
         create(const utils::Sizei& size);
 
         void
+        stop();
+
+        void
         performRendering();
 
         void
-        render();
+        repaint();
 
         // Returns the number of milliseconds elapsed when executing this function.
         int
-        renderWidgets();
+        render();
 
       public:
 
@@ -80,6 +85,7 @@ namespace sdl {
         AppDecoratorShPtr m_engine;
         utils::Uuid m_window;
         utils::Uuid m_canvas;
+        core::engine::Palette m_palette;
     };
 
     using SdlApplicationShPtr = std::shared_ptr<SdlApplication>;

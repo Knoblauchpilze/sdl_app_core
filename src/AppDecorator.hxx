@@ -7,6 +7,27 @@ namespace sdl {
   namespace app {
 
     inline
+    void
+    AppDecorator::clearWindow(const utils::Uuid& /*uuid*/) {
+      if (!m_canvas.valid()) {
+        error(std::string("Cannot clear invalid canvas"));
+      }
+
+      core::engine::EngineDecorator::fillTexture(m_canvas, m_palette);
+    }
+
+    inline
+    void
+    AppDecorator::renderWindow(const utils::Uuid& uuid) {
+      if (!m_canvas.valid()) {
+        error(std::string("Cannot render invalid canvas"));
+      }
+
+      core::engine::EngineDecorator::drawTexture(m_canvas, nullptr, nullptr);
+      core::engine::EngineDecorator::renderWindow(uuid);
+    }
+
+    inline
     utils::Uuid
     AppDecorator::createTexture(const utils::Uuid& /*win*/,
                                 const utils::Sizei& size)
@@ -59,11 +80,10 @@ namespace sdl {
     {
       // Check whether the `on` is null. In this case we should override
       // the settings so that we draw on the specified root canvas.
-      // TODO: Actually do this.
-      // if (on == nullptr && m_canvas.valid()) {
-      //   core::engine::EngineDecorator::drawTexture(tex, &m_canvas, where);
-      //   return;
-      // }
+      if (on == nullptr && m_canvas.valid()) {
+        core::engine::EngineDecorator::drawTexture(tex, &m_canvas, where);
+        return;
+      }
 
       core::engine::EngineDecorator::drawTexture(tex, on, where);
     }

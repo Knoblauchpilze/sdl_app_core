@@ -6,9 +6,11 @@ namespace sdl {
 
     AppDecorator::AppDecorator(core::engine::EngineShPtr engine,
                                const utils::Uuid& canvas,
+                               const core::engine::Palette& palette,
                                const utils::Uuid& window):
       core::engine::EngineDecorator(engine),
       m_canvas(canvas),
+      m_palette(palette),
       m_window(window)
     {}
 

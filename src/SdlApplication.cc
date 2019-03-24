@@ -2,6 +2,7 @@
 # include "SdlApplication.hh"
 # include <chrono>
 # include <thread>
+# include <sdl_engine/Color.hh>
 # include <sdl_engine/SdlEngine.hh>
 
 namespace sdl {
@@ -30,7 +31,8 @@ namespace sdl {
 
       m_engine(nullptr),
       m_window(),
-      m_canvas()
+      m_canvas(),
+      m_palette(core::engine::Palette::fromBackgroundColor(core::engine::Color::NamedColor::Cyan))
     {
       setService("app");
 
@@ -52,27 +54,28 @@ namespace sdl {
       }
 
       // Create a basic canvas which will be used as basis for the rendering.
-      // m_canvas = engine->createTexture(m_window, size);
+      m_canvas = engine->createTexture(m_window, size);
 
-      // if (!m_canvas.valid()) {
-      //   error(std::string("Could not create window's canvas with size " + size.toString()));
-      // }
+      if (!m_canvas.valid()) {
+        error(std::string("Could not create window's canvas with size " + size.toString()));
+      }
+
+      engine->setTextureAlpha(m_canvas, m_palette.getActiveColor());
+      engine->fillTexture(m_canvas, m_palette);
 
       // Finally create the engine decorator which will use the newly created
       // window and canvas
-      m_engine = std::make_shared<AppDecorator>(engine, m_canvas, m_window);
-
-      // Add the canvas as a child of the window.
-      // TODO: Restore the canvas and add it to the window ?
+      m_engine = std::make_shared<AppDecorator>(engine, m_canvas, m_palette, m_window);
     }
 
     void
     SdlApplication::performRendering() {
-      // Start the event handling.
+      // Notify that the rendering for this application has started.
       m_locker.lock();
       m_renderingRunning = true;
       m_locker.unlock();
 
+      // While we are not asked to stop, continue rendering.
       bool stillRunning = true;
       while (stillRunning) {
         m_locker.lock();
@@ -83,14 +86,14 @@ namespace sdl {
           break;
         }
 
-        render();
+        repaint();
       }
     }
 
     void
-    SdlApplication::render() {
+    SdlApplication::repaint() {
       // Render widgets.
-      int renderingDuration = renderWidgets();;
+      int renderingDuration = render();
 
       // Check whether the rendering time is compatible with the desired framerate.
       if (1.0f * renderingDuration > m_frameDuration) {
@@ -114,16 +117,23 @@ namespace sdl {
     }
 
     int
-    SdlApplication::renderWidgets() {
+    SdlApplication::render() {
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
 
       // Start time measurement.
       auto start = std::chrono::steady_clock::now();
 
-      // Clear screen content.
-      m_engine->clearWindow(m_window);
-
       std::shared_ptr<core::engine::Engine> engine = m_engine;
+
+
+      // Rendering widgets include building a valid `m_canvas` textures by successfully
+      // drawing each child widget onto it.
+      // Building the `m_canvas` relies on 4 operations:
+      // 1) Clear the canvas from existing content.
+      // 2) Render each child widget on the `m_canvas`.
+      // 3) Render the `m_canvas` to the screen.
+      // 4) Update the windows to reveal the modifications.
+      m_engine->clearWindow(m_window);
 
       for (WidgetsMap::iterator widgetIt = m_widgets.begin() ;
           widgetIt != m_widgets.end() ;
@@ -147,7 +157,6 @@ namespace sdl {
         );
       }
 
-      // Display the changes.
       m_engine->renderWindow(m_window);
 
       // Return the elapsed time.
