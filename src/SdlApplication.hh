@@ -32,6 +32,9 @@ namespace sdl {
         const std::string&
         getTitle() const noexcept;
 
+        core::engine::Engine&
+        getEngine();
+
         void
         setIcon(const std::string& icon);
 

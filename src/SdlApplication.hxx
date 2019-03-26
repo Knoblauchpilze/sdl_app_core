@@ -19,6 +19,19 @@ namespace sdl {
     }
 
     inline
+    core::engine::Engine&
+    SdlApplication::getEngine() {
+      if (m_engine == nullptr) {
+        error(
+          std::string("Cannot return null engine from application \"") + getName() + "\"",
+          std::string("Engine not set")
+        );
+      }
+
+      return *m_engine;
+    }
+
+    inline
     void
     SdlApplication::setIcon(const std::string& icon) {
       m_engine->setWindowIcon(m_window, icon);

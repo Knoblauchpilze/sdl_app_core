@@ -41,11 +41,11 @@ namespace sdl {
         utils::Uuid
         createTextureFromText(const utils::Uuid& win,
                               const std::string& text,
-                              core::engine::ColoredFontShPtr font) override;
+                              const utils::Uuid& font) override;
 
         utils::Uuid
         createTextureFromText(const std::string& text,
-                              core::engine::ColoredFontShPtr font) override;
+                              const utils::Uuid& font) override;
 
         void
         drawTexture(const utils::Uuid& tex,

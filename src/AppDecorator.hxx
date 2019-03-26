@@ -59,7 +59,7 @@ namespace sdl {
     utils::Uuid
     AppDecorator::createTextureFromText(const utils::Uuid& /*win*/,
                                         const std::string& text,
-                                        core::engine::ColoredFontShPtr font)
+                                        const utils::Uuid& font)
     {
       return core::engine::EngineDecorator::createTextureFromText(m_window, text, font);
     }
@@ -67,7 +67,7 @@ namespace sdl {
     inline
     utils::Uuid
     AppDecorator::createTextureFromText(const std::string& text,
-                                        core::engine::ColoredFontShPtr font)
+                                        const utils::Uuid& font)
     {
       return core::engine::EngineDecorator::createTextureFromText(m_window, text, font);
     }
