@@ -45,7 +45,7 @@ namespace sdl {
       // time took too long.
 
       // First, start the event handling routine.
-      m_eventsHandler.run();
+      m_eventsHandler->run();
 
       // Start main loop to render the root canvas.
       performRendering();
@@ -53,7 +53,7 @@ namespace sdl {
 
     inline
     void
-    SdlApplication::onQuitEvent(const SDL_QuitEvent& /*event*/) {
+    SdlApplication::onQuitEvent(const core::engine::QuitEvent& /*event*/) {
       std::lock_guard<std::mutex> guard(m_locker);
       m_renderingRunning = false;
     }
@@ -65,9 +65,11 @@ namespace sdl {
         error(std::string("Cannot add null widget"));
       }
 
+      widget->setEngine(m_engine);
+
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets[widget->getName()] = widget;
-      m_eventsHandler.addListener(widget.get());
+      m_eventsHandler->addListener(widget.get());
     }
 
     inline
@@ -79,15 +81,15 @@ namespace sdl {
 
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets.erase(widget->getName());
-      m_eventsHandler.removeListener(widget.get());
+      m_eventsHandler->removeListener(widget.get());
     }
 
     inline
     void
     SdlApplication::stop() {
       // Stop the events handler.
-      if (m_eventsHandler.isRunning()) {
-        m_eventsHandler.stop();
+      if (m_eventsHandler->isRunning()) {
+        m_eventsHandler->stop();
       }
 
       // The widget's rendering is not a concern here: either it has not

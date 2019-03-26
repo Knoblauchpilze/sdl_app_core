@@ -14,7 +14,7 @@ namespace sdl {
                                    const utils::Sizei& size,
                                    const float& framerate,
                                    const float& eventFramerate):
-      sdl::core::EventListener(name, EventListener::Interaction::FullInteraction),
+      core::engine::EventListener(name, EventListener::Interaction::FullInteraction),
 
       m_title(title),
 
@@ -24,7 +24,7 @@ namespace sdl {
       m_locker(),
       m_renderingRunning(false),
 
-      m_eventsHandler(eventFramerate, true),
+      m_eventsHandler(nullptr),
 
       m_widgetsLocker(),
       m_widgets(),
@@ -36,9 +36,15 @@ namespace sdl {
     {
       setService("app");
 
+      // Create the engine and the window.
       create(size);
+
+      // Assign the desired icon.
       setIcon(icon);
-      m_eventsHandler.addListener(this);
+
+      // Create the event listener and register this application as listener.
+      m_eventsHandler = std::make_shared<SdlEventHandler>(eventFramerate, m_engine, true);
+      m_eventsHandler->addListener(this);
     }
 
     void
@@ -139,7 +145,7 @@ namespace sdl {
           widgetIt != m_widgets.end() ;
           ++widgetIt)
       {
-        sdl::core::SdlWidgetShPtr widget = widgetIt->second;
+        core::SdlWidgetShPtr widget = widgetIt->second;
 
         // Draw this object (caching is handled by the object itself).
         withSafetyNet(

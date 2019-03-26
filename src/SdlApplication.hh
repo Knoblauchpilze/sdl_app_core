@@ -16,7 +16,7 @@
 namespace sdl {
   namespace app {
 
-    class SdlApplication : public sdl::core::EventListener {
+    class SdlApplication : public core::engine::EventListener {
       public:
 
         explicit
@@ -39,7 +39,7 @@ namespace sdl {
         run();
 
         void
-        onQuitEvent(const SDL_QuitEvent& event) override;
+        onQuitEvent(const core::engine::QuitEvent& event) override;
 
         void
         addWidget(sdl::core::SdlWidgetShPtr widget);
@@ -65,7 +65,7 @@ namespace sdl {
         int
         render();
 
-      public:
+      private:
 
         using WidgetsMap = std::unordered_map<std::string, sdl::core::SdlWidgetShPtr>;
 
@@ -77,7 +77,7 @@ namespace sdl {
         std::mutex m_locker;
         bool m_renderingRunning;
 
-        SdlEventHandler m_eventsHandler;
+        SdlEventHandlerShPtr m_eventsHandler;
 
         std::mutex m_widgetsLocker;
         WidgetsMap m_widgets;

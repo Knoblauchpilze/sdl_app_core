@@ -5,9 +5,9 @@
 # include <vector>
 # include <thread>
 # include <mutex>
-# include <SDL2/SDL.h>
 # include <core_utils/CoreObject.hh>
-# include <sdl_core/EventListener.hh>
+# include <sdl_engine/Engine.hh>
+# include <sdl_engine/EventListener.hh>
 
 namespace sdl {
   namespace app {
@@ -17,6 +17,7 @@ namespace sdl {
 
         explicit
         SdlEventHandler(const float& eventHandlingRate = 30.0f,
+                        core::engine::EngineShPtr engine = nullptr,
                         const bool exitOnEscape = true,
                         const std::string& name = std::string("event_handler"));
 
@@ -32,10 +33,10 @@ namespace sdl {
         isRunning();
 
         void
-        addListener(sdl::core::EventListener* listener);
+        addListener(core::engine::EventListener* listener);
 
         void
-        removeListener(sdl::core::EventListener* listener);
+        removeListener(core::engine::EventListener* listener);
 
       private:
 
@@ -48,32 +49,32 @@ namespace sdl {
         void
         handleEvents();
 
-        void
+        int
         processEvents();
 
         void
-        processSingleEvent(const SDL_Event& event);
+        processSingleEvent(const core::engine::EventShPtr event);
 
         void
-        processKeyPressedEvent(const SDL_KeyboardEvent& event);
+        processKeyPressedEvent(const core::engine::KeyEvent& event);
 
         void
-        processKeyReleasedEvent(const SDL_KeyboardEvent& event);
+        processKeyReleasedEvent(const core::engine::KeyEvent& event);
 
         void
-        processMouseMotionEvent(const SDL_MouseMotionEvent& event);
+        processMouseMotionEvent(const core::engine::MouseEvent& event);
 
         void
-        processMouseButtonPressedEvent(const SDL_MouseButtonEvent& event);
+        processMouseButtonPressedEvent(const core::engine::MouseEvent& event);
 
         void
-        processMouseButtonReleasedEvent(const SDL_MouseButtonEvent& event);
+        processMouseButtonReleasedEvent(const core::engine::MouseEvent& event);
 
         void
-        processMouseWheelEvent(const SDL_MouseWheelEvent& event);
+        processMouseWheelEvent(const core::engine::MouseEvent& event);
 
         void
-        processQuitEvent(const SDL_QuitEvent& event);
+        processQuitEvent(const core::engine::QuitEvent& event);
 
       private:
 
@@ -81,11 +82,13 @@ namespace sdl {
         float m_frameDuration;
         bool m_exitOnEscape;
 
+        core::engine::EngineShPtr m_engine;
+
         bool m_eventsRunning;
         std::mutex m_locker;
         std::shared_ptr<std::thread> m_executionThread;
 
-        std::vector<sdl::core::EventListener*> m_listeners;
+        std::vector<core::engine::EventListener*> m_listeners;
         std::mutex m_listenersLocker;
     };
 
