@@ -7,7 +7,6 @@
 # include <unordered_map>
 # include <maths_utils/Size.hh>
 # include <sdl_core/SdlWidget.hh>
-# include <sdl_core/EventListener.hh>
 # include <sdl_engine/Window.hh>
 # include <sdl_engine/Palette.hh>
 # include "AppDecorator.hh"
