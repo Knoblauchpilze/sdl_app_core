@@ -30,29 +30,35 @@ namespace sdl {
     inline
     utils::Uuid
     AppDecorator::createTexture(const utils::Uuid& /*win*/,
-                                const utils::Sizei& size)
+                                const utils::Sizei& size,
+                                const core::engine::Palette::ColorRole& role)
     {
-      return core::engine::EngineDecorator::createTexture(m_window, size);
+      return core::engine::EngineDecorator::createTexture(m_window, size, role);
     }
 
     inline
     utils::Uuid
-    AppDecorator::createTexture(const utils::Sizei& size) {
-      return core::engine::EngineDecorator::createTexture(m_window, size);
+    AppDecorator::createTexture(const utils::Sizei& size,
+                                const core::engine::Palette::ColorRole& role)
+    {
+      return core::engine::EngineDecorator::createTexture(m_window, size, role);
     }
 
     inline
     utils::Uuid
     AppDecorator::createTextureFromFile(const utils::Uuid& /*win*/,
-                                        const std::string& file)
+                                        const std::string& file,
+                                        const core::engine::Palette::ColorRole& role)
     {
-      return core::engine::EngineDecorator::createTextureFromFile(m_window, file);
+      return core::engine::EngineDecorator::createTextureFromFile(m_window, file, role);
     }
 
     inline
     utils::Uuid
-    AppDecorator::createTextureFromFile(const std::string& file) {
-      return core::engine::EngineDecorator::createTextureFromFile(m_window, file);
+    AppDecorator::createTextureFromFile(const std::string& file,
+                                        const core::engine::Palette::ColorRole& role)
+    {
+      return core::engine::EngineDecorator::createTextureFromFile(m_window, file, role);
     }
         
     inline
