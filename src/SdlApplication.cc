@@ -32,7 +32,7 @@ namespace sdl {
       m_engine(nullptr),
       m_window(),
       m_canvas(),
-      m_palette(core::engine::Palette::fromBackgroundColor(core::engine::Color::NamedColor::Cyan))
+      m_palette(core::engine::Palette::fromButtonColor(core::engine::Color::NamedColor::Cyan))
     {
       setService("app");
 
@@ -60,14 +60,11 @@ namespace sdl {
       }
 
       // Create a basic canvas which will be used as basis for the rendering.
-      m_canvas = engine->createTexture(m_window, size);
+      m_canvas = engine->createTexture(m_window, size, core::engine::Palette::ColorRole::Background);
 
       if (!m_canvas.valid()) {
         error(std::string("Could not create window's canvas with size " + size.toString()));
       }
-
-      engine->setTextureAlpha(m_canvas, m_palette.getActiveColor());
-      engine->fillTexture(m_canvas, m_palette);
 
       // Finally create the engine decorator which will use the newly created
       // window and canvas
