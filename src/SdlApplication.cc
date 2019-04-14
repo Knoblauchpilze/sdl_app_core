@@ -4,6 +4,7 @@
 # include <thread>
 # include <sdl_engine/Color.hh>
 # include <sdl_engine/SdlEngine.hh>
+# include <sdl_core/UserInputFilter.hh>
 
 namespace sdl {
   namespace app {
@@ -14,7 +15,7 @@ namespace sdl {
                                    const utils::Sizei& size,
                                    const float& framerate,
                                    const float& eventFramerate):
-      core::engine::EventListener(name, EventListener::Interaction::FullInteraction),
+      core::engine::EventListener(name),
 
       m_title(title),
 
@@ -41,6 +42,9 @@ namespace sdl {
 
       // Assign the desired icon.
       setIcon(icon);
+
+      // Install an event filter to select specifically quit events.
+      installEventFilter(core::UserInputFilter::createExclusionFilterFromMask(core::UserInputFilter::Interaction::Quit));
 
       // Create the event listener and register this application as listener.
       m_eventsHandler = std::make_shared<SdlEventHandler>(eventFramerate, m_engine, true);

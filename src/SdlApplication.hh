@@ -9,6 +9,7 @@
 # include <sdl_core/SdlWidget.hh>
 # include <sdl_engine/Window.hh>
 # include <sdl_engine/Palette.hh>
+# include <sdl_engine/Event.hh>
 # include "AppDecorator.hh"
 # include "SdlEventHandler.hh"
 
@@ -41,15 +42,15 @@ namespace sdl {
         run();
 
         void
-        onQuitEvent(const core::engine::QuitEvent& event) override;
-
-        void
         addWidget(sdl::core::SdlWidgetShPtr widget);
 
         void
         removeWidget(sdl::core::SdlWidgetShPtr widget);
 
       private:
+
+        bool
+        handleEvent(core::engine::EventShPtr e) override;
 
         void
         create(const utils::Sizei& size);

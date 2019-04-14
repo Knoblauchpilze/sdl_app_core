@@ -66,13 +66,6 @@ namespace sdl {
 
     inline
     void
-    SdlApplication::onQuitEvent(const core::engine::QuitEvent& /*event*/) {
-      std::lock_guard<std::mutex> guard(m_locker);
-      m_renderingRunning = false;
-    }
-
-    inline
-    void
     SdlApplication::addWidget(sdl::core::SdlWidgetShPtr widget) {
       if (widget == nullptr) {
         error(std::string("Cannot add null widget"));
@@ -95,6 +88,36 @@ namespace sdl {
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets.erase(widget->getName());
       m_eventsHandler->removeListener(widget.get());
+    }
+
+    inline
+    bool
+    SdlApplication::handleEvent(core::engine::EventShPtr e) {
+      // We only react to quit events.
+      if (e->getType() == core::engine::Event::Type::Quit) {
+        log(
+          std::string("Processing quit event"),
+          utils::Level::Info
+        );
+
+        std::lock_guard<std::mutex> guard(m_locker);
+        m_renderingRunning = false;
+
+        // Mark the event as accepted.
+        e->accept();
+
+        // The event has been recognized (as we handled it).
+        return true;
+      }
+      else {
+        log(
+          std::string("Processing event of type ") + std::to_string(static_cast<int>(e->getType())),
+          utils::Level::Info
+        );
+      }
+
+      // Use the base handler.
+      return core::engine::EventListener::handleEvent(e);
     }
 
     inline
