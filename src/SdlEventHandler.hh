@@ -56,25 +56,7 @@ namespace sdl {
         processSingleEvent(const core::engine::EventShPtr event);
 
         void
-        processKeyPressedEvent(const core::engine::KeyEvent& event);
-
-        void
-        processKeyReleasedEvent(const core::engine::KeyEvent& event);
-
-        void
-        processMouseMotionEvent(const core::engine::MouseEvent& event);
-
-        void
-        processMouseButtonPressedEvent(const core::engine::MouseEvent& event);
-
-        void
-        processMouseButtonReleasedEvent(const core::engine::MouseEvent& event);
-
-        void
-        processMouseWheelEvent(const core::engine::MouseEvent& event);
-
-        void
-        processQuitEvent(const core::engine::QuitEvent& event);
+        dispatchEvent(const core::engine::EventShPtr event);
 
       private:
 

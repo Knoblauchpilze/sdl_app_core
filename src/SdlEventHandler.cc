@@ -1,6 +1,8 @@
 
 # include "SdlEventHandler.hh"
 # include <core_utils/CoreWrapper.hh>
+# include <sdl_engine/KeyEvent.hh>
+# include <sdl_engine/QuitEvent.hh>
 
 namespace sdl {
   namespace app {
@@ -103,32 +105,33 @@ namespace sdl {
 
     void
     SdlEventHandler::processSingleEvent(const core::engine::EventShPtr event) {
-      // Check the event type.
-      switch (event->getType()) {
-        case core::engine::Event::Type::KeyPress:
-          processKeyPressedEvent(*std::dynamic_pointer_cast<core::engine::KeyEvent>(event));
-          break;
-        case core::engine::Event::Type::KeyRelease:
-          processKeyReleasedEvent(*std::dynamic_pointer_cast<core::engine::KeyEvent>(event));
-          break;
-        case core::engine::Event::Type::MouseMove:
-          processMouseMotionEvent(*std::dynamic_pointer_cast<core::engine::MouseEvent>(event));
-          break;
-        case core::engine::Event::Type::MouseButtonPress:
-          processMouseButtonPressedEvent(*std::dynamic_pointer_cast<core::engine::MouseEvent>(event));
-          break;
-        case core::engine::Event::Type::MouseButtonRelease:
-          processMouseButtonReleasedEvent(*std::dynamic_pointer_cast<core::engine::MouseEvent>(event));
-          break;
-        case core::engine::Event::Type::MouseWheel:
-          processMouseWheelEvent(*std::dynamic_pointer_cast<core::engine::MouseEvent>(event));
-          break;
-        case core::engine::Event::Type::Quit:
-          processQuitEvent(*std::dynamic_pointer_cast<core::engine::QuitEvent>(event));
-          break;
-        default:
-          break;
+      // This function basically just transmit the `event` to all the registered
+      // listeners.
+      // We only have one special case which is when the `Escape` key is pressed
+      // and the internal `m_exitOnEscape` status is ticked: in this case we want
+      // to bypass the regular event processing and allow the creation of a quit
+      // event and process it as usual.
+
+      // Check for key released.
+      if (event->getType() == core::engine::Event::Type::KeyRelease) {
+        // Check the key which was pressed.
+        std::shared_ptr<core::engine::KeyEvent> keyEvent = std::dynamic_pointer_cast<core::engine::KeyEvent>(event);
+
+        // If the conversion was successful and that it corresponds to the `Escape`
+        // key, we need to check the internal status to determine the next action.
+        if (keyEvent != nullptr && keyEvent->isEscape() && m_exitOnEscape) {
+          // Replace the input event with a quit event.
+          dispatchEvent(std::make_shared<core::engine::QuitEvent>());
+
+          // All is well.
+          return;
+        }
+
+        // Continue to standard processing.
       }
+
+      // Transmit the event to all listeners.
+      dispatchEvent(event);
     }
 
   }

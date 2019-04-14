@@ -86,84 +86,12 @@ namespace sdl {
 
     inline
     void
-    SdlEventHandler::processKeyPressedEvent(const core::engine::KeyEvent& event) {
+    SdlEventHandler::dispatchEvent(const core::engine::EventShPtr event) {
       for (std::vector<core::engine::EventListener*>::iterator listener = m_listeners.begin() ;
            listener != m_listeners.end() ;
            ++listener)
       {
-        (*listener)->onKeyPressedEvent(event);
-      }
-    }
-
-    inline
-    void
-    SdlEventHandler::processKeyReleasedEvent(const core::engine::KeyEvent& event) {
-      // Check for exit.
-      if (event.isEscape() && m_exitOnEscape) {
-        processQuitEvent(core::engine::QuitEvent());
-        return;
-      }
-
-      for (std::vector<core::engine::EventListener*>::iterator listener = m_listeners.begin() ;
-           listener != m_listeners.end() ;
-           ++listener)
-      {
-        (*listener)->onKeyReleasedEvent(event);
-      }
-    }
-
-    inline
-    void
-    SdlEventHandler::processMouseMotionEvent(const core::engine::MouseEvent& event) {
-      for (std::vector<core::engine::EventListener*>::iterator listener = m_listeners.begin() ;
-           listener != m_listeners.end() ;
-           ++listener)
-      {
-        (*listener)->onMouseMotionEvent(event);
-      }
-    }
-
-    inline
-    void
-    SdlEventHandler::processMouseButtonPressedEvent(const core::engine::MouseEvent& event) {
-      for (std::vector<core::engine::EventListener*>::iterator listener = m_listeners.begin() ;
-           listener != m_listeners.end() ;
-           ++listener)
-      {
-        (*listener)->onMouseButtonPressedEvent(event);
-      }
-    }
-
-    inline
-    void
-    SdlEventHandler::processMouseButtonReleasedEvent(const core::engine::MouseEvent& event) {
-      for (std::vector<core::engine::EventListener*>::iterator listener = m_listeners.begin() ;
-           listener != m_listeners.end() ;
-           ++listener)
-      {
-        (*listener)->onMouseButtonReleasedEvent(event);
-      }
-    }
-
-    inline
-    void
-    SdlEventHandler::processMouseWheelEvent(const core::engine::MouseEvent& event) {
-      for (std::vector<core::engine::EventListener*>::iterator listener = m_listeners.begin() ;
-           listener != m_listeners.end() ;
-           ++listener)
-      {
-        (*listener)->onMouseWheelEvent(event);
-      }
-    }
-
-    inline
-    void
-    SdlEventHandler::processQuitEvent(const core::engine::QuitEvent& event) {
-      for (std::vector<core::engine::EventListener*>::iterator listener = m_listeners.begin() ;
-           listener != m_listeners.end() ;
-           ++listener)
-      {
-        (*listener)->onQuitEvent(event);
+        (*listener)->event(event);
       }
     }
 
