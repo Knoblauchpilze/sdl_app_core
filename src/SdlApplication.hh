@@ -10,13 +10,13 @@
 # include <sdl_engine/Window.hh>
 # include <sdl_engine/Palette.hh>
 # include <sdl_engine/Event.hh>
+# include <sdl_engine/EventsDispatcher.hh>
 # include "AppDecorator.hh"
-# include "SdlEventHandler.hh"
 
 namespace sdl {
   namespace app {
 
-    class SdlApplication : public core::engine::EventListener {
+    class SdlApplication : public core::engine::EngineObject {
       public:
 
         explicit
@@ -80,7 +80,7 @@ namespace sdl {
         std::mutex m_locker;
         bool m_renderingRunning;
 
-        SdlEventHandlerShPtr m_eventsHandler;
+        core::engine::EventsDispatcherShPtr m_eventsDispatcher;
 
         std::mutex m_widgetsLocker;
         WidgetsMap m_widgets;

@@ -9,7 +9,6 @@ find_package (SDL2_ttf REQUIRED)
 
 set (SOURCES
   SdlApplication.cc
-  SdlEventHandler.cc
   AppDecorator.cc
   )
 

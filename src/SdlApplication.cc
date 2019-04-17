@@ -15,7 +15,7 @@ namespace sdl {
                                    const utils::Sizei& size,
                                    const float& framerate,
                                    const float& eventFramerate):
-      core::engine::EventListener(name),
+      core::engine::EngineObject(name),
 
       m_title(title),
 
@@ -25,7 +25,7 @@ namespace sdl {
       m_locker(),
       m_renderingRunning(false),
 
-      m_eventsHandler(nullptr),
+      m_eventsDispatcher(nullptr),
 
       m_widgetsLocker(),
       m_widgets(),
@@ -47,8 +47,8 @@ namespace sdl {
       installEventFilter(core::UserInputFilter::createExclusionFilterFromMask(core::UserInputFilter::Interaction::Quit));
 
       // Create the event listener and register this application as listener.
-      m_eventsHandler = std::make_shared<SdlEventHandler>(eventFramerate, m_engine, true);
-      m_eventsHandler->addListener(this);
+      m_eventsDispatcher = std::make_shared<core::engine::EventsDispatcher>(eventFramerate, m_engine, true);
+      m_eventsDispatcher->addListener(this);
     }
 
     void

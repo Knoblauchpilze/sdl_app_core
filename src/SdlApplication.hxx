@@ -58,7 +58,7 @@ namespace sdl {
       // time took too long.
 
       // First, start the event handling routine.
-      m_eventsHandler->run();
+      m_eventsDispatcher->run();
 
       // Start main loop to render the root canvas.
       performRendering();
@@ -72,10 +72,11 @@ namespace sdl {
       }
 
       widget->setEngine(m_engine);
+      widget->setEventsQueue(m_eventsDispatcher.get());
 
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets[widget->getName()] = widget;
-      m_eventsHandler->addListener(widget.get());
+      m_eventsDispatcher->addListener(widget.get());
     }
 
     inline
@@ -87,7 +88,7 @@ namespace sdl {
 
       std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets.erase(widget->getName());
-      m_eventsHandler->removeListener(widget.get());
+      m_eventsDispatcher->removeListener(widget.get());
     }
 
     inline
@@ -117,22 +118,22 @@ namespace sdl {
       }
 
       // Use the base handler.
-      return core::engine::EventListener::handleEvent(e);
+      return core::engine::EngineObject::handleEvent(e);
     }
 
     inline
     void
     SdlApplication::stop() {
       // Stop the events handler.
-      if (m_eventsHandler->isRunning()) {
-        m_eventsHandler->stop();
+      if (m_eventsDispatcher->isRunning()) {
+        m_eventsDispatcher->stop();
       }
 
       // The widget's rendering is not a concern here: either it has not
       // started in which case there's nothing to worry about or it has
       // been started and the only solution for ending up here is that
       // the infinite loop started for the rendering has been stopped by
-      // some other means (typically through a suer request).
+      // some other means (typically through a user request).
       // So nothing to be done in here.
     }
 
