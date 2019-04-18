@@ -27,7 +27,6 @@ namespace sdl {
 
       m_eventsDispatcher(nullptr),
 
-      m_widgetsLocker(),
       m_widgets(),
 
       m_engine(nullptr),
@@ -42,9 +41,6 @@ namespace sdl {
 
       // Assign the desired icon.
       setIcon(icon);
-
-      // Install an event filter to select specifically quit events.
-      installEventFilter(core::UserInputFilter::createExclusionFilterFromMask(core::UserInputFilter::Interaction::Quit));
 
       // Create the event listener and register this application as listener.
       m_eventsDispatcher = std::make_shared<core::engine::EventsDispatcher>(eventFramerate, m_engine, true);
@@ -125,8 +121,6 @@ namespace sdl {
 
     int
     SdlApplication::render() {
-      std::lock_guard<std::mutex> guard(m_widgetsLocker);
-
       // Start time measurement.
       auto start = std::chrono::steady_clock::now();
 

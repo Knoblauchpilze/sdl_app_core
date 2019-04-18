@@ -82,7 +82,6 @@ namespace sdl {
 
         core::engine::EventsDispatcherShPtr m_eventsDispatcher;
 
-        std::mutex m_widgetsLocker;
         WidgetsMap m_widgets;
 
         AppDecoratorShPtr m_engine;

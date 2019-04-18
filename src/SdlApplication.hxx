@@ -74,9 +74,7 @@ namespace sdl {
       widget->setEngine(m_engine);
       widget->setEventsQueue(m_eventsDispatcher.get());
 
-      std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets[widget->getName()] = widget;
-      m_eventsDispatcher->addListener(widget.get());
     }
 
     inline
@@ -86,21 +84,29 @@ namespace sdl {
         error(std::string("Cannot remove null widget"));
       }
 
-      std::lock_guard<std::mutex> guard(m_widgetsLocker);
       m_widgets.erase(widget->getName());
-      m_eventsDispatcher->removeListener(widget.get());
     }
 
     inline
     bool
     SdlApplication::handleEvent(core::engine::EventShPtr e) {
-      // We only react to quit events.
-      if (e->getType() == core::engine::Event::Type::Quit) {
-        log(
-          std::string("Processing quit event"),
-          utils::Level::Info
-        );
+      // This function is made to react to all the events produced by
+      // the system and also to events posted by objects in the
+      // hierarchy.
+      // We try to make sense of some events in here and to add some
+      // context for specific events. For example, we can try to make
+      // sense of `MouseEvent` to produce `EnterEvent` and notify the
+      // adequate widget of such an event.
+      // This cannot be done by the `EventQueue` itself because it
+      // has no information whatsoever about the widgets and the
+      // hierarchy of elements in the application.
+      // TODO: Add it at some point ?
+      //
+      // In addition to that, the `QuitEvent`s should be processed
+      // in here to stop the application.
 
+      // First handle `QuitEvent`.
+      if (e->getType() == core::engine::Event::Type::Quit) {
         std::lock_guard<std::mutex> guard(m_locker);
         m_renderingRunning = false;
 
@@ -110,14 +116,25 @@ namespace sdl {
         // The event has been recognized (as we handled it).
         return true;
       }
-      else {
-        log(
-          std::string("Processing event of type ") + std::to_string(static_cast<int>(e->getType())),
-          utils::Level::Info
+
+      // We need to trnasmit the event to the widgets added to the
+      // window if any.
+      for (WidgetsMap::iterator widgetIt = m_widgets.begin() ;
+          widgetIt != m_widgets.end() ;
+          ++widgetIt)
+      {
+        core::SdlWidgetShPtr widget = widgetIt->second;
+
+        // Perform event handling for this widget using the input event `e`.
+        withSafetyNet(
+          [widget, e]() {
+            widget->event(e);
+          },
+          std::string("widget_event")
         );
       }
 
-      // Use the base handler.
+      // Finally handle event using the base handler.
       return core::engine::EngineObject::handleEvent(e);
     }
 
