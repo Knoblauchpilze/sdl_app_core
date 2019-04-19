@@ -86,6 +86,7 @@ namespace sdl {
 
         AppDecoratorShPtr m_engine;
         utils::Uuid m_window;
+        // TODO: Should use double buffering as well.
         utils::Uuid m_canvas;
         core::engine::Palette m_palette;
     };

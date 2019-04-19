@@ -89,6 +89,9 @@ namespace sdl {
           break;
         }
 
+        // TODO: Instead of directly calling `repaint` it would be better to post a repaint event
+        // and to let the event handler schedule the most appropriate time to perform the
+        // repaint operation.
         repaint();
       }
     }
@@ -158,6 +161,9 @@ namespace sdl {
         );
       }
 
+      // TODO: Should probaby be tied to the `Refresh` event: we should distinguish between
+      // full repaint and simple refresh where the renderer is only updated with a call
+      // to `SDL_RenderPresent`.
       m_engine->renderWindow(m_window);
 
       // Return the elapsed time.
