@@ -88,57 +88,6 @@ namespace sdl {
     }
 
     inline
-    bool
-    SdlApplication::handleEvent(core::engine::EventShPtr e) {
-      // This function is made to react to all the events produced by
-      // the system and also to events posted by objects in the
-      // hierarchy.
-      // We try to make sense of some events in here and to add some
-      // context for specific events. For example, we can try to make
-      // sense of `MouseEvent` to produce `EnterEvent` and notify the
-      // adequate widget of such an event.
-      // This cannot be done by the `EventQueue` itself because it
-      // has no information whatsoever about the widgets and the
-      // hierarchy of elements in the application.
-      // TODO: Add it at some point ?
-      //
-      // In addition to that, the `QuitEvent`s should be processed
-      // in here to stop the application.
-
-      // First handle `QuitEvent`.
-      if (e->getType() == core::engine::Event::Type::Quit) {
-        std::lock_guard<std::mutex> guard(m_locker);
-        m_renderingRunning = false;
-
-        // Mark the event as accepted.
-        e->accept();
-
-        // The event has been recognized (as we handled it).
-        return true;
-      }
-
-      // We need to trnasmit the event to the widgets added to the
-      // window if any.
-      for (WidgetsMap::iterator widgetIt = m_widgets.begin() ;
-          widgetIt != m_widgets.end() ;
-          ++widgetIt)
-      {
-        core::SdlWidgetShPtr widget = widgetIt->second;
-
-        // Perform event handling for this widget using the input event `e`.
-        withSafetyNet(
-          [widget, e]() {
-            widget->event(e);
-          },
-          std::string("widget_event")
-        );
-      }
-
-      // Finally handle event using the base handler.
-      return core::engine::EngineObject::handleEvent(e);
-    }
-
-    inline
     void
     SdlApplication::stop() {
       // Stop the events handler.
@@ -152,6 +101,13 @@ namespace sdl {
       // the infinite loop started for the rendering has been stopped by
       // some other means (typically through a user request).
       // So nothing to be done in here.
+    }
+
+    inline
+    utils::Boxf
+    SdlApplication::getCachedSize() noexcept {
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+      return m_cachedSize;
     }
 
   }

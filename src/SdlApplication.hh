@@ -5,6 +5,7 @@
 # include <thread>
 # include <memory>
 # include <unordered_map>
+# include <maths_utils/Box.hh>
 # include <maths_utils/Size.hh>
 # include <sdl_core/SdlWidget.hh>
 # include <sdl_engine/Window.hh>
@@ -52,6 +53,24 @@ namespace sdl {
         bool
         handleEvent(core::engine::EventShPtr e) override;
 
+        bool
+        refreshEvent(const core::engine::PaintEvent& e) override;
+
+        bool
+        repaintEvent(const core::engine::PaintEvent& e) override;
+
+        bool
+        windowEnterEvent(const core::engine::WindowEvent& e) override;
+
+        bool
+        windowLeaveEvent(const core::engine::WindowEvent& e) override;
+
+        bool
+        windowResizeEvent(const core::engine::WindowEvent& e) override;
+
+        bool
+        quitEvent(const core::engine::QuitEvent& e) override;
+
         void
         create(const utils::Sizei& size);
 
@@ -61,12 +80,8 @@ namespace sdl {
         void
         performRendering();
 
-        void
-        repaint();
-
-        // Returns the number of milliseconds elapsed when executing this function.
-        int
-        render();
+        utils::Boxf
+        getCachedSize() noexcept;
 
       private:
 
@@ -77,14 +92,17 @@ namespace sdl {
         float m_framerate;
         float m_frameDuration;
 
-        std::mutex m_locker;
+        std::mutex m_renderingLocker;
         bool m_renderingRunning;
 
         core::engine::EventsDispatcherShPtr m_eventsDispatcher;
 
         WidgetsMap m_widgets;
 
+
+        std::mutex m_renderLocker;
         AppDecoratorShPtr m_engine;
+        utils::Boxf m_cachedSize;
         utils::Uuid m_window;
         // TODO: Should use double buffering as well.
         utils::Uuid m_canvas;
