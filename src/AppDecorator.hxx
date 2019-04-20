@@ -19,11 +19,19 @@ namespace sdl {
     inline
     void
     AppDecorator::renderWindow(const utils::Uuid& uuid) {
+      // Check whether the canvas is valid before trying
+      // to render the window.
       if (!m_canvas.valid()) {
         error(std::string("Cannot render invalid canvas"));
       }
 
+      // Clear the visible canvas from previous renderings.
+      core::engine::EngineDecorator::fillTexture(m_canvas, m_palette);
+
+      // Render the canvas onto the screen.
       core::engine::EngineDecorator::drawTexture(m_canvas, nullptr, nullptr);
+
+      // Render the window.
       core::engine::EngineDecorator::renderWindow(uuid);
     }
 
@@ -85,7 +93,9 @@ namespace sdl {
                               utils::Boxf* where)
     {
       // Check whether the `on` is null. In this case we should override
-      // the settings so that we draw on the specified root canvas.
+      // the settings so that we draw on the internal canvas.
+      // The real `m_canvas` is only used when we need to actually repaint
+      // the window and make the content displayed on it visible.
       if (on == nullptr && m_canvas.valid()) {
         core::engine::EngineDecorator::drawTexture(tex, &m_canvas, where);
         return;
