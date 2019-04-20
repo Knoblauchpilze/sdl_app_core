@@ -25,9 +25,6 @@ namespace sdl {
         error(std::string("Cannot render invalid canvas"));
       }
 
-      // Clear the visible canvas from previous renderings.
-      core::engine::EngineDecorator::fillTexture(m_canvas, m_palette);
-
       // Render the canvas onto the screen.
       core::engine::EngineDecorator::drawTexture(m_canvas, nullptr, nullptr);
 
