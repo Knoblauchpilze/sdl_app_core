@@ -11,11 +11,17 @@ r: release
 
 d: debug
 
-install: r
+copyRelease:
 	sudo cp build/Release/lib/libsdl_app_core.so /usr/local/lib
+
+copyDebug:
+	sudo cp build/Debug/lib/libsdl_app_core.so /usr/local/lib
+
+copyHeaders:
 	sudo mkdir -p /usr/local/include/sdl_app_core
 	sudo cp src/*.hh /usr/local/include/sdl_app_core
 	sudo cp src/*.hxx /usr/local/include/sdl_app_core
 
+install: r copyRelease copyHeaders
 
-
+installD: d copyDebug copyHeaders
