@@ -33,9 +33,6 @@ namespace sdl {
         const std::string&
         getTitle() const noexcept;
 
-        core::engine::Engine&
-        getEngine();
-
         void
         setIcon(const std::string& icon);
 
@@ -49,6 +46,36 @@ namespace sdl {
         removeWidget(sdl::core::SdlWidgetShPtr widget);
 
       private:
+
+        void
+        startRendering() noexcept;
+
+        bool
+        isRendering() noexcept;
+
+        void
+        stopRendering() noexcept;
+
+        utils::Boxf
+        getCachedSize() noexcept;
+
+        void
+        stop();
+
+        void
+        create(const utils::Sizei& size);
+
+        /**
+         * @brief - Used to perform the rendering of the offscreen canvas to the
+         *          displayed canvas.
+         *          Returns the elapsed time for the copy operation.
+         * @return - a floating point value representing the elapsed time to perform
+         *           render of the offscreen canvas onto the visible one.
+         *           The duration is expressed in milliseconds which is convenient
+         *           to compare it to the internal `m_frameDuration` for example.
+         */
+        float
+        renderCanvas();
 
         bool
         handleEvent(core::engine::EventShPtr e) override;
@@ -71,18 +98,6 @@ namespace sdl {
         bool
         quitEvent(const core::engine::QuitEvent& e) override;
 
-        void
-        create(const utils::Sizei& size);
-
-        void
-        stop();
-
-        void
-        performRendering();
-
-        utils::Boxf
-        getCachedSize() noexcept;
-
       private:
 
         using WidgetsMap = std::unordered_map<std::string, sdl::core::SdlWidgetShPtr>;
@@ -92,19 +107,17 @@ namespace sdl {
         float m_framerate;
         float m_frameDuration;
 
-        std::mutex m_renderingLocker;
+        std::mutex m_executionLocker;
         bool m_renderingRunning;
 
         core::engine::EventsDispatcherShPtr m_eventsDispatcher;
+        AppDecoratorShPtr m_engine;
 
         WidgetsMap m_widgets;
 
-
         std::mutex m_renderLocker;
-        AppDecoratorShPtr m_engine;
         utils::Boxf m_cachedSize;
         utils::Uuid m_window;
-        // TODO: Should use double buffering as well.
         utils::Uuid m_canvas;
         core::engine::Palette m_palette;
     };

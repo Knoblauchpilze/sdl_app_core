@@ -19,19 +19,6 @@ namespace sdl {
     }
 
     inline
-    core::engine::Engine&
-    SdlApplication::getEngine() {
-      if (m_engine == nullptr) {
-        error(
-          std::string("Cannot return null engine from application \"") + getName() + "\"",
-          std::string("Engine not set")
-        );
-      }
-
-      return *m_engine;
-    }
-
-    inline
     void
     SdlApplication::setIcon(const std::string& icon) {
       m_engine->setWindowIcon(m_window, icon);
@@ -39,52 +26,65 @@ namespace sdl {
 
     inline
     void
-    SdlApplication::run() {
-      // The `run` method needs to start several process inside the application.
-      // Events need to be handling to be able to process user's requests.
-      // In the meantime, we should maintain a steady framerate as described by
-      // the `m_framerate` attribute.
-      // Finally children widgets should be rendered whenever needed.
-      // This application creates the engine to use to interact with the low level
-      // library allowing rendering and thus we should guarantee that all children
-      // widgets also gain access to the internal engine.
-      // We chose to do that by providing a root canvas onto which widgets will be
-      // drawn and to which each one will be attached.
-      // This allows to benefit from the automatic transfer of the engine of a
-      // widget to its children.
-      // Also to maintain a steady framerate, we chose to perform the widgets'
-      // rendering and then perform a short sleep whenever the rendering took less
-      // time than allowed, or printing a warning message in case the rendering
-      // time took too long.
-
-      // First, start the event handling routine.
-      m_eventsDispatcher->run();
-
-      // Start main loop to render the root canvas.
-      performRendering();
-    }
-
-    inline
-    void
     SdlApplication::addWidget(sdl::core::SdlWidgetShPtr widget) {
+      // Check degenrate cases.
       if (widget == nullptr) {
         error(std::string("Cannot add null widget"));
       }
 
-      widget->setEngine(m_engine);
+      // Set up the widget with internal elements.
       widget->setEventsQueue(m_eventsDispatcher.get());
+      widget->setEngine(m_engine);
 
+      // Add this widget to the internal table.
       m_widgets[widget->getName()] = widget;
     }
 
     inline
     void
     SdlApplication::removeWidget(sdl::core::SdlWidgetShPtr widget) {
+      // Check degenrate cases.
       if (widget == nullptr) {
         error(std::string("Cannot remove null widget"));
       }
 
-      m_widgets.erase(widget->getName());
+      // Erase the widget and display the result.
+      std::size_t nbErased = m_widgets.erase(widget->getName());
+      if (nbErased != 1) {
+        log(
+          std::string("Could not remove widget \"") + widget->getName() + "\" from window, not found",
+          utils::Level::Warning
+        );
+      }
+    }
+
+    inline
+    void
+    SdlApplication::startRendering() noexcept {
+      std::lock_guard<std::mutex> guard(m_executionLocker);
+      m_renderingRunning = true;
+    }
+
+    inline
+    bool
+    SdlApplication::isRendering() noexcept {
+      std::lock_guard<std::mutex> guard(m_executionLocker);
+      return m_renderingRunning;
+    }
+
+    inline
+    void
+    SdlApplication::stopRendering() noexcept {
+      // Stop events processing.
+      std::lock_guard<std::mutex> guard(m_executionLocker);
+      m_renderingRunning = false;
+    }
+
+    inline
+    utils::Boxf
+    SdlApplication::getCachedSize() noexcept {
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+      return m_cachedSize;
     }
 
     inline
@@ -104,10 +104,44 @@ namespace sdl {
     }
 
     inline
-    utils::Boxf
-    SdlApplication::getCachedSize() noexcept {
-      std::lock_guard<std::mutex> guard(m_renderLocker);
-      return m_cachedSize;
+    bool
+    SdlApplication::refreshEvent(const core::engine::PaintEvent& e) {
+      log(std::string("Should handle refresh event"), utils::Level::Warning);
+      return core::engine::EngineObject::refreshEvent(e);
+    }
+
+    inline
+    bool
+    SdlApplication::windowEnterEvent(const core::engine::WindowEvent& e) {
+      log(std::string("Should handle window enter event"), utils::Level::Warning);
+      return core::engine::EngineObject::windowEnterEvent(e);
+    }
+
+    inline
+    bool
+    SdlApplication::windowLeaveEvent(const core::engine::WindowEvent& e) {
+      log(std::string("Should handle window leave event"), utils::Level::Warning);
+      return core::engine::EngineObject::windowLeaveEvent(e);
+    }
+
+    inline
+    bool
+    SdlApplication::windowResizeEvent(const core::engine::WindowEvent& e) {
+      log(std::string("Should handle window resize event"), utils::Level::Warning);
+      return core::engine::EngineObject::windowResizeEvent(e);
+    }
+
+    inline
+    bool
+    SdlApplication::quitEvent(const core::engine::QuitEvent& e) {
+      // Stop rendering.
+      stopRendering();
+
+      // Mark the event as accepted.
+      e.accept();
+
+      // Use base handler to determine whether the event was recognized.
+      return core::engine::EngineObject::quitEvent(e);
     }
 
   }
