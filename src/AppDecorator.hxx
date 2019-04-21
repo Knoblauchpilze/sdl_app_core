@@ -65,7 +65,7 @@ namespace sdl {
     {
       return core::engine::EngineDecorator::createTextureFromFile(m_window, file, role);
     }
-        
+
     inline
     utils::Uuid
     AppDecorator::createTextureFromText(const utils::Uuid& /*win*/,

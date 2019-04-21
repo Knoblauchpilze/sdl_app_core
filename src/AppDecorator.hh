@@ -41,7 +41,7 @@ namespace sdl {
         utils::Uuid
         createTextureFromFile(const std::string& file,
                               const core::engine::Palette::ColorRole& role) override;
-        
+
         utils::Uuid
         createTextureFromText(const utils::Uuid& win,
                               const std::string& text,
