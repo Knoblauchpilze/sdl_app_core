@@ -65,15 +65,32 @@ namespace sdl {
       // The last part forces us to keep some processing in the main thread, i.e.
       // in this function.
       // In order to still benefit from the event system and from some sort of
-      // multi-threading, we chose to use a programmatic double buffering system
-      // to still account for calls to `SDL_XYZ` function in other threads.
-      // The `SdlApplication` class defines two canvases: one lives in the main
-      // thread and does not really do anything apart from being being used
-      // periodically to copy the second canvas, which is used to perform off-screen
-      // rendering by children widgets.
+      // multi-threading, we chose to use an hybrid system where the rendering is
+      // not completely done using the events system.
+      // Basically the main thread (i.e. the one calling this function) periodically
+      // wakes up to traverse the entire hierarchy of widgets in order to perform
+      // the redraw. Each widget is then responsible to handle caching at its own
+      // level and to provide the necessary locks so that this step does not access
+      // concurrently data say if an event is processed at the same time.
+      //
+      // This system is cool but not perfect: indeed upon calling this function,
+      // no events have been processed yet so all widgets which use the events
+      // system to be rendered did not have any chance to perform the first paint
+      // operation and it will become problematic very quickly.
+      // Indeed we will start the events dispatcher and then start the rendering
+      // right away.
+      // So most probably some widgets will have been created but not all of them:
+      // it all depends on how fast the events dispatcher can process the events
+      // already queued. In the case of a large UI it is a lost cause.
+      // We figured some kind of workaround by providing a way for the events
+      // dispatcher to notify this application that at least one round of events
+      // has been processed.
 
       // Start the event handling routine in order to launch the main event loop.
       m_eventsDispatcher->run();
+
+      // Wait for the first events round to be processed.
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
       // Notify that the rendering loop is now running.
       startRendering();
