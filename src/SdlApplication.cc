@@ -191,8 +191,6 @@ namespace sdl {
       // In addition to that, the `QuitEvent`s should be processed
       // in here to stop the application.
 
-      log("Handling event of type " + std::to_string(static_cast<int>(e->getType())));
-
       // Handle this event using the base handler.
       const bool recognized = core::engine::EngineObject::handleEvent(e);
 
