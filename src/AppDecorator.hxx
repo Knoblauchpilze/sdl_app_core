@@ -70,17 +70,19 @@ namespace sdl {
     utils::Uuid
     AppDecorator::createTextureFromText(const utils::Uuid& /*win*/,
                                         const std::string& text,
-                                        const utils::Uuid& font)
+                                        const utils::Uuid& font,
+                                        const core::engine::Palette::ColorRole& role)
     {
-      return core::engine::EngineDecorator::createTextureFromText(m_window, text, font);
+      return core::engine::EngineDecorator::createTextureFromText(m_window, text, font, role);
     }
 
     inline
     utils::Uuid
     AppDecorator::createTextureFromText(const std::string& text,
-                                        const utils::Uuid& font)
+                                        const utils::Uuid& font,
+                                        const core::engine::Palette::ColorRole& role)
     {
-      return core::engine::EngineDecorator::createTextureFromText(m_window, text, font);
+      return core::engine::EngineDecorator::createTextureFromText(m_window, text, font, role);
     }
 
     inline
