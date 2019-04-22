@@ -196,15 +196,6 @@ namespace sdl {
       // This function is made to react to all the events produced by
       // the system and also to events posted by objects in the
       // hierarchy.
-      // We try to make sense of some events in here and to add some
-      // context for specific events. For example, we can try to make
-      // sense of `MouseEvent` to produce `EnterEvent` and notify the
-      // adequate widget of such an event.
-      // This cannot be done by the `EventQueue` itself because it
-      // has no information whatsoever about the widgets and the
-      // hierarchy of elements in the application.
-      // TODO: Add it at some point ?
-      //
       // In addition to that, the `QuitEvent`s should be processed
       // in here to stop the application.
 
