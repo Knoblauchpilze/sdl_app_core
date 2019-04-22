@@ -26,7 +26,7 @@ namespace sdl {
 
     inline
     void
-    SdlApplication::addWidget(sdl::core::SdlWidgetShPtr widget) {
+    SdlApplication::addWidget(core::SdlWidgetShPtr widget) {
       // Check degenrate cases.
       if (widget == nullptr) {
         error(std::string("Cannot add null widget"));
@@ -42,7 +42,7 @@ namespace sdl {
 
     inline
     void
-    SdlApplication::removeWidget(sdl::core::SdlWidgetShPtr widget) {
+    SdlApplication::removeWidget(core::SdlWidgetShPtr widget) {
       // Check degenrate cases.
       if (widget == nullptr) {
         error(std::string("Cannot remove null widget"));
