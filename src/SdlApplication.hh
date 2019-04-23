@@ -40,10 +40,10 @@ namespace sdl {
         run();
 
         void
-        addWidget(core::SdlWidgetShPtr widget);
+        addWidget(core::SdlWidget* widget);
 
         void
-        removeWidget(core::SdlWidgetShPtr widget);
+        removeWidget(core::SdlWidget* widget);
 
       private:
 
@@ -100,7 +100,7 @@ namespace sdl {
 
       private:
 
-        using WidgetsMap = std::unordered_map<std::string, core::SdlWidgetShPtr>;
+        using WidgetsMap = std::unordered_map<std::string, core::SdlWidget*>;
 
         std::string m_title;
 

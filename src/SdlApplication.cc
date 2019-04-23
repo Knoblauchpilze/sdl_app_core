@@ -211,7 +211,7 @@ namespace sdl {
             widgetIt != m_widgets.end() ;
             ++widgetIt)
         {
-          core::SdlWidgetShPtr widget = widgetIt->second;
+          core::SdlWidget* widget = widgetIt->second;
 
           // Perform event handling for this widget using the input event `e`.
           withSafetyNet(
@@ -253,7 +253,7 @@ namespace sdl {
           widgetIt != m_widgets.end() ;
           ++widgetIt)
       {
-        core::SdlWidgetShPtr widget = widgetIt->second;
+        core::SdlWidget* widget = widgetIt->second;
 
         // Draw this object (caching is handled by the object itself).
         withSafetyNet(

@@ -10,6 +10,16 @@ namespace sdl {
     inline
     SdlApplication::~SdlApplication() {
       stop();
+
+      // Clear widgets.
+      for (WidgetsMap::const_iterator widget = m_widgets.cbegin() ;
+           widget != m_widgets.cend() ;
+           ++widget)
+      {
+        if (widget->second != nullptr) {
+          delete widget->second;
+        }
+      }
     }
 
     inline
@@ -26,7 +36,7 @@ namespace sdl {
 
     inline
     void
-    SdlApplication::addWidget(core::SdlWidgetShPtr widget) {
+    SdlApplication::addWidget(core::SdlWidget* widget) {
       // Check degenrate cases.
       if (widget == nullptr) {
         error(std::string("Cannot add null widget"));
@@ -42,7 +52,7 @@ namespace sdl {
 
     inline
     void
-    SdlApplication::removeWidget(core::SdlWidgetShPtr widget) {
+    SdlApplication::removeWidget(core::SdlWidget* widget) {
       // Check degenrate cases.
       if (widget == nullptr) {
         error(std::string("Cannot remove null widget"));
