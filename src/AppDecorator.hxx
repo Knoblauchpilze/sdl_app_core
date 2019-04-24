@@ -8,6 +8,17 @@ namespace sdl {
 
     inline
     void
+    AppDecorator::setDrawingCanvas(const utils::Uuid& canvas) {
+      // Check that we're assigning a valid canvas.
+      if (!canvas.valid()) {
+        error(std::string("Cannot assign invalid canvas"));
+      }
+
+      m_canvas = canvas;
+    }
+
+    inline
+    void
     AppDecorator::clearWindow(const utils::Uuid& /*uuid*/) {
       if (!m_canvas.valid()) {
         error(std::string("Cannot clear invalid canvas"));

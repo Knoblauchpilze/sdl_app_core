@@ -19,6 +19,9 @@ namespace sdl {
         virtual ~AppDecorator();
 
         void
+        setDrawingCanvas(const utils::Uuid& canvas);
+
+        void
         clearWindow(const utils::Uuid& uuid) override;
 
         void

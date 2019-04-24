@@ -13,6 +13,7 @@ namespace sdl {
                                    const std::string& title,
                                    const std::string& icon,
                                    const utils::Sizei& size,
+                                   const bool resizable,
                                    const float& framerate,
                                    const float& eventFramerate):
       core::engine::EngineObject(name),
@@ -39,7 +40,7 @@ namespace sdl {
       setService("app");
 
       // Create the engine and the window.
-      create(size);
+      create(size, resizable);
 
       // Assign the desired icon.
       setIcon(icon);
@@ -150,12 +151,14 @@ namespace sdl {
     }
 
     void
-    SdlApplication::create(const utils::Sizei& size) {
+    SdlApplication::create(const utils::Sizei& size,
+                           const bool resizable)
+    {
       // Create the engine to use to perform rendering.
       core::engine::SdlEngineShPtr engine = std::make_shared<core::engine::SdlEngine>();
 
       // Use the engine to create the window.
-      m_window = engine->createWindow(size, getTitle());
+      m_window = engine->createWindow(size, resizable, getTitle());
 
       if (!m_window.valid()) {
         error(std::string("Could not create window with size " + size.toString()));
@@ -276,6 +279,51 @@ namespace sdl {
 
       // Use base handler to determine whether the event was recognized.
       return core::engine::EngineObject::repaintEvent(e);
+    }
+
+    bool
+    SdlApplication::windowLeaveEvent(const core::engine::WindowEvent& e) {
+      // We need to trigger a global leave event so that no widget stays selected
+      // or in highlight mode when the mouse is not in the window anymore.
+      postEvent(std::make_shared<core::engine::Event>(core::engine::Event::Type::Leave));
+
+      // Use base handle to determine whether the event was recognized.
+      return core::engine::EngineObject::windowLeaveEvent(e);
+    }
+
+    bool
+    SdlApplication::windowResizeEvent(const core::engine::WindowEvent& e) {
+      // We need to handle the resize of the canvas, and possibly the size of the
+      // inserted widgets.
+
+      // Acquire the lock on this application.
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      // Update the size of the internal canvas if any.
+      if (m_canvas.valid()) {
+        m_engine->destroyTexture(m_canvas);
+        m_canvas.invalidate();
+      }
+
+      // Creata a new texture with the required dimensions.
+      utils::Sizei size(
+        static_cast<int>(e.getSize().w()),
+        static_cast<int>(e.getSize().h())
+      );
+
+      m_canvas = m_engine->createTexture(m_window, size, core::engine::Palette::ColorRole::Background);
+      if (!m_canvas.valid()) {
+        error(std::string("Could not create window's canvas with size " + e.getSize().toString()));
+      }
+
+      // Assign the new canvas texture.
+      m_engine->setDrawingCanvas(m_canvas);
+
+      // Assign the cached size.
+      m_cachedSize = utils::Boxf::fromSize(size);
+
+      // Use base handler to determine whether the event was recognized.
+      return core::engine::EngineObject::windowResizeEvent(e);
     }
 
   }

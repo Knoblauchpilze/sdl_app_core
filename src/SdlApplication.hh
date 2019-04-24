@@ -25,6 +25,7 @@ namespace sdl {
                        const std::string& title,
                        const std::string& icon,
                        const utils::Sizei& size = utils::Sizei(640, 480),
+                       const bool resizable = true,
                        const float& framerate = 60.0f,
                        const float& eventFramerate = 30.0f);
 
@@ -63,7 +64,8 @@ namespace sdl {
         stop();
 
         void
-        create(const utils::Sizei& size);
+        create(const utils::Sizei& size,
+               const bool resizable);
 
         /**
          * @brief - Used to perform the rendering of the offscreen canvas to the
@@ -85,9 +87,6 @@ namespace sdl {
 
         bool
         repaintEvent(const core::engine::PaintEvent& e) override;
-
-        bool
-        windowEnterEvent(const core::engine::WindowEvent& e) override;
 
         bool
         windowLeaveEvent(const core::engine::WindowEvent& e) override;

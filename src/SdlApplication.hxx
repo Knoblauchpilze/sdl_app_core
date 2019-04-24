@@ -122,27 +122,6 @@ namespace sdl {
 
     inline
     bool
-    SdlApplication::windowEnterEvent(const core::engine::WindowEvent& e) {
-      log(std::string("Should handle window enter event"), utils::Level::Warning);
-      return core::engine::EngineObject::windowEnterEvent(e);
-    }
-
-    inline
-    bool
-    SdlApplication::windowLeaveEvent(const core::engine::WindowEvent& e) {
-      log(std::string("Should handle window leave event"), utils::Level::Warning);
-      return core::engine::EngineObject::windowLeaveEvent(e);
-    }
-
-    inline
-    bool
-    SdlApplication::windowResizeEvent(const core::engine::WindowEvent& e) {
-      log(std::string("Should handle window resize event"), utils::Level::Warning);
-      return core::engine::EngineObject::windowResizeEvent(e);
-    }
-
-    inline
-    bool
     SdlApplication::quitEvent(const core::engine::QuitEvent& e) {
       // Stop rendering.
       stopRendering();
