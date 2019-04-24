@@ -320,6 +320,9 @@ namespace sdl {
       m_engine->setDrawingCanvas(m_canvas);
 
       // Assign the cached size.
+      // TODO: We should probably have some kind of layout mechanism in the application. Maybe using a
+      // inherited window with a simple layout with a central widget and some dock widgets. This would
+      // allow to also increase the size of the content upon resizing.
       m_cachedSize = utils::Boxf::fromSize(size);
 
       // Use base handler to determine whether the event was recognized.
