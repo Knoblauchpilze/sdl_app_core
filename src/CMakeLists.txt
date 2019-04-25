@@ -10,6 +10,7 @@ find_package (SDL2_ttf REQUIRED)
 set (SOURCES
   SdlApplication.cc
   AppDecorator.cc
+  MainWindowLayout.cc
   )
 
 add_library (sdl_app_core SHARED
