@@ -13,6 +13,7 @@
 # include <sdl_engine/Event.hh>
 # include <sdl_engine/EventsDispatcher.hh>
 # include "AppDecorator.hh"
+# include "MainWindowLayout.hh"
 
 namespace sdl {
   namespace app {
@@ -61,6 +62,12 @@ namespace sdl {
         getCachedSize() noexcept;
 
         void
+        setLayout(MainWindowLayoutShPtr layout);
+
+        void
+        invalidate(const utils::Boxf& area);
+
+        void
         stop();
 
         void
@@ -81,6 +88,9 @@ namespace sdl {
 
         bool
         handleEvent(core::engine::EventShPtr e) override;
+
+        bool
+        geometryUpdateEvent(const core::engine::Event& e) override;
 
         bool
         refreshEvent(const core::engine::PaintEvent& e) override;
@@ -112,6 +122,7 @@ namespace sdl {
         core::engine::EventsDispatcherShPtr m_eventsDispatcher;
         AppDecoratorShPtr m_engine;
 
+        MainWindowLayoutShPtr m_layout;
         WidgetsMap m_widgets;
 
         std::mutex m_renderLocker;

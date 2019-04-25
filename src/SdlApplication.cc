@@ -29,6 +29,7 @@ namespace sdl {
       m_eventsDispatcher(nullptr),
       m_engine(nullptr),
 
+      m_layout(nullptr),
       m_widgets(),
 
       m_renderLocker(),
@@ -48,6 +49,12 @@ namespace sdl {
       // Create the event listener and register this application as listener.
       m_eventsDispatcher = std::make_shared<core::engine::EventsDispatcher>(eventFramerate, m_engine, true);
       m_eventsDispatcher->addListener(this);
+
+      // Set the queue for this application so that it can post events.
+      setEventsQueue(m_eventsDispatcher.get());
+
+      // Create the event for this window and assign it.
+      setLayout(std::make_shared<MainWindowLayout>(getCachedSize(), 5.0f));
     }
 
     void
@@ -186,7 +193,7 @@ namespace sdl {
 
       // Perform the rendering for the widgets registered as children of
       // this application.
-      repaintEvent(core::engine::PaintEvent(getCachedSize()));
+      repaintEvent(core::engine::PaintEvent(getCachedSize(), this));
 
       // Compute the elapsed time and return it as a floating point value.
       auto end = std::chrono::steady_clock::now();
@@ -227,6 +234,28 @@ namespace sdl {
       }
 
       return recognized;
+    }
+
+    bool
+    SdlApplication::geometryUpdateEvent(const core::engine::Event& e) {
+      // We need to handle the recomputation of the internal layout if any.
+
+      // Acquire the lock on this application.
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      // Update the layout if any.
+      if (m_layout != nullptr) {
+        m_layout->update();
+      }
+
+      // Mark the event as accepted if it is directed only through this
+      // object.
+      if (isReceiver(e)) {
+        e.accept();
+      }
+
+      // Use base handle to determine whether the event was recognized.
+      return core::engine::EngineObject::geometryUpdateEvent(e);
     }
 
     bool
@@ -277,6 +306,12 @@ namespace sdl {
       // Now render the content of the window and make it visible to the user.
       engine->renderWindow(m_window);
 
+      // Mark the event as accepted if it is directed only through this
+      // object.
+      if (isReceiver(e)) {
+        e.accept();
+      }
+
       // Use base handler to determine whether the event was recognized.
       return core::engine::EngineObject::repaintEvent(e);
     }
@@ -286,6 +321,12 @@ namespace sdl {
       // We need to trigger a global leave event so that no widget stays selected
       // or in highlight mode when the mouse is not in the window anymore.
       postEvent(std::make_shared<core::engine::Event>(core::engine::Event::Type::Leave));
+
+      // Mark the event as accepted if it is directed only through this
+      // object.
+      if (isReceiver(e)) {
+        e.accept();
+      }
 
       // Use base handle to determine whether the event was recognized.
       return core::engine::EngineObject::windowLeaveEvent(e);
@@ -324,6 +365,15 @@ namespace sdl {
       // inherited window with a simple layout with a central widget and some dock widgets. This would
       // allow to also increase the size of the content upon resizing.
       m_cachedSize = utils::Boxf::fromSize(size);
+
+      // And request an update of the layout.
+      invalidate(m_cachedSize);
+
+      // Mark the event as accepted if it is directed only through this
+      // object.
+      if (isReceiver(e)) {
+        e.accept();
+      }
 
       // Use base handler to determine whether the event was recognized.
       return core::engine::EngineObject::windowResizeEvent(e);

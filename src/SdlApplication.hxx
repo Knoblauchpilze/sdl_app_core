@@ -42,9 +42,14 @@ namespace sdl {
         error(std::string("Cannot add null widget"));
       }
 
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
       // Set up the widget with internal elements.
       widget->setEventsQueue(m_eventsDispatcher.get());
       widget->setEngine(m_engine);
+
+      // Add the widget to the internal layout if any.
+      m_layout->addItem(widget);
 
       // Add this widget to the internal table.
       m_widgets[widget->getName()] = widget;
@@ -58,6 +63,8 @@ namespace sdl {
         error(std::string("Cannot remove null widget"));
       }
 
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
       // Erase the widget and display the result.
       std::size_t nbErased = m_widgets.erase(widget->getName());
       if (nbErased != 1) {
@@ -65,6 +72,12 @@ namespace sdl {
           std::string("Could not remove widget \"") + widget->getName() + "\" from window, not found",
           utils::Level::Warning
         );
+        return;
+      }
+
+      // Remove the widget from the layout if any.
+      if (m_layout != nullptr) {
+        m_layout->removeItem(widget);
       }
     }
 
@@ -95,6 +108,36 @@ namespace sdl {
     SdlApplication::getCachedSize() noexcept {
       std::lock_guard<std::mutex> guard(m_renderLocker);
       return m_cachedSize;
+    }
+
+    inline
+    void
+    SdlApplication::setLayout(MainWindowLayoutShPtr layout) {
+      // Lock this application.
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      // Assign the new layout.
+      m_layout = layout;
+
+      // Provide the current size of the application to the layout.
+      invalidate(m_cachedSize);
+    }
+
+    inline
+    void
+    SdlApplication::invalidate(const utils::Boxf& area) {
+      // Assign the cached size to the internal layout if any.
+      if (m_layout != nullptr) {
+        m_layout->setArea(area);
+      }
+
+      // Post a new geometry update event.
+      postEvent(
+        std::make_shared<core::engine::Event>(
+          core::engine::Event::Type::GeometryUpdate,
+          this
+        )
+      );
     }
 
     inline
