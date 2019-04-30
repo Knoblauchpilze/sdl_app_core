@@ -7,7 +7,8 @@ namespace sdl {
     MainWindowLayout::MainWindowLayout(const utils::Boxf& area,
                                        const float& margin):
       core::Layout(nullptr, margin),
-      m_area(area)
+      m_area(area),
+      m_infos()
     {}
 
     MainWindowLayout::~MainWindowLayout() {}
