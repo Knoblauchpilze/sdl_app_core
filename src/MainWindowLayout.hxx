@@ -21,19 +21,19 @@ namespace sdl {
     void
     MainWindowLayout::update() {
       // Check if this layout is dirty.
-      if (!m_dirty) {
+      if (!isDirty()) {
         return;
       }
 
       // And if some items are managed by this layout.
-      if (m_items.empty()) {
+      if (empty()) {
         return;
       }
 
       // Update with private handler.
       updatePrivate(m_area);
 
-      m_dirty = false;
+      recomputed();
     }
 
     inline
