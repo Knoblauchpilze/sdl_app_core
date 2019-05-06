@@ -23,8 +23,21 @@ namespace sdl {
 
       public:
 
+        /**
+         * @brief - The area available for the layout.
+         * @param margin - the margin around the borders of the layout. Expressed in pixels and similar
+         *                 for width and height.
+         * @param centralWidgetSize - a size describing both for width and height the percentage of the
+         *                            total area occupied by the central widget. The rest of the area
+         *                            is divided between the other sections.
+         *                            Note that the values should be in the range `[0; 1]` with `0`
+         *                            meaning that the central widget does not have any portion of the
+         *                            total area and `1` meaning that it occupies all the available
+         *                            space.
+         */
         MainWindowLayout(const utils::Boxf& area,
-                         const float& margin = 1.0f);
+                         const float& margin = 1.0f,
+                         const utils::Sizef& centralWidgetSize = utils::Sizef(0.7f, 0.5f));
 
         virtual ~MainWindowLayout();
 
@@ -88,12 +101,16 @@ namespace sdl {
           DockWidgetArea area;
         };
 
-        using InfoMap = std::unordered_map<int, ItemInfo>;
+        using InfosMap = std::unordered_map<int, ItemInfo>;
+        using AreasInfo = std::unordered_map<DockWidgetArea, utils::Boxf>;
 
         void
         updatePrivate(const utils::Boxf& window) override;
 
       private:
+
+        void
+        assignPercentagesFromCentralWidget(const utils::Sizef& centralWidgetSize);
 
         void
         addItemWithRoleAndArea(core::SdlWidget* widget,
@@ -116,10 +133,47 @@ namespace sdl {
         getIndexAndCheck(core::SdlWidget* widget,
                          const WidgetRole& role);
 
+        void
+        adjustAreasHorizontally(const utils::Sizef& internalSize,
+                                const std::vector<WidgetInfo>& widgetsInfo,
+                                AreasInfo& areas);
+
+        void
+        adjustAreasVertically(const utils::Sizef& internalSize,
+                              const std::vector<WidgetInfo>& widgetsInfo,
+                              AreasInfo& areas);
+
       private:
 
         utils::Boxf m_area;
-        InfoMap m_infos;
+        InfosMap m_infos;
+
+        /**
+         * @brief - The main window layout is divided into three horizontal sections:
+         *          the left part, the right part and the remaining section is occupied
+         *          by the central widget.
+         *          Each section occupies a certain percentage of the total available
+         *          area as described by the variables below.
+         *          The sum of the percentage should add up to 1.
+         *          Note that the percentage of the area occupied by the central widget
+         *          is deduced from the two other percentages.
+         */
+        float m_leftAreaPercentage;
+        float m_rightAreaPercentage;
+
+        /**
+         * @brief - The main window layout is divided into six vertical sections:
+         *          the menu bar, the tool bars, the top widgets, the central widget, the
+         *          bottom section and the status bar.
+         *          As for the horizontal sections, the percentages should add up to 1.
+         *          Note that the percentage of the area occupied by the central widget
+         *          is deduced from the other percentages.
+         */
+        float m_menuBarPercentage;
+        float m_toolBarPercentage;
+        float m_topAreaPercentage;
+        float m_bottomAreaPercentage;
+        float m_statusBarPercentage;
 
     };
 
