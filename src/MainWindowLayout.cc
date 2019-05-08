@@ -27,6 +27,55 @@ namespace sdl {
     MainWindowLayout::~MainWindowLayout() {}
 
     void
+    MainWindowLayout::removeDockWidget(core::SdlWidget* item) {
+      // Before trying to remove the widget, we need to first determine
+      // its precise role. Indeed based on the area in which the widget
+      // is located, its role will be different.
+      // So first, try to retrieve the index of this widget inside the
+      // internal array.
+
+      // Check whether the item is valid.
+      if (item == nullptr) {
+        error(
+          std::string("Cannot remove item from layout"),
+          std::string("Invalid null item")
+        );
+      }
+
+      const int id = getIndexOf(item);
+
+      // Check whether we could find this item.
+      if (!isValidIndex(id)) {
+        error(
+          std::string("Cannot get index for item \"") + item->getName() + "\" from layout",
+          std::string("Widget is not managed by this layout")
+        );
+      }
+
+      // Check that this item is registered in the information array.
+      InfosMap::const_iterator info = m_infos.find(id);
+      if (info == m_infos.cend()) {
+        error(
+          std::string("Cannot retrieve role for item \"") + item->getName() + "\"",
+          std::string("Inexisting key")
+        );
+      }
+
+      // Check whether the role for this item is actually a dock widget. In
+      // any other case we abort the deletion of the item as it is not what
+      // is expected by the caller.
+      if (!isValidDockWidgetRole(info->second.role)) {
+        error(
+          std::string("Could not remove item \"") + item->getName() + "\" which is not a dock widget",
+          std::string("Role \"") + std::to_string(static_cast<int>(info->second.role)) + " is not a valid dock widget role"
+        );
+      }
+
+      // The input item is actually a dock widget we can remove it.
+      removeItem(id);
+    }
+
+    void
     MainWindowLayout::updatePrivate(const utils::Boxf& window) {
       // The main window layout can be represented as below:
       //
@@ -37,11 +86,11 @@ namespace sdl {
       //  |                                 |
       //  |  +---+-------------------+---+  |
       //  |  |   |   Dock widgets    |   |  |
-      //  |  +---+-------------------+---+  |
+      //  |  |   +-------------------+   |  |
       //  |  |   |                   |   |  |
       //  |  |   |  Central  widget  |   |  |
       //  |  |   |                   |   |  |
-      //  |  +---+-------------------+---+  |
+      //  |  |   +-------------------+   |  |
       //  |  |   |                   |   |  |
       //  |  +---+-------------------+---+  |
       //  |                                 |
@@ -120,13 +169,6 @@ namespace sdl {
         }
 
         // Retrieve the area's position from the adjustments we made if needed.
-        if (info->second.role == WidgetRole::DockWidget) {
-          log(
-            std::string("Skipping position for widget \"") + getWidgetAt(index)->getName() + "\" with unsupported role DockWidget",
-            utils::Level::Warning
-          );
-          continue;
-        }
         const AreasInfo::const_iterator area = areas.find(info->second.area);
         if (area == areas.cend()) {
           error(
@@ -261,7 +303,7 @@ namespace sdl {
       }
 
       // Use the dedicated method to retrieve the item's index and determine
-      // whether it is actually a toolbar.
+      // whether it is actually a valid widget.
       const int id = getIndexOf(widget);
 
       // Check whether we could find this item.
@@ -298,6 +340,46 @@ namespace sdl {
                                               const std::vector<WidgetInfo>& /*widgetsInfo*/,
                                               AreasInfo& /*areas*/)
     {
+      // The goal of this function is to perform an adjustment of the horizontal areas.
+      // Relevant areas which can impact the horizontal adjustement are the left dock
+      // area, the central widget, bottom and top dock areas and the right dock area.
+      // Apart from these areas, the tool bars, status bar and menu bar will be given
+      // access to the whole width of the layout.
+      // In order to perform the adjustment, we first try to determine a global policy
+      // for each area: this is done by scanning each widget using the area and determining
+      // the bounds of the size which can be assigned to it.
+      // We update the global policy for each widget encountered.
+      //
+      // Once we got a global policy for each area, we can try to assign the total space
+      // based on the percentages assigned to each area for this layout. Each area will
+      // be assigned a default space which will then be constrained by the global policy
+      // and updated.
+      // We then loop until no more modifications are made to any widget. This allows
+      // to use additional space not used by an area if another area can take it. In
+      // general it guarantees a better repartition of the space between areas.
+      //
+      // Once we reached a stable state, we can update the input `areas` array with
+      // the width of each column.
+      std::unordered_set<DockWidgetArea> dockAreas;
+
+      // First, compute a global policy for each relevant area.
+      dockAreas.clear();
+      dockAreas.insert(DockWidgetArea::LeftArea);
+      core::SizePolicy leftPolicy = computeSizePolicyForAreas(dockAreas);
+
+      dockAreas.clear();
+      dockAreas.insert(DockWidgetArea::LeftArea);
+      core::SizePolicy rightPolicy = computeSizePolicyForAreas(dockAreas);
+
+      // Agregate a relevant area for the top and bottom area along with the central widget.
+      // As these areas as all aligned horizontally, any space used by one of them will be
+      // shared with the other areas, and thus any constraint applied to any of the area will
+      // translate into a constraint into the other areas.
+      // Even if the widgets spanning a particular area might not be able to use the full
+      // extent of all the constraints, this will be used nonetheless. We can then proceed
+      // to centering for example to try to make use of the constraints.
+      core::SizePolicy centralPolicy = computeSizePolicyForAreas(dockAreas);
+
       // TODO: Implementation.
       log("Should perform horizontal adjustment");
     }
@@ -309,6 +391,11 @@ namespace sdl {
     {
       // TODO: Implementation.
       log("Should perform vertical adjustment");
+    }
+
+    core::SizePolicy
+    MainWindowLayout::computeSizePolicyForArea(const DockWidgetArea& area) const {
+
     }
 
   }

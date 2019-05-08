@@ -69,7 +69,11 @@ namespace sdl {
                                     const DockWidgetArea& area)
     {
       // Use internal handler.
-      addItemWithRoleAndArea(item, WidgetRole::DockWidget, area);
+      addItemWithRoleAndArea(
+        item,
+        determineDockWidgetRoleFromArea(area),
+        area
+      );
     }
 
     inline
@@ -94,12 +98,64 @@ namespace sdl {
 
     inline
     void
-    MainWindowLayout::removeDockWidget(core::SdlWidget* item) {
-      // Try to retrieve the index for this item.
-      const int index = getIndexAndCheck(item, WidgetRole::DockWidget);
+    MainWindowLayout::removeItem(int item) {
+      // We need to both remove the item using the base handler and also remove the
+      // corresponding entry in the internal information map.
 
-      // Remove it using the dedicated handler.
-      removeItem(index);
+      // Remove the item using the base class handler.
+      core::Layout::removeItem(item);
+
+      // Erase the corresponding entry in the internal table.
+      const std::size_t count = m_infos.erase(item);
+
+      // Check whether we could remove the input item.
+      if (count != 1) {
+        log(
+          std::string("Invalid removed item count while deleting item ") + std::to_string(item) +
+          std::string("(removed ") + std::to_string(count) + " item(s))",
+          utils::Level::Warning
+        );
+      }
+    }
+
+    inline
+    MainWindowLayout::WidgetRole
+    MainWindowLayout::determineDockWidgetRoleFromArea(const DockWidgetArea& area) {
+      WidgetRole role;
+
+      switch (area) {
+        case DockWidgetArea::LeftArea:
+          role = WidgetRole::LeftDockWidget;
+          break;
+        case DockWidgetArea::RightArea:
+          role = WidgetRole::RightDockWidget;
+          break;
+        case DockWidgetArea::TopArea:
+          role = WidgetRole::TopDockWidget;
+          break;
+        case DockWidgetArea::BottomArea:
+          role = WidgetRole::BottomDockWidget;
+          break;
+        default:
+          error(
+            std::string("Could not determine widget role for area ") + std::to_string(static_cast<int>(area)),
+            std::string("Invalid dock area")
+          );
+          break;
+      }
+
+      return role;
+    }
+
+    inline
+    bool
+    MainWindowLayout::isValidDockWidgetRole(const WidgetRole& role) noexcept {
+      return
+        role == WidgetRole::LeftDockWidget ||
+        role == WidgetRole::RightDockWidget ||
+        role == WidgetRole::TopDockWidget ||
+        role == WidgetRole::BottomDockWidget
+      ;
     }
 
     inline

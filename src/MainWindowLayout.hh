@@ -3,8 +3,10 @@
 
 # include <memory>
 # include <unordered_map>
+# include <unordered_set>
 # include <maths_utils/Box.hh>
 # include <sdl_core/Layout.hh>
+# include <sdl_core/SizePolicy.hh>
 
 namespace sdl {
   namespace app {
@@ -79,7 +81,10 @@ namespace sdl {
           MenuBar,
           StatusBar,
           ToolBar,
-          DockWidget,
+          LeftDockWidget,
+          RightDockWidget,
+          TopDockWidget,
+          BottomDockWidget,
           CentralWidget
         };
 
@@ -107,10 +112,20 @@ namespace sdl {
         void
         updatePrivate(const utils::Boxf& window) override;
 
+        void
+        removeItem(int item) override;
+
       private:
 
         void
         assignPercentagesFromCentralWidget(const utils::Sizef& centralWidgetSize);
+
+        WidgetRole
+        determineDockWidgetRoleFromArea(const DockWidgetArea& area);
+
+        static
+        bool
+        isValidDockWidgetRole(const WidgetRole& role) noexcept;
 
         void
         addItemWithRoleAndArea(core::SdlWidget* widget,
@@ -142,6 +157,9 @@ namespace sdl {
         adjustAreasVertically(const utils::Sizef& internalSize,
                               const std::vector<WidgetInfo>& widgetsInfo,
                               AreasInfo& areas);
+
+        core::SizePolicy
+        computeSizePolicyForAreas(const std::unordered_set<DockWidgetArea>& areas) const;
 
       private:
 
