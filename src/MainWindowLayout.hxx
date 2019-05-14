@@ -93,17 +93,17 @@ namespace sdl {
       const int index = getIndexAndCheck(item, WidgetRole::ToolBar);
 
       // Remove it using the dedicated handler.
-      removeItem(index);
+      removeItemFromIndex(index);
     }
 
     inline
     void
-    MainWindowLayout::removeItem(int item) {
+    MainWindowLayout::removeItemFromIndex(int item) {
       // We need to both remove the item using the base handler and also remove the
       // corresponding entry in the internal information map.
 
       // Remove the item using the base class handler.
-      core::Layout::removeItem(item);
+      core::Layout::removeItemFromIndex(item);
 
       // Erase the corresponding entry in the internal table.
       const std::size_t count = m_infos.erase(item);
@@ -135,6 +135,9 @@ namespace sdl {
           break;
         case DockWidgetArea::BottomArea:
           role = WidgetRole::BottomDockWidget;
+          break;
+        case DockWidgetArea::CentralArea:
+          role = WidgetRole::CentralWidget;
           break;
         default:
           error(
@@ -175,6 +178,61 @@ namespace sdl {
           role,
           area
         };
+      }
+    }
+
+    inline
+    utils::Sizef
+    MainWindowLayout::computeSizeOfAreas(const std::vector<core::Layout::WidgetInfo>& areas) const noexcept {
+      // Create a default size.
+      utils::Sizef achievedSize;
+
+      // Traverse the input information and append the size to the global achieved size.
+      for (unsigned index = 0u ; index < areas.size() ; ++index) {
+        // Increment the achieved size with the dimensions of the current box.
+        achievedSize.w() += areas[index].area.w();
+        achievedSize.h() += areas[index].area.h();
+      }
+
+      // Return the computed size.
+      return achievedSize;
+    }
+
+    inline
+    void
+    MainWindowLayout::consolidatePolicyFromItem(WidgetInfo& policy,
+                                                const WidgetInfo& item) noexcept
+    {
+      // Update minimum size only if it is larger than the current minimum.
+      if (item.min.w() > policy.min.w()) {
+        policy.min.w() = item.min.w();
+      }
+
+      if (item.min.h() > policy.min.h()) {
+        policy.min.h() = item.min.h();
+      }
+
+      // Update maximum size only if it is larger than the current maximum.
+      if (item.max.w() > policy.max.w()) {
+        policy.max.w() = item.max.w();
+      }
+
+      if (item.max.h() > policy.max.h()) {
+        policy.max.h() = item.max.h();
+      }
+
+      // Do not update size hint, we assume regular distribution during the
+      // process.
+
+      // Update the policy if it contains flag `expanding`: this allows widgets
+      // to expand if needed and does not prevent anything from shrinking because
+      // we do not provide any size hint.
+      if (item.policy.canExpandHorizontally()) {
+        policy.policy.setHorizontalPolicy(core::SizePolicy::Expanding);
+      }
+
+      if (item.policy.canExpandVertically()) {
+        policy.policy.setVerticalPolicy(core::SizePolicy::Expanding);
       }
     }
 

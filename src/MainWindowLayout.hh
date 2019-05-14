@@ -15,12 +15,13 @@ namespace sdl {
       public:
 
         enum class DockWidgetArea {
-          None       = 0,
-          LeftArea   = 1 << 0,
-          RightArea  = 1 << 1,
-          TopArea    = 1 << 2,
-          BottomArea = 1 << 3,
-          All        = 1 << 4
+          None        = 0,
+          LeftArea    = 1 << 0,
+          RightArea   = 1 << 1,
+          TopArea     = 1 << 2,
+          BottomArea  = 1 << 3,
+          CentralArea = 1 << 4,
+          All         = 1 << 5
         };
 
       public:
@@ -113,7 +114,7 @@ namespace sdl {
         updatePrivate(const utils::Boxf& window) override;
 
         void
-        removeItem(int item) override;
+        removeItemFromIndex(int item) override;
 
       private:
 
@@ -149,17 +150,26 @@ namespace sdl {
                          const WidgetRole& role);
 
         void
-        adjustAreasHorizontally(const utils::Sizef& internalSize,
+        adjustAreasHorizontally(const utils::Sizef& window,
                                 const std::vector<WidgetInfo>& widgetsInfo,
                                 AreasInfo& areas);
 
         void
-        adjustAreasVertically(const utils::Sizef& internalSize,
+        adjustAreasVertically(const utils::Sizef& window,
                               const std::vector<WidgetInfo>& widgetsInfo,
                               AreasInfo& areas);
 
-        core::SizePolicy
-        computeSizePolicyForAreas(const std::unordered_set<DockWidgetArea>& areas) const;
+        core::Layout::WidgetInfo
+        computeSizePolicyForAreas(const std::unordered_set<DockWidgetArea>& areas,
+                                  const std::vector<WidgetInfo>& widgetsInfo) const;
+
+        utils::Sizef
+        computeSizeOfAreas(const std::vector<core::Layout::WidgetInfo>& areas) const noexcept;
+
+        static
+        void
+        consolidatePolicyFromItem(WidgetInfo& policy,
+                                  const WidgetInfo& item) noexcept;
 
       private:
 

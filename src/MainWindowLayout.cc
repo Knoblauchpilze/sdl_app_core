@@ -72,7 +72,7 @@ namespace sdl {
       }
 
       // The input item is actually a dock widget we can remove it.
-      removeItem(id);
+      removeItemFromIndex(id);
     }
 
     void
@@ -284,7 +284,7 @@ namespace sdl {
         }
         else {
           // Remove the item we found.
-          removeItem(info->first);
+          removeItemFromIndex(info->first);
         }
       }
       while (stillWidgetWithRole);
@@ -336,8 +336,8 @@ namespace sdl {
     }
 
     void
-    MainWindowLayout::adjustAreasHorizontally(const utils::Sizef& /*internalSize*/,
-                                              const std::vector<WidgetInfo>& /*widgetsInfo*/,
+    MainWindowLayout::adjustAreasHorizontally(const utils::Sizef& window,
+                                              const std::vector<WidgetInfo>& widgetsInfo,
                                               AreasInfo& /*areas*/)
     {
       // The goal of this function is to perform an adjustment of the horizontal areas.
@@ -365,11 +365,11 @@ namespace sdl {
       // First, compute a global policy for each relevant area.
       dockAreas.clear();
       dockAreas.insert(DockWidgetArea::LeftArea);
-      core::SizePolicy leftPolicy = computeSizePolicyForAreas(dockAreas);
+      core::Layout::WidgetInfo leftPolicy = computeSizePolicyForAreas(dockAreas, widgetsInfo);
 
       dockAreas.clear();
-      dockAreas.insert(DockWidgetArea::LeftArea);
-      core::SizePolicy rightPolicy = computeSizePolicyForAreas(dockAreas);
+      dockAreas.insert(DockWidgetArea::RightArea);
+      core::Layout::WidgetInfo rightPolicy = computeSizePolicyForAreas(dockAreas, widgetsInfo);
 
       // Agregate a relevant area for the top and bottom area along with the central widget.
       // As these areas as all aligned horizontally, any space used by one of them will be
@@ -378,14 +378,171 @@ namespace sdl {
       // Even if the widgets spanning a particular area might not be able to use the full
       // extent of all the constraints, this will be used nonetheless. We can then proceed
       // to centering for example to try to make use of the constraints.
-      core::SizePolicy centralPolicy = computeSizePolicyForAreas(dockAreas);
+      dockAreas.clear();
+      dockAreas.insert(DockWidgetArea::TopArea);
+      dockAreas.insert(DockWidgetArea::CentralArea);
+      dockAreas.insert(DockWidgetArea::BottomArea);
+      core::Layout::WidgetInfo centralPolicy = computeSizePolicyForAreas(dockAreas, widgetsInfo);
 
+      // Once policies for each area are computed, we can start the optimization process.
+      // We basically try to allocate fairly the remaining space between each area at any point
+      // and proceed to several iteration to allocate the space that could not be allocated in
+      // the previous iteration.
+      // This allows for a simple iterative algorithm where at each step we try to divide the space
+      // equally and each area has the opportunity to grow by the same amount: if for some reasons
+      // the area cannot make use of the space, we will redistribute it in the next iteration to
+      // other areas and see what they can do with it.
+      std::unordered_set<unsigned> areasToAdjust;
+      std::vector<core::Layout::WidgetInfo> areasData;
+
+      // In a first approach all the widgets can be adjusted.
+      for (unsigned index = 0u ; index < widgetsInfo.size() ; ++index) {
+        areasToAdjust.insert(index);
+      }
+      areasData.push_back(leftPolicy);
+      areasData.push_back(centralPolicy);
+      areasData.push_back(rightPolicy);
+
+      // Also assume that we didn't use up all the available space.
+      float spaceToUse = window.w();
+      bool allSpaceUsed = false;
+
+      float achievedWidth = 0.0f;
+
+      // Loop until no more widgets can be used to adjust the space needed or all the
+      // available space has been used up.
+      // TODO: Handle cases where the widgets are too large to fit into the widget ?
+      while (!areasToAdjust.empty() && !allSpaceUsed) {
+
+        // Compute the amount of space we will try to allocate to each area still
+        // available for adjustment.
+        // The `defaultWidth` is computed by dividing equally the remaining `spaceToUse`
+        // among all the available areas.
+        const float defaultWidth = allocateFairly(spaceToUse, areasToAdjust.size());
+
+        log(std::string("Default width is ") + std::to_string(defaultWidth), utils::Level::Info);
+
+        // Loop on all the areas that can still be used to adjust the space used by
+        // this layout and perform the size adjustements.
+        for (std::unordered_set<unsigned>::const_iterator area = areasToAdjust.cbegin() ;
+             area != areasToAdjust.cend() ;
+             ++area)
+        {
+          // Try to assign the `defaultWidth` to this area: we use a dedicated handler
+          // to handle the case where the provided space is too large/small/not suited
+          // to the area for some reasons, in which case the handler will provide a
+          // size which can be applied to the widget.
+          float width = computeWidthFromPolicy(areasData[*area].area, defaultWidth, areasData[*area]);
+
+          // We now need to distribute this width to the current `area`: in order to do
+          // so, let's compute the size increase provided for this area by the current
+          // iteration: this is the size which belongs to the area.
+          areasData[*area].area.w() += (width - areasData[*area].area.w());
+
+          log(std::string("Area ") + std::to_string(*area) + " reach size " + areasData[*area].area.toString());
+        }
+
+        // We have tried to apply the `defaultWidth` to all the areas. This might have fail
+        // in some cases (for example due to a `Fixed` size policy for an area) and thus
+        // we might end up with a total size for all the areas different from the one desired
+        // and expected when the `defaultWidth` has been computed.
+        // In order to fix things, we must compute the deviation from the expected size and
+        // try to allocate the remaining space to other areas (or remove the missing space
+        // from areas which can give up some).
+
+        // Compute the total size of the bounding boxes.
+        achievedWidth = computeSizeOfAreas(areasData).w();
+
+        const utils::Sizef achievedSize(achievedWidth, window.h());
+
+        // Check whether all the space have been used.
+        if (achievedSize.fuzzyEqual(window, 1.0f)) {
+          // We used up all the available space, no more adjustments to perform.
+          allSpaceUsed = true;
+          continue;
+        }
+
+
+        // All space has not been used. Update the relevant `spaceToUse` in order to perform
+        // the next iteration.
+        spaceToUse = computeSpaceAdjustmentNeeded(achievedSize, window).w();
+
+        // Determine the policy to apply based on the achieved size.
+        const core::SizePolicy action = shrinkOrGrow(window, achievedSize, 0.5f);
+
+        log(std::string("Desired ") + window.toString() + ", achieved: " + std::to_string(achievedWidth) + ", space: " + std::to_string(spaceToUse), utils::Level::Info);
+
+        // We now know what should be done to make the `achievedSize` closer to `desiredSize`.
+        // Based on the `policy` provided by the base class method, we can now determine which
+        // area should be used to perform the needed adjustments.
+        std::unordered_set<unsigned> areasToUse;
+        for (unsigned index = 0u ; index < widgetsInfo.size() ; ++index) {
+          // Check whether this area can be used to grow/shrink.
+          std::pair<bool, bool> usable = canBeUsedTo(std::string("Area") + std::to_string(index), areasData[index], areasData[index].area, action);
+
+          // Only care for the horizontal direction, vertical direction will be handled later.
+          if (usable.first) {
+            std::cout << "[LAY] Area " << index << " can be used to "
+                      << std::to_string(static_cast<int>(action.getHorizontalPolicy()))
+                      << " and "
+                      << std::to_string(static_cast<int>(action.getVerticalPolicy()))
+                      << std::endl;
+            areasToUse.insert(index);
+          }
+        }
+
+        // There's one more thing to determine: the `Expanding` flag on any area's policy should
+        // mark it as priority over other areas. For example if two areas can grow, one having
+        // the flag `Grow` and the other the `Expand` flag, we should make priority for the one
+        // with `Expanding` flag.
+        // Areas with `Grow` flag will only grow when all `Expanding` areas have been maxed out.
+        // Of course this does not apply in case areas should be shrunk: all areas are treated
+        // equally in this case and there's not preferred areas to shrink.
+        if (action.canExtendHorizontally()) {
+          // Select only `Expanding` widget if any.
+          std::unordered_set<unsigned> areasToExpand;
+
+          for (std::unordered_set<unsigned>::const_iterator area = areasToUse.cbegin() ;
+               area != areasToUse.cend() ;
+               ++area)
+          {
+            // Check whether this area can expand.
+            if (areasData[*area].policy.canExpandHorizontally()) {
+              std::cout << "[LAY] Area " << *area << " can be expanded horizontally" << std::endl;
+              areasToExpand.insert(*area);
+            }
+          }
+
+          std::cout << "[LAY] Saved " << areasToExpand.size() << " which can expand compared to "
+                    << areasToUse.size() << " which can extend"
+                    << std::endl;
+          // Check whether we could select at least one area to expand: if this is not the
+          // case we can proceed to extend the areas with only a `Grow` flag.
+          if (!areasToExpand.empty()) {
+            areasToUse.swap(areasToExpand);
+          }
+        }
+
+
+        // Use the computed list of areas to perform the next action in order
+        // to reach the desired space.
+        areasToAdjust.swap(areasToUse);
+      }
+
+      if (!allSpaceUsed) {
+        log(
+          std::string("Could only achieve width of ") + std::to_string(achievedWidth) +
+          " but available space is " + window.toString(),
+          utils::Level::Error
+        );
+      }
+      
       // TODO: Implementation.
       log("Should perform horizontal adjustment");
     }
 
     void
-    MainWindowLayout::adjustAreasVertically(const utils::Sizef& /*internalSize*/,
+    MainWindowLayout::adjustAreasVertically(const utils::Sizef& /*window*/,
                                             const std::vector<WidgetInfo>& /*widgetsInfo*/,
                                             AreasInfo& /*areas*/)
     {
@@ -393,9 +550,50 @@ namespace sdl {
       log("Should perform vertical adjustment");
     }
 
-    core::SizePolicy
-    MainWindowLayout::computeSizePolicyForArea(const DockWidgetArea& area) const {
+    core::Layout::WidgetInfo
+    MainWindowLayout::computeSizePolicyForAreas(const std::unordered_set<DockWidgetArea>& areas,
+                                                const std::vector<WidgetInfo>& widgetsInfo) const
+    {
+      // Create a default policy.
+      core::Layout::WidgetInfo policy;
 
+      // Traverse the internal set of widgets to determine the global policy.
+      for (InfosMap::const_iterator info = m_infos.cbegin() ;
+           info != m_infos.cend() ;
+           ++info)
+      {
+        // Retrieve the area associated to the current widget.
+        const ItemInfo item = info->second;
+
+        // Check whether the widget belongs to the input set of areas: if this is not the
+        // case we do not consider it for the determination of the global policy.
+        if (areas.count(item.area) == 0) {
+          // No need to consider this item.
+          continue;
+        }
+
+        // We now know that the widget does belong to the input areas: we shall use it for
+        // the determination of the global policy.
+        // In order to do that, we need to update the dimensions which might be provided
+        // by the widget and also the policy.
+        // We will select the less restrictive policies for any area in terms of maximum
+        // size and the most restrictive policies for minimum size.
+        // To do all that, we first need to retrieve the policy of the widget associated to
+        // the information we are processing.
+
+        // Retrieve the information for this widget.
+        const WidgetInfo& wigInfo = widgetsInfo[info->first];
+
+        // First adjust the size information for the global policy. We update both the
+        // maximum and minimum size if they are larger respectively than the current
+        // maximum and minimum size. This guarantees that we will expand as much as possible
+        // and shrink as little as needed.
+        // In order to keep things simple we will use the dedicated handler from this class.
+        consolidatePolicyFromItem(policy, wigInfo);
+      }
+
+      // Return the computed policy for the input areas.
+      return policy;
     }
 
   }
