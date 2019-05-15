@@ -180,6 +180,28 @@ namespace sdl {
                                    const float& width,
                                    AreasInfo& areas) const;
 
+        void
+        assignOrCreateHeightForArea(const DockWidgetArea& area,
+                                    const float& height,
+                                    AreasInfo& areas) const;
+
+        void
+        assignAbscissaForArea(const DockWidgetArea& area,
+                              const float& x,
+                              AreasInfo& areas) const;
+
+        void
+        assignOrdinateForArea(const DockWidgetArea& area,
+                              const float& y,
+                              AreasInfo& areas) const;
+
+        utils::Boxf
+        getLocationOfArea(const DockWidgetArea& area,
+                          AreasInfo& areas) const;
+
+        void
+        consolidateAreasDimensions(AreasInfo& areas) const;
+
       private:
 
         utils::Boxf m_area;

@@ -255,6 +255,112 @@ namespace sdl {
       }
     }
 
+    inline
+    void
+    MainWindowLayout::assignOrCreateWidthForArea(const DockWidgetArea& area,
+                                                 const float& width,
+                                                 AreasInfo& areas) const
+    {
+      // Check whether the input `area` already exist in the input information array.
+      AreasInfo::iterator boxToUpdate = areas.find(area);
+
+      if (boxToUpdate == areas.cend()) {
+        // This area does not exist yet, register it.
+        areas[area] = utils::Boxf(
+          0.0f,
+          0.0f,
+          width,
+          0.0f
+        );
+      }
+      else {
+        // The area already exists, replace the width value.
+        boxToUpdate->second.w() = width;
+      }
+    }
+
+    inline
+    void
+    MainWindowLayout::assignOrCreateHeightForArea(const DockWidgetArea& area,
+                                                  const float& height,
+                                                 AreasInfo& areas) const
+    {
+      // Check whether the input `area` already exist in the input information array.
+      AreasInfo::iterator boxToUpdate = areas.find(area);
+
+      if (boxToUpdate == areas.cend()) {
+        // This area does not exist yet, register it.
+        areas[area] = utils::Boxf(
+          0.0f,
+          0.0f,
+          0.0f,
+          height
+        );
+      }
+      else {
+        // The area already exists, replace the height value.
+        boxToUpdate->second.h() = height;
+      }
+    }
+
+    inline
+    void
+    MainWindowLayout::assignAbscissaForArea(const DockWidgetArea& area,
+                                            const float& x,
+                                            AreasInfo& areas) const
+    {
+      // Check whether the input `area` already exist in the input information array.
+      AreasInfo::iterator boxToUpdate = areas.find(area);
+      
+      if (boxToUpdate == areas.cend()) {
+        error(
+          std::string("Could not update abscissa for area ") + getNameFromArea(area),
+          std::string("No such area available")
+        );
+      }
+
+      // Update the abscissa with the provided argument.
+      boxToUpdate->second.x() = x;
+    }
+
+    inline
+    void
+    MainWindowLayout::assignOrdinateForArea(const DockWidgetArea& area,
+                                            const float& y,
+                                            AreasInfo& areas) const
+    {
+      // Check whether the input `area` already exist in the input information array.
+      AreasInfo::iterator boxToUpdate = areas.find(area);
+      
+      if (boxToUpdate == areas.cend()) {
+        error(
+          std::string("Could not update ordinate for area ") + getNameFromArea(area),
+          std::string("No such area available")
+        );
+      }
+
+      // Update the ordinate with the provided argument.
+      boxToUpdate->second.y() = y;
+    }
+
+    inline
+    utils::Boxf
+    MainWindowLayout::getLocationOfArea(const DockWidgetArea& area,
+                                        AreasInfo& areas) const
+    {
+      // Check whether the input `area` already exist in the input information array.
+      AreasInfo::iterator boxToUpdate = areas.find(area);
+      
+      if (boxToUpdate == areas.cend()) {
+        error(
+          std::string("Could not retrieve location for area ") + getNameFromArea(area),
+          std::string("No such area available")
+        );
+      }
+
+      return boxToUpdate->second;
+    }
+
   }
 }
 

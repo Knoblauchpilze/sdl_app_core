@@ -146,6 +146,9 @@ namespace sdl {
       // Perform a vertical adjustment.
       adjustAreasVertically(internalSize, widgetsInfo, areas);
 
+      // Consolidate areas dimensions.
+      consolidateAreasDimensions(areas);
+
       // Compute bounding boxes from the result of the optimization.
       std::vector<utils::Boxf> outputBoxes(getItemsCount());
 
@@ -182,13 +185,11 @@ namespace sdl {
           );
         }
 
+        log("Area is now " + area->second.toString(), utils::Level::Warning);
+
         // Assign position from this area's information.
         float xWidget = area->second.x();
         float yWidget = area->second.y();
-
-        // Center the position (because `Boxf` are centered).
-        xWidget += (area->second.w() / 2.0f);
-        yWidget += (area->second.h() / 2.0f);
 
         // Handle the centering of the widget in case it is smaller than the
         // desired width or height.
@@ -200,6 +201,13 @@ namespace sdl {
           area->second.toSize(),
           widgetsInfo[index]
         );
+
+        // Center the position (because `Boxf` are centered).
+        // TODO: Keep this ?
+        // xWidget += ((area->second.w() - achievableSize.w()) / 2.0f);
+        // yWidget += ((area->second.h() - achievableSize.h()) / 2.0f);
+        xWidget += (area->second.w() / 2.0f);
+        yWidget += (area->second.h() / 2.0f);
 
         // Handle centering anyway: if the achievable size is identical to the
         // desired size the centering will not modify the position of the widget.
@@ -632,26 +640,40 @@ namespace sdl {
     }
 
     void
-    MainWindowLayout::assignOrCreateWidthForArea(const DockWidgetArea& area,
-                                                 const float& width,
-                                                 AreasInfo& areas) const
-    {
-      // Check whether the input `ærea` already exist in the input information array.
-      AreasInfo::iterator boxToUpdate = areas.find(area);
+    MainWindowLayout::consolidateAreasDimensions(AreasInfo& areas) const {
+      // Here we want to update the position of each area based on the dimensions
+      // of their relative position. Upon entering this function, each area has
+      // valid dimensions but no position yet.
+      // We need to correct this fact so that we obtain a nice layout based on the
+      // expected position of each area.
+      // For example the central area should be offset so that it lands on the right
+      // of the left area and on the left of the right area.
+      // Basically we will update each individual area based on the position of the
+      // layout.
 
-      if (boxToUpdate == areas.cend()) {
-        // This area does not exist yet, register it.
-        areas[area] = utils::Boxf(
-          0.0f,
-          0.0f,
-          width,
-          0.0f
-        );
-      }
-      else {
-        // The area already exists, replace the width value.
-        boxToUpdate->second.w() = width;
-      }
+      // First, update the left area position: its position is only determined by
+      // the margins of this layout.
+      assignAbscissaForArea(DockWidgetArea::LeftArea, getMargin().w(), areas);
+      assignOrdinateForArea(DockWidgetArea::LeftArea, getMargin().h(), areas);
+
+      // Top, central and bottom area are on the right of the left area.
+      // Also each one is stacked on top of each other.
+      const float offsetForCentralAreas = getMargin().w() + getLocationOfArea(DockWidgetArea::LeftArea, areas).w();
+      assignAbscissaForArea(DockWidgetArea::TopArea, offsetForCentralAreas, areas);
+      assignAbscissaForArea(DockWidgetArea::CentralArea, offsetForCentralAreas, areas);
+      assignAbscissaForArea(DockWidgetArea::BottomArea, offsetForCentralAreas, areas);
+
+      float offset = getMargin().h();
+      assignOrdinateForArea(DockWidgetArea::TopArea, offset, areas);
+      offset += getLocationOfArea(DockWidgetArea::TopArea, areas).h();
+      assignOrdinateForArea(DockWidgetArea::CentralArea, offset, areas);
+      offset += getLocationOfArea(DockWidgetArea::CentralArea, areas).h();
+      assignOrdinateForArea(DockWidgetArea::BottomArea, offset, areas);
+
+      // Right area is on the right of the area.
+      const float offsetForRightArea = offsetForCentralAreas + getLocationOfArea(DockWidgetArea::TopArea, areas).w();
+      assignAbscissaForArea(DockWidgetArea::RightArea, offsetForRightArea, areas);
+      assignOrdinateForArea(DockWidgetArea::RightArea, getMargin().h(), areas);
     }
 
   }
