@@ -49,7 +49,7 @@ namespace sdl {
       widget->setEngine(m_engine);
 
       // Add the widget to the internal layout if any.
-      m_layout->addItem(widget);
+      m_layout->setCentralWidget(widget);
 
       // Add this widget to the internal table.
       m_widgets[widget->getName()] = widget;
