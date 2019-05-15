@@ -176,7 +176,7 @@ namespace sdl {
         const AreasInfo::const_iterator area = areas.find(info->second.area);
         if (area == areas.cend()) {
           error(
-            std::string("Could not retrieve area position for \"" + std::to_string(static_cast<int>(info->second.area)) + "\", widget ") +
+            std::string("Could not retrieve area position for \"" + getNameFromArea(info->second.area) + "\", widget ") +
             getWidgetAt(index)->getName() + " has invalid position",
             std::string("Invalid area information")
           );
@@ -551,15 +551,12 @@ namespace sdl {
       assignOrCreateWidthForArea(DockWidgetArea::LeftArea, areasData[0u].area.w(), areas);
 
       // Central, top and bottom area are shared.
-      assignOrCreateWidthForArea(DockWidgetArea::TopArea, areasData[1].area.w(), areas);
-      assignOrCreateWidthForArea(DockWidgetArea::CentralArea, areasData[1].area.w(), areas);
-      assignOrCreateWidthForArea(DockWidgetArea::BottomArea, areasData[1].area.w(), areas);
+      assignOrCreateWidthForArea(DockWidgetArea::TopArea, areasData[1u].area.w(), areas);
+      assignOrCreateWidthForArea(DockWidgetArea::CentralArea, areasData[1u].area.w(), areas);
+      assignOrCreateWidthForArea(DockWidgetArea::BottomArea, areasData[1u].area.w(), areas);
 
       // And finally right area.
       assignOrCreateWidthForArea(DockWidgetArea::RightArea, areasData[2u].area.w(), areas);
-
-      // TODO: Implementation.
-      log("Should perform horizontal adjustment");
     }
 
     void
@@ -640,7 +637,7 @@ namespace sdl {
                                                  AreasInfo& areas) const
     {
       // Check whether the input `ærea` already exist in the input information array.
-      AreasInfo::iterator boxToUpdate = areas.find(DockWidgetArea::LeftArea);
+      AreasInfo::iterator boxToUpdate = areas.find(area);
 
       if (boxToUpdate == areas.cend()) {
         // This area does not exist yet, register it.
