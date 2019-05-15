@@ -128,6 +128,10 @@ namespace sdl {
         bool
         isValidDockWidgetRole(const WidgetRole& role) noexcept;
 
+        static
+        std::string
+        getNameFromArea(const DockWidgetArea& area) noexcept;
+
         void
         addItemWithRoleAndArea(core::SdlWidget* widget,
                                const WidgetRole& role,
@@ -170,6 +174,11 @@ namespace sdl {
         void
         consolidatePolicyFromItem(WidgetInfo& policy,
                                   const WidgetInfo& item) noexcept;
+
+        void
+        assignOrCreateWidthForArea(const DockWidgetArea& area,
+                                   const float& width,
+                                   AreasInfo& areas) const;
 
       private:
 

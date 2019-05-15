@@ -60,7 +60,7 @@ namespace sdl {
       removeAll(WidgetRole::CentralWidget);
 
       // Use internal handler.
-      addItemWithRoleAndArea(item, WidgetRole::CentralWidget);
+      addItemWithRoleAndArea(item, WidgetRole::CentralWidget, DockWidgetArea::CentralArea);
     }
 
     inline
@@ -159,6 +159,25 @@ namespace sdl {
         role == WidgetRole::TopDockWidget ||
         role == WidgetRole::BottomDockWidget
       ;
+    }
+
+    inline
+    std::string
+    MainWindowLayout::getNameFromArea(const DockWidgetArea& area) noexcept {
+      switch (area) {
+        case DockWidgetArea::LeftArea:
+          return "left_area";
+        case DockWidgetArea::RightArea:
+          return "right_area";
+        case DockWidgetArea::TopArea:
+          return "top_area";
+        case DockWidgetArea::BottomArea:
+          return "bottom_area";
+        case DockWidgetArea::CentralArea:
+          return "central_area";
+        default:
+          return "unknow_area";
+      }
     }
 
     inline

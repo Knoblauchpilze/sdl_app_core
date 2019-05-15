@@ -1,6 +1,8 @@
 
 # include "MainWindowLayout.hh"
 
+# include <iostream>
+
 namespace sdl {
   namespace app {
 
@@ -22,6 +24,8 @@ namespace sdl {
     {
       // Assign the percentages from the input central widget size.
       assignPercentagesFromCentralWidget(centralWidgetSize);
+
+      setService("main_layout");
     }
 
     MainWindowLayout::~MainWindowLayout() {}
@@ -338,7 +342,7 @@ namespace sdl {
     void
     MainWindowLayout::adjustAreasHorizontally(const utils::Sizef& window,
                                               const std::vector<WidgetInfo>& widgetsInfo,
-                                              AreasInfo& /*areas*/)
+                                              AreasInfo& areas)
     {
       // The goal of this function is to perform an adjustment of the horizontal areas.
       // Relevant areas which can impact the horizontal adjustement are the left dock
@@ -396,7 +400,7 @@ namespace sdl {
       std::vector<core::Layout::WidgetInfo> areasData;
 
       // In a first approach all the widgets can be adjusted.
-      for (unsigned index = 0u ; index < widgetsInfo.size() ; ++index) {
+      for (unsigned index = 0u ; index < 3u ; ++index) {
         areasToAdjust.insert(index);
       }
       areasData.push_back(leftPolicy);
@@ -476,7 +480,7 @@ namespace sdl {
         // Based on the `policy` provided by the base class method, we can now determine which
         // area should be used to perform the needed adjustments.
         std::unordered_set<unsigned> areasToUse;
-        for (unsigned index = 0u ; index < widgetsInfo.size() ; ++index) {
+        for (unsigned index = 0u ; index < 3u ; ++index) {
           // Check whether this area can be used to grow/shrink.
           std::pair<bool, bool> usable = canBeUsedTo(std::string("Area") + std::to_string(index), areasData[index], areasData[index].area, action);
 
@@ -529,6 +533,7 @@ namespace sdl {
         areasToAdjust.swap(areasToUse);
       }
 
+      // Warn the user in case we could not use all the space.
       if (!allSpaceUsed) {
         log(
           std::string("Could only achieve width of ") + std::to_string(achievedWidth) +
@@ -536,7 +541,23 @@ namespace sdl {
           utils::Level::Error
         );
       }
-      
+
+      // Update the input argument `areas`. This attribute contains a box for each dock area
+      // and should be updated with the content of the internal `areasData` array.
+      // We know by construction the position of each area so we can just perform the update
+      // for each relevant area.
+
+      // First left area.
+      assignOrCreateWidthForArea(DockWidgetArea::LeftArea, areasData[0u].area.w(), areas);
+
+      // Central, top and bottom area are shared.
+      assignOrCreateWidthForArea(DockWidgetArea::TopArea, areasData[1].area.w(), areas);
+      assignOrCreateWidthForArea(DockWidgetArea::CentralArea, areasData[1].area.w(), areas);
+      assignOrCreateWidthForArea(DockWidgetArea::BottomArea, areasData[1].area.w(), areas);
+
+      // And finally right area.
+      assignOrCreateWidthForArea(DockWidgetArea::RightArea, areasData[2u].area.w(), areas);
+
       // TODO: Implementation.
       log("Should perform horizontal adjustment");
     }
@@ -557,6 +578,15 @@ namespace sdl {
       // Create a default policy.
       core::Layout::WidgetInfo policy;
 
+      std::cout << "[CON] Computing policy for areas: ";
+      for (std::unordered_set<DockWidgetArea>::const_iterator area = areas.cbegin() ;
+           area != areas.cend() ;
+           ++area)
+      {
+        std::cout << getNameFromArea(*area) << " ";
+      }
+      std::cout << " out of " << m_infos.size() << " info" << std::endl;
+
       // Traverse the internal set of widgets to determine the global policy.
       for (InfosMap::const_iterator info = m_infos.cbegin() ;
            info != m_infos.cend() ;
@@ -568,9 +598,12 @@ namespace sdl {
         // Check whether the widget belongs to the input set of areas: if this is not the
         // case we do not consider it for the determination of the global policy.
         if (areas.count(item.area) == 0) {
+          std::cout << "[CON] Widget belongs to area " << getNameFromArea(item.area) << ", no need to consider it" << std::endl;
           // No need to consider this item.
           continue;
         }
+
+        std::cout << "[CON] Considering widget belonging to correct area " << getNameFromArea(item.area) << std::endl;
 
         // We now know that the widget does belong to the input areas: we shall use it for
         // the determination of the global policy.
@@ -590,10 +623,38 @@ namespace sdl {
         // and shrink as little as needed.
         // In order to keep things simple we will use the dedicated handler from this class.
         consolidatePolicyFromItem(policy, wigInfo);
+
+        std::cout << "[CON] Policy is: min=" << policy.min.toString()
+                  << ", hint=" << policy.hint.toString()
+                  << ", max=" << policy.max.toString()
+                  << std::endl;
       }
 
       // Return the computed policy for the input areas.
       return policy;
+    }
+
+    void
+    MainWindowLayout::assignOrCreateWidthForArea(const DockWidgetArea& area,
+                                                 const float& width,
+                                                 AreasInfo& areas) const
+    {
+      // Check whether the input `ærea` already exist in the input information array.
+      AreasInfo::iterator boxToUpdate = areas.find(DockWidgetArea::LeftArea);
+
+      if (boxToUpdate == areas.cend()) {
+        // This area does not exist yet, register it.
+        areas[area] = utils::Boxf(
+          0.0f,
+          0.0f,
+          width,
+          0.0f
+        );
+      }
+      else {
+        // The area already exists, replace the width value.
+        boxToUpdate->second.w() = width;
+      }
     }
 
   }
