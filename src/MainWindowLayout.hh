@@ -108,7 +108,7 @@ namespace sdl {
         };
 
         using InfosMap = std::unordered_map<int, ItemInfo>;
-        using AreasInfo = std::unordered_map<DockWidgetArea, utils::Boxf>;
+        using RolesInfo = std::unordered_map<WidgetRole, utils::Boxf>;
 
         void
         updatePrivate(const utils::Boxf& window) override;
@@ -132,6 +132,10 @@ namespace sdl {
         std::string
         getNameFromArea(const DockWidgetArea& area) noexcept;
 
+        static
+        std::string
+        getNameFromRole(const WidgetRole& role) noexcept;
+
         void
         addItemWithRoleAndArea(core::SdlWidget* widget,
                                const WidgetRole& role,
@@ -154,21 +158,21 @@ namespace sdl {
                          const WidgetRole& role);
 
         void
-        adjustAreasHorizontally(const utils::Sizef& window,
+        adjustRolesHorizontally(const utils::Sizef& window,
                                 const std::vector<WidgetInfo>& widgetsInfo,
-                                AreasInfo& areas);
+                                RolesInfo& roles);
 
         void
-        adjustAreasVertically(const utils::Sizef& window,
+        adjustRolesVertically(const utils::Sizef& window,
                               const std::vector<WidgetInfo>& widgetsInfo,
-                              AreasInfo& areas);
+                              RolesInfo& roles);
 
         core::Layout::WidgetInfo
-        computeSizePolicyForAreas(const std::unordered_set<DockWidgetArea>& areas,
+        computeSizePolicyForRoles(const std::unordered_set<WidgetRole>& roles,
                                   const std::vector<WidgetInfo>& widgetsInfo) const;
 
         utils::Sizef
-        computeSizeOfAreas(const std::vector<core::Layout::WidgetInfo>& areas) const noexcept;
+        computeSizeOfRoles(const std::vector<core::Layout::WidgetInfo>& roles) const noexcept;
 
         static
         void
@@ -176,31 +180,31 @@ namespace sdl {
                                   const WidgetInfo& item) noexcept;
 
         void
-        assignOrCreateWidthForArea(const DockWidgetArea& area,
+        assignOrCreateWidthForRole(const WidgetRole& role,
                                    const float& width,
-                                   AreasInfo& areas) const;
+                                   RolesInfo& roles) const;
 
         void
-        assignOrCreateHeightForArea(const DockWidgetArea& area,
+        assignOrCreateHeightForRole(const WidgetRole& role,
                                     const float& height,
-                                    AreasInfo& areas) const;
+                                    RolesInfo& roles) const;
 
         void
-        assignAbscissaForArea(const DockWidgetArea& area,
+        assignAbscissaForRole(const WidgetRole& role,
                               const float& x,
-                              AreasInfo& areas) const;
+                              RolesInfo& roles) const;
 
         void
-        assignOrdinateForArea(const DockWidgetArea& area,
+        assignOrdinateForRole(const WidgetRole& role,
                               const float& y,
-                              AreasInfo& areas) const;
+                              RolesInfo& roles) const;
 
         utils::Boxf
-        getLocationOfArea(const DockWidgetArea& area,
-                          AreasInfo& areas) const;
+        getLocationOfRole(const WidgetRole& role,
+                          RolesInfo& roles) const;
 
         void
-        consolidateAreasDimensions(AreasInfo& areas) const;
+        consolidateRolesDimensions(RolesInfo& roles) const;
 
       private:
 

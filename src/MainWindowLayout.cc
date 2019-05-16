@@ -9,7 +9,7 @@ namespace sdl {
     MainWindowLayout::MainWindowLayout(const utils::Boxf& area,
                                        const float& margin,
                                        const utils::Sizef& centralWidgetSize):
-      core::Layout(nullptr, margin, true),
+      core::Layout(nullptr, margin, false),
       m_area(area),
       m_infos(),
 
@@ -136,18 +136,17 @@ namespace sdl {
       // requesting constantly information or setting information multiple times.
       std::vector<WidgetInfo> widgetsInfo = computeWidgetsInfo();
 
-      // The goal is to provide a position for each of the dock widget area
-      // in this layout.
-      AreasInfo areas;
+      // The goal is to provide a position for each of the area in this layout.
+      RolesInfo roles;
 
       // Perform an horizontal adjustment.
-      adjustAreasHorizontally(internalSize, widgetsInfo, areas);
+      adjustRolesHorizontally(internalSize, widgetsInfo, roles);
 
       // Perform a vertical adjustment.
-      adjustAreasVertically(internalSize, widgetsInfo, areas);
+      adjustRolesVertically(internalSize, widgetsInfo, roles);
 
-      // Consolidate areas dimensions.
-      consolidateAreasDimensions(areas);
+      // Consolidate roles dimensions.
+      consolidateRolesDimensions(roles);
 
       // Compute bounding boxes from the result of the optimization.
       std::vector<utils::Boxf> outputBoxes(getItemsCount());
@@ -175,39 +174,49 @@ namespace sdl {
           );
         }
 
-        // Retrieve the area's position from the adjustments we made if needed.
-        const AreasInfo::const_iterator area = areas.find(info->second.area);
-        if (area == areas.cend()) {
+        // Retrieve the role's position from the adjustments we made.
+        const RolesInfo::const_iterator role = roles.find(info->second.role);
+        if (role == roles.cend()) {
           error(
-            std::string("Could not retrieve area position for \"" + getNameFromArea(info->second.area) + "\", widget ") +
+            std::string("Could not retrieve role position for \"" + getNameFromRole(info->second.role) + "\", widget ") +
             getWidgetAt(index)->getName() + " has invalid position",
-            std::string("Invalid area information")
+            std::string("Invalid role information")
           );
         }
 
-        log("Area is now " + area->second.toString(), utils::Level::Warning);
+        log("Area is now " + role->second.toString(), utils::Level::Warning);
 
-        // Assign position from this area's information.
-        float xWidget = area->second.x();
-        float yWidget = area->second.y();
+        // Assign position first by using the global offset of the input `window`.
+        float xWidget = (window.x() - window.w() / 2.0f);
+        float yWidget = (window.y() - window.h() / 2.0f);
+
+        // Assign position from this role's information: this accounts for the offset
+        // of the role inside the texture representing this layout.
+        xWidget += role->second.x();
+        yWidget += role->second.y();
 
         // Handle the centering of the widget in case it is smaller than the
         // desired width or height.
-        // To do so, compute the size the widget _should_ have based on its
-        // area and try to apply it to the widget. If the provided is different
-        // from the provided size we handle centering.
+        // Basically we are using a centered representation for the bounding
+        // boxes, so we should add the following expression to the position
+        // of the box:
+        //
+        // xWidget += role->second.w() / 2.0f
+        // yWidget += role->second.h() / 2.0f
+        //
+        // This will guarantee that the widget is in the middle of the area
+        // assigned to it no matter its real size computed with the following
+        // function (i.e. `computeSizeFromPolicy`).
         utils::Sizef achievableSize = computeSizeFromPolicy(
           outputBoxes[index],
-          area->second.toSize(),
+          role->second.toSize(),
           widgetsInfo[index]
         );
 
-        // Center the position (because `Boxf` are centered).
-        // TODO: Keep this ?
-        // xWidget += ((area->second.w() - achievableSize.w()) / 2.0f);
-        // yWidget += ((area->second.h() - achievableSize.h()) / 2.0f);
-        xWidget += (area->second.w() / 2.0f);
-        yWidget += (area->second.h() / 2.0f);
+        // Center the position (because `Boxf` is a centered representation of
+        // a bounding box).
+        xWidget += (role->second.w() / 2.0f);
+        yWidget += (role->second.h() / 2.0f);
 
         // Handle centering anyway: if the achievable size is identical to the
         // desired size the centering will not modify the position of the widget.
@@ -221,8 +230,9 @@ namespace sdl {
         );
       }
 
-      // Assign rendering areas using the base handler.
-      assignRenderingAreas(outputBoxes, window);
+      // Assign rendering areas using the base handler without converting the
+      // positions as this layout handles position in the application itself.
+      assignRenderingAreas(outputBoxes, window, false);
     }
 
     void
@@ -348,9 +358,9 @@ namespace sdl {
     }
 
     void
-    MainWindowLayout::adjustAreasHorizontally(const utils::Sizef& window,
+    MainWindowLayout::adjustRolesHorizontally(const utils::Sizef& window,
                                               const std::vector<WidgetInfo>& widgetsInfo,
-                                              AreasInfo& areas)
+                                              RolesInfo& roles)
     {
       // The goal of this function is to perform an adjustment of the horizontal areas.
       // Relevant areas which can impact the horizontal adjustement are the left dock
@@ -370,18 +380,18 @@ namespace sdl {
       // to use additional space not used by an area if another area can take it. In
       // general it guarantees a better repartition of the space between areas.
       //
-      // Once we reached a stable state, we can update the input `areas` array with
+      // Once we reached a stable state, we can update the input `roles` array with
       // the width of each column.
-      std::unordered_set<DockWidgetArea> dockAreas;
+      std::unordered_set<WidgetRole> dockRoles;
 
       // First, compute a global policy for each relevant area.
-      dockAreas.clear();
-      dockAreas.insert(DockWidgetArea::LeftArea);
-      core::Layout::WidgetInfo leftPolicy = computeSizePolicyForAreas(dockAreas, widgetsInfo);
+      dockRoles.clear();
+      dockRoles.insert(WidgetRole::LeftDockWidget);
+      core::Layout::WidgetInfo leftPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
 
-      dockAreas.clear();
-      dockAreas.insert(DockWidgetArea::RightArea);
-      core::Layout::WidgetInfo rightPolicy = computeSizePolicyForAreas(dockAreas, widgetsInfo);
+      dockRoles.clear();
+      dockRoles.insert(WidgetRole::RightDockWidget);
+      core::Layout::WidgetInfo rightPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
 
       // Agregate a relevant area for the top and bottom area along with the central widget.
       // As these areas as all aligned horizontally, any space used by one of them will be
@@ -390,11 +400,11 @@ namespace sdl {
       // Even if the widgets spanning a particular area might not be able to use the full
       // extent of all the constraints, this will be used nonetheless. We can then proceed
       // to centering for example to try to make use of the constraints.
-      dockAreas.clear();
-      dockAreas.insert(DockWidgetArea::TopArea);
-      dockAreas.insert(DockWidgetArea::CentralArea);
-      dockAreas.insert(DockWidgetArea::BottomArea);
-      core::Layout::WidgetInfo centralPolicy = computeSizePolicyForAreas(dockAreas, widgetsInfo);
+      dockRoles.clear();
+      dockRoles.insert(WidgetRole::TopDockWidget);
+      dockRoles.insert(WidgetRole::CentralWidget);
+      dockRoles.insert(WidgetRole::BottomDockWidget);
+      core::Layout::WidgetInfo centralPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
 
       // Once policies for each area are computed, we can start the optimization process.
       // We basically try to allocate fairly the remaining space between each area at any point
@@ -404,16 +414,16 @@ namespace sdl {
       // equally and each area has the opportunity to grow by the same amount: if for some reasons
       // the area cannot make use of the space, we will redistribute it in the next iteration to
       // other areas and see what they can do with it.
-      std::unordered_set<unsigned> areasToAdjust;
-      std::vector<core::Layout::WidgetInfo> areasData;
+      std::unordered_set<unsigned> rolesToAdjust;
+      std::vector<core::Layout::WidgetInfo> rolesData;
 
       // In a first approach all the widgets can be adjusted.
       for (unsigned index = 0u ; index < 3u ; ++index) {
-        areasToAdjust.insert(index);
+        rolesToAdjust.insert(index);
       }
-      areasData.push_back(leftPolicy);
-      areasData.push_back(centralPolicy);
-      areasData.push_back(rightPolicy);
+      rolesData.push_back(leftPolicy);
+      rolesData.push_back(centralPolicy);
+      rolesData.push_back(rightPolicy);
 
       // Also assume that we didn't use up all the available space.
       float spaceToUse = window.w();
@@ -423,35 +433,35 @@ namespace sdl {
 
       // Loop until no more widgets can be used to adjust the space needed or all the
       // available space has been used up.
-      // TODO: Handle cases where the widgets are too large to fit into the widget ?
-      while (!areasToAdjust.empty() && !allSpaceUsed) {
+      // TODO: Handle cases where the widgets are too large to fit into the layout ?
+      while (!rolesToAdjust.empty() && !allSpaceUsed) {
 
         // Compute the amount of space we will try to allocate to each area still
         // available for adjustment.
         // The `defaultWidth` is computed by dividing equally the remaining `spaceToUse`
         // among all the available areas.
-        const float defaultWidth = allocateFairly(spaceToUse, areasToAdjust.size());
+        const float defaultWidth = allocateFairly(spaceToUse, rolesToAdjust.size());
 
         log(std::string("Default width is ") + std::to_string(defaultWidth), utils::Level::Info);
 
         // Loop on all the areas that can still be used to adjust the space used by
         // this layout and perform the size adjustements.
-        for (std::unordered_set<unsigned>::const_iterator area = areasToAdjust.cbegin() ;
-             area != areasToAdjust.cend() ;
-             ++area)
+        for (std::unordered_set<unsigned>::const_iterator role = rolesToAdjust.cbegin() ;
+             role != rolesToAdjust.cend() ;
+             ++role)
         {
           // Try to assign the `defaultWidth` to this area: we use a dedicated handler
           // to handle the case where the provided space is too large/small/not suited
           // to the area for some reasons, in which case the handler will provide a
           // size which can be applied to the widget.
-          float width = computeWidthFromPolicy(areasData[*area].area, defaultWidth, areasData[*area]);
+          float width = computeWidthFromPolicy(rolesData[*role].area, defaultWidth, rolesData[*role]);
 
           // We now need to distribute this width to the current `area`: in order to do
           // so, let's compute the size increase provided for this area by the current
           // iteration: this is the size which belongs to the area.
-          areasData[*area].area.w() += (width - areasData[*area].area.w());
+          rolesData[*role].area.w() += (width - rolesData[*role].area.w());
 
-          log(std::string("Area ") + std::to_string(*area) + " reach size " + areasData[*area].area.toString());
+          log(std::string("Role ") + std::to_string(*role) + " reach size " + rolesData[*role].area.toString());
         }
 
         // We have tried to apply the `defaultWidth` to all the areas. This might have fail
@@ -463,7 +473,7 @@ namespace sdl {
         // from areas which can give up some).
 
         // Compute the total size of the bounding boxes.
-        achievedWidth = computeSizeOfAreas(areasData).w();
+        achievedWidth = computeSizeOfRoles(rolesData).w();
 
         const utils::Sizef achievedSize(achievedWidth, window.h());
 
@@ -487,19 +497,19 @@ namespace sdl {
         // We now know what should be done to make the `achievedSize` closer to `desiredSize`.
         // Based on the `policy` provided by the base class method, we can now determine which
         // area should be used to perform the needed adjustments.
-        std::unordered_set<unsigned> areasToUse;
+        std::unordered_set<unsigned> rolesToUse;
         for (unsigned index = 0u ; index < 3u ; ++index) {
           // Check whether this area can be used to grow/shrink.
-          std::pair<bool, bool> usable = canBeUsedTo(std::string("Area") + std::to_string(index), areasData[index], areasData[index].area, action);
+          std::pair<bool, bool> usable = canBeUsedTo(std::string("Role") + std::to_string(index), rolesData[index], rolesData[index].area, action);
 
           // Only care for the horizontal direction, vertical direction will be handled later.
           if (usable.first) {
-            std::cout << "[LAY] Area " << index << " can be used to "
+            std::cout << "[LAY] Role " << index << " can be used to "
                       << std::to_string(static_cast<int>(action.getHorizontalPolicy()))
                       << " and "
                       << std::to_string(static_cast<int>(action.getVerticalPolicy()))
                       << std::endl;
-            areasToUse.insert(index);
+            rolesToUse.insert(index);
           }
         }
 
@@ -512,33 +522,33 @@ namespace sdl {
         // equally in this case and there's not preferred areas to shrink.
         if (action.canExtendHorizontally()) {
           // Select only `Expanding` widget if any.
-          std::unordered_set<unsigned> areasToExpand;
+          std::unordered_set<unsigned> rolesToExpand;
 
-          for (std::unordered_set<unsigned>::const_iterator area = areasToUse.cbegin() ;
-               area != areasToUse.cend() ;
-               ++area)
+          for (std::unordered_set<unsigned>::const_iterator role = rolesToUse.cbegin() ;
+               role != rolesToUse.cend() ;
+               ++role)
           {
             // Check whether this area can expand.
-            if (areasData[*area].policy.canExpandHorizontally()) {
-              std::cout << "[LAY] Area " << *area << " can be expanded horizontally" << std::endl;
-              areasToExpand.insert(*area);
+            if (rolesData[*role].policy.canExpandHorizontally()) {
+              std::cout << "[LAY] Role " << *role << " can be expanded horizontally" << std::endl;
+              rolesToExpand.insert(*role);
             }
           }
 
-          std::cout << "[LAY] Saved " << areasToExpand.size() << " which can expand compared to "
-                    << areasToUse.size() << " which can extend"
+          std::cout << "[LAY] Saved " << rolesToExpand.size() << " which can expand compared to "
+                    << rolesToUse.size() << " which can extend"
                     << std::endl;
           // Check whether we could select at least one area to expand: if this is not the
           // case we can proceed to extend the areas with only a `Grow` flag.
-          if (!areasToExpand.empty()) {
-            areasToUse.swap(areasToExpand);
+          if (!rolesToExpand.empty()) {
+            rolesToUse.swap(rolesToExpand);
           }
         }
 
 
         // Use the computed list of areas to perform the next action in order
         // to reach the desired space.
-        areasToAdjust.swap(areasToUse);
+        rolesToAdjust.swap(rolesToUse);
       }
 
       // Warn the user in case we could not use all the space.
@@ -550,45 +560,268 @@ namespace sdl {
         );
       }
 
-      // Update the input argument `areas`. This attribute contains a box for each dock area
+      // Update the input argument `roles`. This attribute contains a box for each dock area
       // and should be updated with the content of the internal `areasData` array.
       // We know by construction the position of each area so we can just perform the update
       // for each relevant area.
 
       // First left area.
-      assignOrCreateWidthForArea(DockWidgetArea::LeftArea, areasData[0u].area.w(), areas);
+      assignOrCreateWidthForRole(WidgetRole::LeftDockWidget, rolesData[0u].area.w(), roles);
 
       // Central, top and bottom area are shared.
-      assignOrCreateWidthForArea(DockWidgetArea::TopArea, areasData[1u].area.w(), areas);
-      assignOrCreateWidthForArea(DockWidgetArea::CentralArea, areasData[1u].area.w(), areas);
-      assignOrCreateWidthForArea(DockWidgetArea::BottomArea, areasData[1u].area.w(), areas);
+      assignOrCreateWidthForRole(WidgetRole::TopDockWidget, rolesData[1u].area.w(), roles);
+      assignOrCreateWidthForRole(WidgetRole::CentralWidget, rolesData[1u].area.w(), roles);
+      assignOrCreateWidthForRole(WidgetRole::BottomDockWidget, rolesData[1u].area.w(), roles);
 
       // And finally right area.
-      assignOrCreateWidthForArea(DockWidgetArea::RightArea, areasData[2u].area.w(), areas);
+      assignOrCreateWidthForRole(WidgetRole::RightDockWidget, rolesData[2u].area.w(), roles);
+
+      // Assign the total window's size to the menu bar, tool bar and status bar.
+      assignOrCreateWidthForRole(WidgetRole::MenuBar, window.w(), roles);
+      assignOrCreateWidthForRole(WidgetRole::ToolBar, window.w(), roles);
+      assignOrCreateWidthForRole(WidgetRole::StatusBar, window.w(), roles);
     }
 
     void
-    MainWindowLayout::adjustAreasVertically(const utils::Sizef& /*window*/,
-                                            const std::vector<WidgetInfo>& /*widgetsInfo*/,
-                                            AreasInfo& /*areas*/)
+    MainWindowLayout::adjustRolesVertically(const utils::Sizef& window,
+                                            const std::vector<WidgetInfo>& widgetsInfo,
+                                            RolesInfo& roles)
     {
-      // TODO: Implementation.
-      log("Should perform vertical adjustment");
+      // The goal of this function is to perform an adjustment of the vertical areas.
+      // Relevant areas which can impact the vertical adjustement are the dock widgets
+      // areas, the menu bar, status bar and tool bar.
+      // In order to perform the adjustment, we first try to determine a global policy
+      // for each area: this is done by scanning each widget using the area and determining
+      // the bounds of the size which can be assigned to it.
+      // We update the global policy for each widget encountered.
+      //
+      // Once we got a global policy for each area, we can try to assign the total space
+      // based on the percentages assigned to each area for this layout. Each area will
+      // be assigned a default space which will then be constrained by the global policy
+      // and updated.
+      // We then loop until no more modifications are made to any widget. This allows
+      // to use additional space not used by an area if another area can take it. In
+      // general it guarantees a better repartition of the space between areas.
+      //
+      // Once we reached a stable state, we can update the input `roles` array with
+      // the width of each column.
+      std::unordered_set<WidgetRole> dockRoles;
+
+      // First, compute a global policy for each relevant area. We need to aggregate a
+      // global policy for all the dock widgets as they will be assigned a single height
+      // in the layout.
+      dockRoles.clear();
+      dockRoles.insert(WidgetRole::LeftDockWidget);
+      dockRoles.insert(WidgetRole::TopDockWidget);
+      dockRoles.insert(WidgetRole::CentralWidget);
+      dockRoles.insert(WidgetRole::BottomDockWidget);
+      dockRoles.insert(WidgetRole::RightDockWidget);
+      core::Layout::WidgetInfo dockAreaPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
+
+      // Aggregate the policy for each bar.
+      dockRoles.clear();
+      dockRoles.insert(WidgetRole::MenuBar);
+      core::Layout::WidgetInfo menuBarPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
+
+      dockRoles.clear();
+      dockRoles.insert(WidgetRole::ToolBar);
+      core::Layout::WidgetInfo toolBarPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
+
+      dockRoles.clear();
+      dockRoles.insert(WidgetRole::StatusBar);
+      core::Layout::WidgetInfo statusBarPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
+
+      // Once policies for each area are computed, we can start the optimization process.
+      // We basically try to allocate fairly the remaining space between each area at any point
+      // and proceed to several iteration to allocate the space that could not be allocated in
+      // the previous iteration.
+      // This allows for a simple iterative algorithm where at each step we try to divide the space
+      // equally and each area has the opportunity to grow by the same amount: if for some reasons
+      // the area cannot make use of the space, we will redistribute it in the next iteration to
+      // other areas and see what they can do with it.
+      std::unordered_set<unsigned> rolesToAdjust;
+      std::vector<core::Layout::WidgetInfo> rolesData;
+
+      // In a first approach all the widgets can be adjusted.
+      for (unsigned index = 0u ; index < 4u ; ++index) {
+        rolesToAdjust.insert(index);
+      }
+      rolesData.push_back(menuBarPolicy);
+      rolesData.push_back(toolBarPolicy);
+      rolesData.push_back(dockAreaPolicy);
+      rolesData.push_back(statusBarPolicy);
+
+      // Also assume that we didn't use up all the available space.
+      float spaceToUse = window.w();
+      bool allSpaceUsed = false;
+
+      float achievedHeight = 0.0f;
+
+      // Loop until no more widgets can be used to adjust the space needed or all the
+      // available space has been used up.
+      // TODO: Handle cases where the widgets are too large to fit into the layout ?
+      while (!rolesToAdjust.empty() && !allSpaceUsed) {
+
+        // Compute the amount of space we will try to allocate to each area still
+        // available for adjustment.
+        // The `defaultHeight` is computed by dividing equally the remaining `spaceToUse`
+        // among all the available areas.
+        const float defaultHeight = allocateFairly(spaceToUse, rolesToAdjust.size());
+
+        log(std::string("Default height is ") + std::to_string(defaultHeight), utils::Level::Info);
+
+        // Loop on all the areas that can still be used to adjust the space used by
+        // this layout and perform the size adjustements.
+        for (std::unordered_set<unsigned>::const_iterator role = rolesToAdjust.cbegin() ;
+             role != rolesToAdjust.cend() ;
+             ++role)
+        {
+          // Try to assign the `defaultWidth` to this area: we use a dedicated handler
+          // to handle the case where the provided space is too large/small/not suited
+          // to the area for some reasons, in which case the handler will provide a
+          // size which can be applied to the widget.
+          float height = computeHeightFromPolicy(rolesData[*role].area, defaultHeight, rolesData[*role]);
+
+          // We now need to distribute this width to the current `area`: in order to do
+          // so, let's compute the size increase provided for this area by the current
+          // iteration: this is the size which belongs to the area.
+          rolesData[*role].area.h() += (height - rolesData[*role].area.h());
+
+          log(std::string("Role ") + std::to_string(*role) + " reach size " + rolesData[*role].area.toString());
+        }
+
+        // We have tried to apply the `defaultHeight` to all the areas. This might have fail
+        // in some cases (for example due to a `Fixed` size policy for an area) and thus
+        // we might end up with a total size for all the areas different from the one desired
+        // and expected when the `defaultHeight` has been computed.
+        // In order to fix things, we must compute the deviation from the expected size and
+        // try to allocate the remaining space to other areas (or remove the missing space
+        // from areas which can give up some).
+
+        // Compute the total size of the bounding boxes.
+        achievedHeight = computeSizeOfRoles(rolesData).h();
+
+        const utils::Sizef achievedSize(window.w(), achievedHeight);
+
+        // Check whether all the space have been used.
+        if (achievedSize.fuzzyEqual(window, 1.0f)) {
+          // We used up all the available space, no more adjustments to perform.
+          allSpaceUsed = true;
+          continue;
+        }
+
+
+        // All space has not been used. Update the relevant `spaceToUse` in order to perform
+        // the next iteration.
+        spaceToUse = computeSpaceAdjustmentNeeded(achievedSize, window).h();
+
+        // Determine the policy to apply based on the achieved size.
+        const core::SizePolicy action = shrinkOrGrow(window, achievedSize, 0.5f);
+
+        log(std::string("Desired ") + window.toString() + ", achieved: " + std::to_string(achievedHeight) + ", space: " + std::to_string(spaceToUse), utils::Level::Info);
+
+        // We now know what should be done to make the `achievedSize` closer to `desiredSize`.
+        // Based on the `policy` provided by the base class method, we can now determine which
+        // area should be used to perform the needed adjustments.
+        std::unordered_set<unsigned> rolesToUse;
+        for (unsigned index = 0u ; index < 4u ; ++index) {
+          // Check whether this area can be used to grow/shrink.
+          std::pair<bool, bool> usable = canBeUsedTo(std::string("Role") + std::to_string(index), rolesData[index], rolesData[index].area, action);
+
+          // Only care for the vertical direction, horizontal direction will be handled later.
+          if (usable.second) {
+            std::cout << "[LAY] Role " << index << " can be used to "
+                      << std::to_string(static_cast<int>(action.getHorizontalPolicy()))
+                      << " and "
+                      << std::to_string(static_cast<int>(action.getVerticalPolicy()))
+                      << std::endl;
+            rolesToUse.insert(index);
+          }
+        }
+
+        // There's one more thing to determine: the `Expanding` flag on any area's policy should
+        // mark it as priority over other areas. For example if two areas can grow, one having
+        // the flag `Grow` and the other the `Expand` flag, we should make priority for the one
+        // with `Expanding` flag.
+        // Areas with `Grow` flag will only grow when all `Expanding` areas have been maxed out.
+        // Of course this does not apply in case areas should be shrunk: all areas are treated
+        // equally in this case and there's not preferred areas to shrink.
+        if (action.canExtendVertically()) {
+          // Select only `Expanding` widget if any.
+          std::unordered_set<unsigned> rolesToExpand;
+
+          for (std::unordered_set<unsigned>::const_iterator role = rolesToUse.cbegin() ;
+               role != rolesToUse.cend() ;
+               ++role)
+          {
+            // Check whether this area can expand.
+            if (rolesData[*role].policy.canExpandVertically()) {
+              std::cout << "[LAY] Role " << *role << " can be expanded vertically" << std::endl;
+              rolesToExpand.insert(*role);
+            }
+          }
+
+          std::cout << "[LAY] Saved " << rolesToExpand.size() << " which can expand compared to "
+                    << rolesToUse.size() << " which can extend"
+                    << std::endl;
+          // Check whether we could select at least one area to expand: if this is not the
+          // case we can proceed to extend the areas with only a `Grow` flag.
+          if (!rolesToExpand.empty()) {
+            rolesToUse.swap(rolesToExpand);
+          }
+        }
+
+
+        // Use the computed list of areas to perform the next action in order
+        // to reach the desired space.
+        rolesToAdjust.swap(rolesToUse);
+      }
+
+      // Warn the user in case we could not use all the space.
+      if (!allSpaceUsed) {
+        log(
+          std::string("Could only achieve height of ") + std::to_string(achievedHeight) +
+          " but available space is " + window.toString(),
+          utils::Level::Error
+        );
+      }
+
+      // Update the input argument `roles`. This attribute contains a box for each dock area
+      // and should be updated with the content of the internal `areasData` array.
+      // We know by construction the position of each area so we can just perform the update
+      // for each relevant area.
+
+      // First left area.
+      assignOrCreateHeightForRole(WidgetRole::LeftDockWidget, rolesData[2u].area.h(), roles);
+
+      // Central, top and bottom area are shared.
+      // TODO: How to do that ???
+      assignOrCreateHeightForRole(WidgetRole::TopDockWidget, 0.0f, roles);
+      assignOrCreateHeightForRole(WidgetRole::CentralWidget, rolesData[2u].area.h(), roles);
+      assignOrCreateHeightForRole(WidgetRole::BottomDockWidget, 0.0f, roles);
+
+      // And finally right area.
+      assignOrCreateHeightForRole(WidgetRole::RightDockWidget, rolesData[2u].area.h(), roles);
+
+      // Assign the computed height to the menu bar, tool bar and status bar.
+      assignOrCreateHeightForRole(WidgetRole::MenuBar, rolesData[0u].area.h(), roles);
+      assignOrCreateHeightForRole(WidgetRole::ToolBar, rolesData[1u].area.h(), roles);
+      assignOrCreateHeightForRole(WidgetRole::StatusBar, rolesData[3u].area.h(), roles);
     }
 
     core::Layout::WidgetInfo
-    MainWindowLayout::computeSizePolicyForAreas(const std::unordered_set<DockWidgetArea>& areas,
+    MainWindowLayout::computeSizePolicyForRoles(const std::unordered_set<WidgetRole>& roles,
                                                 const std::vector<WidgetInfo>& widgetsInfo) const
     {
       // Create a default policy.
       core::Layout::WidgetInfo policy;
 
-      std::cout << "[CON] Computing policy for areas: ";
-      for (std::unordered_set<DockWidgetArea>::const_iterator area = areas.cbegin() ;
-           area != areas.cend() ;
-           ++area)
+      std::cout << "[CON] Computing policy for roles: ";
+      for (std::unordered_set<WidgetRole>::const_iterator role = roles.cbegin() ;
+           role != roles.cend() ;
+           ++role)
       {
-        std::cout << getNameFromArea(*area) << " ";
+        std::cout << getNameFromRole(*role) << " ";
       }
       std::cout << " out of " << m_infos.size() << " info" << std::endl;
 
@@ -600,17 +833,17 @@ namespace sdl {
         // Retrieve the area associated to the current widget.
         const ItemInfo item = info->second;
 
-        // Check whether the widget belongs to the input set of areas: if this is not the
+        // Check whether the widget belongs to the input role: if this is not the
         // case we do not consider it for the determination of the global policy.
-        if (areas.count(item.area) == 0) {
-          std::cout << "[CON] Widget belongs to area " << getNameFromArea(item.area) << ", no need to consider it" << std::endl;
+        if (roles.count(item.role) == 0) {
+          std::cout << "[CON] Widget assumes role " << getNameFromRole(item.role) << ", no need to consider it" << std::endl;
           // No need to consider this item.
           continue;
         }
 
-        std::cout << "[CON] Considering widget belonging to correct area " << getNameFromArea(item.area) << std::endl;
+        std::cout << "[CON] Considering widget assuming correct role " << getNameFromRole(item.role) << std::endl;
 
-        // We now know that the widget does belong to the input areas: we shall use it for
+        // We now know that the widget does assume the input role: we shall use it for
         // the determination of the global policy.
         // In order to do that, we need to update the dimensions which might be provided
         // by the widget and also the policy.
@@ -640,7 +873,7 @@ namespace sdl {
     }
 
     void
-    MainWindowLayout::consolidateAreasDimensions(AreasInfo& areas) const {
+    MainWindowLayout::consolidateRolesDimensions(RolesInfo& roles) const {
       // Here we want to update the position of each area based on the dimensions
       // of their relative position. Upon entering this function, each area has
       // valid dimensions but no position yet.
@@ -651,29 +884,46 @@ namespace sdl {
       // Basically we will update each individual area based on the position of the
       // layout.
 
-      // First, update the left area position: its position is only determined by
-      // the margins of this layout.
-      assignAbscissaForArea(DockWidgetArea::LeftArea, getMargin().w(), areas);
-      assignOrdinateForArea(DockWidgetArea::LeftArea, getMargin().h(), areas);
+      // TODO: Add menu bar and tool bar.
+      // Menu bar's position is only determined by the margins of this layout.
+      assignAbscissaForRole(WidgetRole::MenuBar, getMargin().w(), roles);
+      assignOrdinateForRole(WidgetRole::MenuBar, getMargin().h(), roles);
+
+      // Tool bar is right below the menu bar and is only offset along the `x` axis
+      // based on the margin.
+      assignAbscissaForRole(WidgetRole::ToolBar, getMargin().w(), roles);
+      float offset = getMargin().h() + getLocationOfRole(WidgetRole::MenuBar, roles).h();
+      assignOrdinateForRole(WidgetRole::ToolBar, offset, roles);
+
+      // The left area position's position is determined by the bottom bound of the
+      // tool bar and is only offset along the `x` axis based on the margin.
+      assignAbscissaForRole(WidgetRole::LeftDockWidget, getMargin().w(), roles);
+      offset += getLocationOfRole(WidgetRole::ToolBar, roles).h();
+      assignOrdinateForRole(WidgetRole::LeftDockWidget, offset, roles);
 
       // Top, central and bottom area are on the right of the left area.
       // Also each one is stacked on top of each other.
-      const float offsetForCentralAreas = getMargin().w() + getLocationOfArea(DockWidgetArea::LeftArea, areas).w();
-      assignAbscissaForArea(DockWidgetArea::TopArea, offsetForCentralAreas, areas);
-      assignAbscissaForArea(DockWidgetArea::CentralArea, offsetForCentralAreas, areas);
-      assignAbscissaForArea(DockWidgetArea::BottomArea, offsetForCentralAreas, areas);
+      const float xOffsetForCentralAreas = getMargin().w() + getLocationOfRole(WidgetRole::LeftDockWidget, roles).w();
+      assignAbscissaForRole(WidgetRole::TopDockWidget, xOffsetForCentralAreas, roles);
+      assignAbscissaForRole(WidgetRole::CentralWidget, xOffsetForCentralAreas, roles);
+      assignAbscissaForRole(WidgetRole::BottomDockWidget, xOffsetForCentralAreas, roles);
 
-      float offset = getMargin().h();
-      assignOrdinateForArea(DockWidgetArea::TopArea, offset, areas);
-      offset += getLocationOfArea(DockWidgetArea::TopArea, areas).h();
-      assignOrdinateForArea(DockWidgetArea::CentralArea, offset, areas);
-      offset += getLocationOfArea(DockWidgetArea::CentralArea, areas).h();
-      assignOrdinateForArea(DockWidgetArea::BottomArea, offset, areas);
+      float yOffsetForCentralAreas = offset;
+      assignOrdinateForRole(WidgetRole::TopDockWidget, yOffsetForCentralAreas, roles);
+      yOffsetForCentralAreas += getLocationOfRole(WidgetRole::TopDockWidget, roles).h();
+      assignOrdinateForRole(WidgetRole::CentralWidget, yOffsetForCentralAreas, roles);
+      yOffsetForCentralAreas += getLocationOfRole(WidgetRole::CentralWidget, roles).h();
+      assignOrdinateForRole(WidgetRole::BottomDockWidget, yOffsetForCentralAreas, roles);
 
-      // Right area is on the right of the area.
-      const float offsetForRightArea = offsetForCentralAreas + getLocationOfArea(DockWidgetArea::TopArea, areas).w();
-      assignAbscissaForArea(DockWidgetArea::RightArea, offsetForRightArea, areas);
-      assignOrdinateForArea(DockWidgetArea::RightArea, getMargin().h(), areas);
+      // Right area is on the right of the central areas.
+      const float xOffsetForRightArea = xOffsetForCentralAreas + getLocationOfRole(WidgetRole::TopDockWidget, roles).w();
+      assignAbscissaForRole(WidgetRole::RightDockWidget, xOffsetForRightArea, roles);
+      assignOrdinateForRole(WidgetRole::RightDockWidget, offset, roles);
+
+      // The status bar is below the left area.
+      offset += getLocationOfRole(WidgetRole::LeftDockWidget, roles).h();
+      assignAbscissaForRole(WidgetRole::StatusBar, getMargin().w(), roles);
+      assignOrdinateForRole(WidgetRole::StatusBar, offset, roles);
     }
 
   }

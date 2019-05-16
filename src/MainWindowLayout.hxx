@@ -181,6 +181,31 @@ namespace sdl {
     }
 
     inline
+    std::string
+    MainWindowLayout::getNameFromRole(const WidgetRole& role) noexcept {
+      switch (role) {
+        case WidgetRole::MenuBar:
+          return "menu_bar";
+        case WidgetRole::StatusBar:
+          return "status_bar";
+        case WidgetRole::ToolBar:
+          return "tool_bar";
+        case WidgetRole::LeftDockWidget:
+          return "left_dock_widget";
+        case WidgetRole::RightDockWidget:
+          return "right_dock_widget";
+        case WidgetRole::TopDockWidget:
+          return "top_dock_widget";
+        case WidgetRole::BottomDockWidget:
+          return "bottom_dock_widget";
+        case WidgetRole::CentralWidget:
+          return "central_dock_widget";
+        default:
+          return "unknown_role";
+      }
+    }
+
+    inline
     void
     MainWindowLayout::addItemWithRoleAndArea(core::SdlWidget* widget,
                                              const WidgetRole& role,
@@ -202,15 +227,15 @@ namespace sdl {
 
     inline
     utils::Sizef
-    MainWindowLayout::computeSizeOfAreas(const std::vector<core::Layout::WidgetInfo>& areas) const noexcept {
+    MainWindowLayout::computeSizeOfRoles(const std::vector<core::Layout::WidgetInfo>& roles) const noexcept {
       // Create a default size.
       utils::Sizef achievedSize;
 
       // Traverse the input information and append the size to the global achieved size.
-      for (unsigned index = 0u ; index < areas.size() ; ++index) {
+      for (unsigned index = 0u ; index < roles.size() ; ++index) {
         // Increment the achieved size with the dimensions of the current box.
-        achievedSize.w() += areas[index].area.w();
-        achievedSize.h() += areas[index].area.h();
+        achievedSize.w() += roles[index].area.w();
+        achievedSize.h() += roles[index].area.h();
       }
 
       // Return the computed size.
@@ -257,16 +282,16 @@ namespace sdl {
 
     inline
     void
-    MainWindowLayout::assignOrCreateWidthForArea(const DockWidgetArea& area,
+    MainWindowLayout::assignOrCreateWidthForRole(const WidgetRole& role,
                                                  const float& width,
-                                                 AreasInfo& areas) const
+                                                 RolesInfo& roles) const
     {
-      // Check whether the input `area` already exist in the input information array.
-      AreasInfo::iterator boxToUpdate = areas.find(area);
+      // Check whether the input `role` already exist in the input information array.
+      RolesInfo::iterator boxToUpdate = roles.find(role);
 
-      if (boxToUpdate == areas.cend()) {
-        // This area does not exist yet, register it.
-        areas[area] = utils::Boxf(
+      if (boxToUpdate == roles.cend()) {
+        // This role does not exist yet, register it.
+        roles[role] = utils::Boxf(
           0.0f,
           0.0f,
           width,
@@ -274,23 +299,23 @@ namespace sdl {
         );
       }
       else {
-        // The area already exists, replace the width value.
+        // The role already exists, replace the width value.
         boxToUpdate->second.w() = width;
       }
     }
 
     inline
     void
-    MainWindowLayout::assignOrCreateHeightForArea(const DockWidgetArea& area,
+    MainWindowLayout::assignOrCreateHeightForRole(const WidgetRole& role,
                                                   const float& height,
-                                                 AreasInfo& areas) const
+                                                  RolesInfo& roles) const
     {
-      // Check whether the input `area` already exist in the input information array.
-      AreasInfo::iterator boxToUpdate = areas.find(area);
+      // Check whether the input `role` already exist in the input information array.
+      RolesInfo::iterator boxToUpdate = roles.find(role);
 
-      if (boxToUpdate == areas.cend()) {
-        // This area does not exist yet, register it.
-        areas[area] = utils::Boxf(
+      if (boxToUpdate == roles.cend()) {
+        // This role does not exist yet, register it.
+        roles[role] = utils::Boxf(
           0.0f,
           0.0f,
           0.0f,
@@ -298,24 +323,24 @@ namespace sdl {
         );
       }
       else {
-        // The area already exists, replace the height value.
+        // The role already exists, replace the height value.
         boxToUpdate->second.h() = height;
       }
     }
 
     inline
     void
-    MainWindowLayout::assignAbscissaForArea(const DockWidgetArea& area,
+    MainWindowLayout::assignAbscissaForRole(const WidgetRole& role,
                                             const float& x,
-                                            AreasInfo& areas) const
+                                            RolesInfo& roles) const
     {
-      // Check whether the input `area` already exist in the input information array.
-      AreasInfo::iterator boxToUpdate = areas.find(area);
+      // Check whether the input `role` already exist in the input information array.
+      RolesInfo::iterator boxToUpdate = roles.find(role);
       
-      if (boxToUpdate == areas.cend()) {
+      if (boxToUpdate == roles.cend()) {
         error(
-          std::string("Could not update abscissa for area ") + getNameFromArea(area),
-          std::string("No such area available")
+          std::string("Could not update abscissa for role ") + getNameFromRole(role),
+          std::string("No such role available")
         );
       }
 
@@ -325,17 +350,17 @@ namespace sdl {
 
     inline
     void
-    MainWindowLayout::assignOrdinateForArea(const DockWidgetArea& area,
+    MainWindowLayout::assignOrdinateForRole(const WidgetRole& role,
                                             const float& y,
-                                            AreasInfo& areas) const
+                                            RolesInfo& roles) const
     {
-      // Check whether the input `area` already exist in the input information array.
-      AreasInfo::iterator boxToUpdate = areas.find(area);
+      // Check whether the input `role` already exist in the input information array.
+      RolesInfo::iterator boxToUpdate = roles.find(role);
       
-      if (boxToUpdate == areas.cend()) {
+      if (boxToUpdate == roles.cend()) {
         error(
-          std::string("Could not update ordinate for area ") + getNameFromArea(area),
-          std::string("No such area available")
+          std::string("Could not update ordinate for role ") + getNameFromRole(role),
+          std::string("No such role available")
         );
       }
 
@@ -345,16 +370,16 @@ namespace sdl {
 
     inline
     utils::Boxf
-    MainWindowLayout::getLocationOfArea(const DockWidgetArea& area,
-                                        AreasInfo& areas) const
+    MainWindowLayout::getLocationOfRole(const WidgetRole& role,
+                                        RolesInfo& roles) const
     {
-      // Check whether the input `area` already exist in the input information array.
-      AreasInfo::iterator boxToUpdate = areas.find(area);
+      // Check whether the input `role` already exist in the input information array.
+      RolesInfo::iterator boxToUpdate = roles.find(role);
       
-      if (boxToUpdate == areas.cend()) {
+      if (boxToUpdate == roles.cend()) {
         error(
-          std::string("Could not retrieve location for area ") + getNameFromArea(area),
-          std::string("No such area available")
+          std::string("Could not retrieve location for role ") + getNameFromRole(role),
+          std::string("No such role available")
         );
       }
 
