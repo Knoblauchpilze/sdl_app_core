@@ -57,10 +57,10 @@ namespace sdl {
     void
     MainWindowLayout::setCentralWidget(core::SdlWidget* item) {
       // Remove existing central widget.
-      removeAll(WidgetRole::CentralWidget);
+      removeAll(WidgetRole::CentralDockWidget);
 
       // Use internal handler.
-      addItemWithRoleAndArea(item, WidgetRole::CentralWidget, DockWidgetArea::CentralArea);
+      addItemWithRoleAndArea(item, WidgetRole::CentralDockWidget, DockWidgetArea::CentralArea);
     }
 
     inline
@@ -119,49 +119,6 @@ namespace sdl {
     }
 
     inline
-    MainWindowLayout::WidgetRole
-    MainWindowLayout::determineDockWidgetRoleFromArea(const DockWidgetArea& area) {
-      WidgetRole role;
-
-      switch (area) {
-        case DockWidgetArea::LeftArea:
-          role = WidgetRole::LeftDockWidget;
-          break;
-        case DockWidgetArea::RightArea:
-          role = WidgetRole::RightDockWidget;
-          break;
-        case DockWidgetArea::TopArea:
-          role = WidgetRole::TopDockWidget;
-          break;
-        case DockWidgetArea::BottomArea:
-          role = WidgetRole::BottomDockWidget;
-          break;
-        case DockWidgetArea::CentralArea:
-          role = WidgetRole::CentralWidget;
-          break;
-        default:
-          error(
-            std::string("Could not determine widget role for area ") + std::to_string(static_cast<int>(area)),
-            std::string("Invalid dock area")
-          );
-          break;
-      }
-
-      return role;
-    }
-
-    inline
-    bool
-    MainWindowLayout::isValidDockWidgetRole(const WidgetRole& role) noexcept {
-      return
-        role == WidgetRole::LeftDockWidget ||
-        role == WidgetRole::RightDockWidget ||
-        role == WidgetRole::TopDockWidget ||
-        role == WidgetRole::BottomDockWidget
-      ;
-    }
-
-    inline
     std::string
     MainWindowLayout::getNameFromArea(const DockWidgetArea& area) noexcept {
       switch (area) {
@@ -198,11 +155,78 @@ namespace sdl {
           return "top_dock_widget";
         case WidgetRole::BottomDockWidget:
           return "bottom_dock_widget";
-        case WidgetRole::CentralWidget:
+        case WidgetRole::CentralDockWidget:
           return "central_dock_widget";
         default:
           return "unknown_role";
       }
+    }
+
+    inline
+    bool
+    MainWindowLayout::isValidDockWidgetRole(const WidgetRole& role) noexcept {
+      return
+        role == WidgetRole::LeftDockWidget ||
+        role == WidgetRole::RightDockWidget ||
+        role == WidgetRole::TopDockWidget ||
+        role == WidgetRole::BottomDockWidget ||
+        role == WidgetRole::CentralDockWidget
+      ;
+    }
+
+    inline
+    WidgetRole
+    MainWindowLayout::determineDockWidgetRoleFromArea(const DockWidgetArea& area) {
+      WidgetRole role;
+
+      switch (area) {
+        case DockWidgetArea::LeftArea:
+          role = WidgetRole::LeftDockWidget;
+          break;
+        case DockWidgetArea::RightArea:
+          role = WidgetRole::RightDockWidget;
+          break;
+        case DockWidgetArea::TopArea:
+          role = WidgetRole::TopDockWidget;
+          break;
+        case DockWidgetArea::BottomArea:
+          role = WidgetRole::BottomDockWidget;
+          break;
+        case DockWidgetArea::CentralArea:
+          role = WidgetRole::CentralDockWidget;
+          break;
+        default:
+          error(
+            std::string("Could not determine widget role for area ") + std::to_string(static_cast<int>(area)),
+            std::string("Invalid dock area")
+          );
+          break;
+      }
+
+      return role;
+    }
+
+    inline
+    void
+    MainWindowLayout::assignPercentagesFromCentralWidget(const utils::Sizef& centralWidgetSize) {
+      // Left and right areas share equal percentage of the remaining space.
+      const float sidePercentage = (1.0f - centralWidgetSize.w()) / 2.0f;
+      m_leftAreaPercentage = sidePercentage;
+      m_rightAreaPercentage = sidePercentage;
+
+      // From the remaining vertical space, the top and bottom areas take
+      // up to 60%, toolbars 20% and the menu and status bars share the rest.
+      const float remaining = 1.0f - centralWidgetSize.h();
+
+      const float periphericalAreas = 0.6f * remaining;
+      const float toolbarsPercentage = 0.2f * remaining;
+      const float menuAndStatus = (1.0f - periphericalAreas - toolbarsPercentage);
+
+      m_menuBarPercentage = menuAndStatus / 2.0f;
+      m_toolBarPercentage = toolbarsPercentage;
+      m_topAreaPercentage = periphericalAreas / 2.0f;
+      m_bottomAreaPercentage = periphericalAreas / 2.0f;
+      m_statusBarPercentage = menuAndStatus / 2.0f;
     }
 
     inline
@@ -217,13 +241,18 @@ namespace sdl {
       // Register this item in the internal table of information if
       // a valid index was generated.
       if (index >= 0) {
-        m_infos[index] = {
-          index,
+        m_infos[index] = ItemInfo{
           role,
-          area
+          area,
+          widget
         };
       }
     }
+
+
+
+
+
 
     inline
     utils::Sizef
@@ -278,112 +307,6 @@ namespace sdl {
       if (item.policy.canExpandVertically()) {
         policy.policy.setVerticalPolicy(core::SizePolicy::Expanding);
       }
-    }
-
-    inline
-    void
-    MainWindowLayout::assignOrCreateWidthForRole(const WidgetRole& role,
-                                                 const float& width,
-                                                 RolesInfo& roles) const
-    {
-      // Check whether the input `role` already exist in the input information array.
-      RolesInfo::iterator boxToUpdate = roles.find(role);
-
-      if (boxToUpdate == roles.cend()) {
-        // This role does not exist yet, register it.
-        roles[role] = utils::Boxf(
-          0.0f,
-          0.0f,
-          width,
-          0.0f
-        );
-      }
-      else {
-        // The role already exists, replace the width value.
-        boxToUpdate->second.w() = width;
-      }
-    }
-
-    inline
-    void
-    MainWindowLayout::assignOrCreateHeightForRole(const WidgetRole& role,
-                                                  const float& height,
-                                                  RolesInfo& roles) const
-    {
-      // Check whether the input `role` already exist in the input information array.
-      RolesInfo::iterator boxToUpdate = roles.find(role);
-
-      if (boxToUpdate == roles.cend()) {
-        // This role does not exist yet, register it.
-        roles[role] = utils::Boxf(
-          0.0f,
-          0.0f,
-          0.0f,
-          height
-        );
-      }
-      else {
-        // The role already exists, replace the height value.
-        boxToUpdate->second.h() = height;
-      }
-    }
-
-    inline
-    void
-    MainWindowLayout::assignAbscissaForRole(const WidgetRole& role,
-                                            const float& x,
-                                            RolesInfo& roles) const
-    {
-      // Check whether the input `role` already exist in the input information array.
-      RolesInfo::iterator boxToUpdate = roles.find(role);
-      
-      if (boxToUpdate == roles.cend()) {
-        error(
-          std::string("Could not update abscissa for role ") + getNameFromRole(role),
-          std::string("No such role available")
-        );
-      }
-
-      // Update the abscissa with the provided argument.
-      boxToUpdate->second.x() = x;
-    }
-
-    inline
-    void
-    MainWindowLayout::assignOrdinateForRole(const WidgetRole& role,
-                                            const float& y,
-                                            RolesInfo& roles) const
-    {
-      // Check whether the input `role` already exist in the input information array.
-      RolesInfo::iterator boxToUpdate = roles.find(role);
-      
-      if (boxToUpdate == roles.cend()) {
-        error(
-          std::string("Could not update ordinate for role ") + getNameFromRole(role),
-          std::string("No such role available")
-        );
-      }
-
-      // Update the ordinate with the provided argument.
-      boxToUpdate->second.y() = y;
-    }
-
-    inline
-    utils::Boxf
-    MainWindowLayout::getLocationOfRole(const WidgetRole& role,
-                                        RolesInfo& roles) const
-    {
-      // Check whether the input `role` already exist in the input information array.
-      RolesInfo::iterator boxToUpdate = roles.find(role);
-      
-      if (boxToUpdate == roles.cend()) {
-        error(
-          std::string("Could not retrieve location for role ") + getNameFromRole(role),
-          std::string("No such role available")
-        );
-      }
-
-      return boxToUpdate->second;
     }
 
   }

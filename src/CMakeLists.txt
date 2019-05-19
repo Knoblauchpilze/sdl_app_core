@@ -11,6 +11,7 @@ set (SOURCES
   SdlApplication.cc
   AppDecorator.cc
   MainWindowLayout.cc
+  RolesInfo.cc
   )
 
 add_library (sdl_app_core SHARED

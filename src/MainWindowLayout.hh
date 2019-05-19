@@ -7,6 +7,8 @@
 # include <maths_utils/Box.hh>
 # include <sdl_core/Layout.hh>
 # include <sdl_core/SizePolicy.hh>
+# include "WidgetRole.hh"
+# include "RolesInfo.hh"
 
 namespace sdl {
   namespace app {
@@ -75,58 +77,38 @@ namespace sdl {
       protected:
 
         /**
-         * @brief - Enumeration to describe the role of each widget
-         *          added to this layout.
-         */
-        enum class WidgetRole {
-          MenuBar,
-          StatusBar,
-          ToolBar,
-          LeftDockWidget,
-          RightDockWidget,
-          TopDockWidget,
-          BottomDockWidget,
-          CentralWidget
-        };
-
-        /**
          * @brief - Describes additional information to locate the widget
          *          in the layout. Each data is linked to a widget which
-         *          can be found at the index `widget` of the `m_items`
-         *          list described by the parent `Layout` class. The role
-         *          of the widget is specified using the `role` attribute
-         *          and according to the role the relevant area is provided
-         *          to locate the widget in the layout. Note that if the
-         *          role for the widget is not set to `DockWidget` the
-         *          `area` attribute is not relevant and set to its default
-         *          value, i.e. `None`.
+         *          is represneted through the `widget` attribute. To get
+         *          the index of the item in the parent `m_items` table
+         *          one can use the `getIndexOf` method.
+         *          The role of the widget is specified using the `role`
+         *          attribute and according to the role the relevant area
+         *          is provided to locate the widget in the layout.
+         *          Note that if the role for the widget is not set to
+         *          `DockWidget` the `area` attribute is not relevant and
+         *          set to its default value, i.e. `None`.
          */
         struct ItemInfo {
-          int widget;
           WidgetRole role;
           DockWidgetArea area;
+          core::SdlWidget* widget;
         };
 
         using InfosMap = std::unordered_map<int, ItemInfo>;
-        using RolesInfo = std::unordered_map<WidgetRole, utils::Boxf>;
 
         void
         updatePrivate(const utils::Boxf& window) override;
+
+        void
+        invalidate() noexcept override;
 
         void
         removeItemFromIndex(int item) override;
 
       private:
 
-        void
-        assignPercentagesFromCentralWidget(const utils::Sizef& centralWidgetSize);
-
-        WidgetRole
-        determineDockWidgetRoleFromArea(const DockWidgetArea& area);
-
-        static
-        bool
-        isValidDockWidgetRole(const WidgetRole& role) noexcept;
+        // Inline functions.
 
         static
         std::string
@@ -136,11 +118,30 @@ namespace sdl {
         std::string
         getNameFromRole(const WidgetRole& role) noexcept;
 
+        static
+        bool
+        isValidDockWidgetRole(const WidgetRole& role) noexcept;
+
+        WidgetRole
+        determineDockWidgetRoleFromArea(const DockWidgetArea& area);
+
+        void
+        assignPercentagesFromCentralWidget(const utils::Sizef& centralWidgetSize);
+
         void
         addItemWithRoleAndArea(core::SdlWidget* widget,
                                const WidgetRole& role,
                                const DockWidgetArea& area = DockWidgetArea::None);
 
+        // Implemented functions.
+
+        /**
+         * @brief - Remove all the widgets of this layout which are currently
+         *          assuming the input `role`.
+         *          Note that several calls to invalidate might be triggered if
+         *          several widgets assume the input `role` in this layout.
+         * @brief - The role for which all widgets should be removed.
+         */
         void
         removeAll(const WidgetRole& role);
 
@@ -178,33 +179,6 @@ namespace sdl {
         void
         consolidatePolicyFromItem(WidgetInfo& policy,
                                   const WidgetInfo& item) noexcept;
-
-        void
-        assignOrCreateWidthForRole(const WidgetRole& role,
-                                   const float& width,
-                                   RolesInfo& roles) const;
-
-        void
-        assignOrCreateHeightForRole(const WidgetRole& role,
-                                    const float& height,
-                                    RolesInfo& roles) const;
-
-        void
-        assignAbscissaForRole(const WidgetRole& role,
-                              const float& x,
-                              RolesInfo& roles) const;
-
-        void
-        assignOrdinateForRole(const WidgetRole& role,
-                              const float& y,
-                              RolesInfo& roles) const;
-
-        utils::Boxf
-        getLocationOfRole(const WidgetRole& role,
-                          RolesInfo& roles) const;
-
-        void
-        consolidateRolesDimensions(RolesInfo& roles) const;
 
       private:
 

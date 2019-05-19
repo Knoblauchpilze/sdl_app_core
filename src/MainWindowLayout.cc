@@ -146,7 +146,7 @@ namespace sdl {
       adjustRolesVertically(internalSize, widgetsInfo, roles);
 
       // Consolidate roles dimensions.
-      consolidateRolesDimensions(roles);
+      roles.consolidateRolesDimensions(getMargin());
 
       // Compute bounding boxes from the result of the optimization.
       std::vector<utils::Boxf> outputBoxes(getItemsCount());
@@ -175,8 +175,8 @@ namespace sdl {
         }
 
         // Retrieve the role's position from the adjustments we made.
-        const RolesInfo::const_iterator role = roles.find(info->second.role);
-        if (role == roles.cend()) {
+        const utils::Boxf areaForRole = roles.getBoxForRole(info->second.role);
+        if (!areaForRole.valid()) {
           error(
             std::string("Could not retrieve role position for \"" + getNameFromRole(info->second.role) + "\", widget ") +
             getWidgetAt(index)->getName() + " has invalid position",
@@ -184,7 +184,7 @@ namespace sdl {
           );
         }
 
-        log("Area is now " + role->second.toString(), utils::Level::Warning);
+        log("Area is now " + areaForRole.toString(), utils::Level::Warning);
 
         // Assign position first by using the global offset of the input `window`.
         float xWidget = (window.x() - window.w() / 2.0f);
@@ -192,8 +192,8 @@ namespace sdl {
 
         // Assign position from this role's information: this accounts for the offset
         // of the role inside the texture representing this layout.
-        xWidget += role->second.x();
-        yWidget += role->second.y();
+        xWidget += areaForRole.x();
+        yWidget += areaForRole.y();
 
         // Handle the centering of the widget in case it is smaller than the
         // desired width or height.
@@ -201,22 +201,22 @@ namespace sdl {
         // boxes, so we should add the following expression to the position
         // of the box:
         //
-        // xWidget += role->second.w() / 2.0f
-        // yWidget += role->second.h() / 2.0f
+        // xWidget += areaForRole.w() / 2.0f
+        // yWidget += areaForRole.h() / 2.0f
         //
         // This will guarantee that the widget is in the middle of the area
         // assigned to it no matter its real size computed with the following
         // function (i.e. `computeSizeFromPolicy`).
         utils::Sizef achievableSize = computeSizeFromPolicy(
           outputBoxes[index],
-          role->second.toSize(),
+          areaForRole.toSize(),
           widgetsInfo[index]
         );
 
         // Center the position (because `Boxf` is a centered representation of
         // a bounding box).
-        xWidget += (role->second.w() / 2.0f);
-        yWidget += (role->second.h() / 2.0f);
+        xWidget += (areaForRole.w() / 2.0f);
+        yWidget += (areaForRole.h() / 2.0f);
 
         // Handle centering anyway: if the achievable size is identical to the
         // desired size the centering will not modify the position of the widget.
@@ -236,25 +236,39 @@ namespace sdl {
     }
 
     void
-    MainWindowLayout::assignPercentagesFromCentralWidget(const utils::Sizef& centralWidgetSize) {
-      // Left and right areas share equal percentage of the remaining space.
-      const float sidePercentage = (1.0f - centralWidgetSize.w()) / 2.0f;
-      m_leftAreaPercentage = sidePercentage;
-      m_rightAreaPercentage = sidePercentage;
+    MainWindowLayout::invalidate() noexcept {
+      // We need to update the local information about widgets. This means basically updating the
+      // `m_infos` attribute. In order to do so, we need to rely on some invariant properties
+      // of the widget which have been updated. We will use the address in order to maintain some
+      // consistency between widgets.
 
-      // From the remaining vertical space, the top and bottom areas take
-      // up to 60%, toolbars 20% and the menu and status bars share the rest.
-      const float remaining = 1.0f - centralWidgetSize.h();
+      // So first copy the internal information table so that we can build a new one right away.
+      InfosMap old;
+      old.swap(m_infos);
 
-      const float periphericalAreas = 0.6f * remaining;
-      const float toolbarsPercentage = 0.2f * remaining;
-      const float menuAndStatus = (1.0f - periphericalAreas - toolbarsPercentage);
+      // Traverse the old information and try to build the new table.
+      for (InfosMap::const_iterator oldWidget = old.cbegin() ;
+           oldWidget != old.cend() ;
+           ++oldWidget)
+      {
+        // Try to find the index of this widget.
+        const int newID = getIndexOf(oldWidget->second.widget);
 
-      m_menuBarPercentage = menuAndStatus / 2.0f;
-      m_toolBarPercentage = toolbarsPercentage;
-      m_topAreaPercentage = periphericalAreas / 2.0f;
-      m_bottomAreaPercentage = periphericalAreas / 2.0f;
-      m_statusBarPercentage = menuAndStatus / 2.0f;
+        // From there, we have two main cases: either the widget still exists in the layout,
+        // or it doesn't. This is defined by the fact that the `newID` is positive or negative.
+        // If the widget still exists, we need to update the information contained in the
+        // internal map so that further update of the layout yields correct results. If the
+        // widget does not exist anymore in the layout, we have to ignore this widget and not
+        // add it to the new internal map.
+
+        // Insert the widget with its new information only if it still exists in the layout.
+        if (isValidIndex(newID)) {
+          m_infos[newID] = oldWidget->second;
+        }
+      }
+
+      // Call parent method.
+      core::Layout::invalidate();
     }
 
     void
@@ -347,9 +361,9 @@ namespace sdl {
 
       if (info->second.role != role) {
         error(
-          std::string("Item \"") + widget->getName() + "\" has not expected role in layout",
-          std::string("Expected ") + std::to_string(static_cast<int>(role)) +
-          " got " + std::to_string(static_cast<int>(info->second.role))
+          std::string("Item \"") + widget->getName() + "\" does not have expected role in layout",
+          std::string("Expected ") + getNameFromRole(role) +
+          " got " + getNameFromRole(info->second.role)
         );
       }
 
@@ -402,7 +416,7 @@ namespace sdl {
       // to centering for example to try to make use of the constraints.
       dockRoles.clear();
       dockRoles.insert(WidgetRole::TopDockWidget);
-      dockRoles.insert(WidgetRole::CentralWidget);
+      dockRoles.insert(WidgetRole::CentralDockWidget);
       dockRoles.insert(WidgetRole::BottomDockWidget);
       core::Layout::WidgetInfo centralPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
 
@@ -566,20 +580,20 @@ namespace sdl {
       // for each relevant area.
 
       // First left area.
-      assignOrCreateWidthForRole(WidgetRole::LeftDockWidget, rolesData[0u].area.w(), roles);
+      roles.assignOrCreateDimsForRole(WidgetRole::LeftDockWidget, true, rolesData[0u].area.w());
 
       // Central, top and bottom area are shared.
-      assignOrCreateWidthForRole(WidgetRole::TopDockWidget, rolesData[1u].area.w(), roles);
-      assignOrCreateWidthForRole(WidgetRole::CentralWidget, rolesData[1u].area.w(), roles);
-      assignOrCreateWidthForRole(WidgetRole::BottomDockWidget, rolesData[1u].area.w(), roles);
+      roles.assignOrCreateDimsForRole(WidgetRole::TopDockWidget, true, rolesData[1u].area.w());
+      roles.assignOrCreateDimsForRole(WidgetRole::CentralDockWidget, true, rolesData[1u].area.w());
+      roles.assignOrCreateDimsForRole(WidgetRole::BottomDockWidget, true, rolesData[1u].area.w());
 
       // And finally right area.
-      assignOrCreateWidthForRole(WidgetRole::RightDockWidget, rolesData[2u].area.w(), roles);
+      roles.assignOrCreateDimsForRole(WidgetRole::RightDockWidget, true, rolesData[2u].area.w());
 
       // Assign the total window's size to the menu bar, tool bar and status bar.
-      assignOrCreateWidthForRole(WidgetRole::MenuBar, window.w(), roles);
-      assignOrCreateWidthForRole(WidgetRole::ToolBar, window.w(), roles);
-      assignOrCreateWidthForRole(WidgetRole::StatusBar, window.w(), roles);
+      roles.assignOrCreateDimsForRole(WidgetRole::MenuBar, true, window.w());
+      roles.assignOrCreateDimsForRole(WidgetRole::ToolBar, true, window.w());
+      roles.assignOrCreateDimsForRole(WidgetRole::StatusBar, true, window.w());
     }
 
     void
@@ -613,7 +627,7 @@ namespace sdl {
       dockRoles.clear();
       dockRoles.insert(WidgetRole::LeftDockWidget);
       dockRoles.insert(WidgetRole::TopDockWidget);
-      dockRoles.insert(WidgetRole::CentralWidget);
+      dockRoles.insert(WidgetRole::CentralDockWidget);
       dockRoles.insert(WidgetRole::BottomDockWidget);
       dockRoles.insert(WidgetRole::RightDockWidget);
       core::Layout::WidgetInfo dockAreaPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
@@ -792,21 +806,21 @@ namespace sdl {
       // for each relevant area.
 
       // First left area.
-      assignOrCreateHeightForRole(WidgetRole::LeftDockWidget, rolesData[2u].area.h(), roles);
+      roles.assignOrCreateDimsForRole(WidgetRole::LeftDockWidget, false, 0.0f, true, rolesData[2u].area.h());
 
       // Central, top and bottom area are shared.
       // TODO: How to do that ???
-      assignOrCreateHeightForRole(WidgetRole::TopDockWidget, 0.0f, roles);
-      assignOrCreateHeightForRole(WidgetRole::CentralWidget, rolesData[2u].area.h(), roles);
-      assignOrCreateHeightForRole(WidgetRole::BottomDockWidget, 0.0f, roles);
+      roles.assignOrCreateDimsForRole(WidgetRole::TopDockWidget, false, 0.0f, true, 0.0f);
+      roles.assignOrCreateDimsForRole(WidgetRole::CentralDockWidget, false, 0.0f, true, rolesData[2u].area.h());
+      roles.assignOrCreateDimsForRole(WidgetRole::BottomDockWidget, false, 0.0f, true, 0.0f);
 
       // And finally right area.
-      assignOrCreateHeightForRole(WidgetRole::RightDockWidget, rolesData[2u].area.h(), roles);
+      roles.assignOrCreateDimsForRole(WidgetRole::RightDockWidget, false, 0.0f, true, rolesData[2u].area.h());
 
       // Assign the computed height to the menu bar, tool bar and status bar.
-      assignOrCreateHeightForRole(WidgetRole::MenuBar, rolesData[0u].area.h(), roles);
-      assignOrCreateHeightForRole(WidgetRole::ToolBar, rolesData[1u].area.h(), roles);
-      assignOrCreateHeightForRole(WidgetRole::StatusBar, rolesData[3u].area.h(), roles);
+      roles.assignOrCreateDimsForRole(WidgetRole::MenuBar, false, 0.0f, true, rolesData[0u].area.h());
+      roles.assignOrCreateDimsForRole(WidgetRole::ToolBar, false, 0.0f, true, rolesData[1u].area.h());
+      roles.assignOrCreateDimsForRole(WidgetRole::StatusBar, false, 0.0f, true, rolesData[3u].area.h());
     }
 
     core::Layout::WidgetInfo
@@ -870,60 +884,6 @@ namespace sdl {
 
       // Return the computed policy for the input areas.
       return policy;
-    }
-
-    void
-    MainWindowLayout::consolidateRolesDimensions(RolesInfo& roles) const {
-      // Here we want to update the position of each area based on the dimensions
-      // of their relative position. Upon entering this function, each area has
-      // valid dimensions but no position yet.
-      // We need to correct this fact so that we obtain a nice layout based on the
-      // expected position of each area.
-      // For example the central area should be offset so that it lands on the right
-      // of the left area and on the left of the right area.
-      // Basically we will update each individual area based on the position of the
-      // layout.
-
-      // TODO: Add menu bar and tool bar.
-      // Menu bar's position is only determined by the margins of this layout.
-      assignAbscissaForRole(WidgetRole::MenuBar, getMargin().w(), roles);
-      assignOrdinateForRole(WidgetRole::MenuBar, getMargin().h(), roles);
-
-      // Tool bar is right below the menu bar and is only offset along the `x` axis
-      // based on the margin.
-      assignAbscissaForRole(WidgetRole::ToolBar, getMargin().w(), roles);
-      float offset = getMargin().h() + getLocationOfRole(WidgetRole::MenuBar, roles).h();
-      assignOrdinateForRole(WidgetRole::ToolBar, offset, roles);
-
-      // The left area position's position is determined by the bottom bound of the
-      // tool bar and is only offset along the `x` axis based on the margin.
-      assignAbscissaForRole(WidgetRole::LeftDockWidget, getMargin().w(), roles);
-      offset += getLocationOfRole(WidgetRole::ToolBar, roles).h();
-      assignOrdinateForRole(WidgetRole::LeftDockWidget, offset, roles);
-
-      // Top, central and bottom area are on the right of the left area.
-      // Also each one is stacked on top of each other.
-      const float xOffsetForCentralAreas = getMargin().w() + getLocationOfRole(WidgetRole::LeftDockWidget, roles).w();
-      assignAbscissaForRole(WidgetRole::TopDockWidget, xOffsetForCentralAreas, roles);
-      assignAbscissaForRole(WidgetRole::CentralWidget, xOffsetForCentralAreas, roles);
-      assignAbscissaForRole(WidgetRole::BottomDockWidget, xOffsetForCentralAreas, roles);
-
-      float yOffsetForCentralAreas = offset;
-      assignOrdinateForRole(WidgetRole::TopDockWidget, yOffsetForCentralAreas, roles);
-      yOffsetForCentralAreas += getLocationOfRole(WidgetRole::TopDockWidget, roles).h();
-      assignOrdinateForRole(WidgetRole::CentralWidget, yOffsetForCentralAreas, roles);
-      yOffsetForCentralAreas += getLocationOfRole(WidgetRole::CentralWidget, roles).h();
-      assignOrdinateForRole(WidgetRole::BottomDockWidget, yOffsetForCentralAreas, roles);
-
-      // Right area is on the right of the central areas.
-      const float xOffsetForRightArea = xOffsetForCentralAreas + getLocationOfRole(WidgetRole::TopDockWidget, roles).w();
-      assignAbscissaForRole(WidgetRole::RightDockWidget, xOffsetForRightArea, roles);
-      assignOrdinateForRole(WidgetRole::RightDockWidget, offset, roles);
-
-      // The status bar is below the left area.
-      offset += getLocationOfRole(WidgetRole::LeftDockWidget, roles).h();
-      assignAbscissaForRole(WidgetRole::StatusBar, getMargin().w(), roles);
-      assignOrdinateForRole(WidgetRole::StatusBar, offset, roles);
     }
 
   }
