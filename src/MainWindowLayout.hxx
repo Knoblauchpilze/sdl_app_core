@@ -197,7 +197,7 @@ namespace sdl {
           break;
         default:
           error(
-            std::string("Could not determine widget role for area ") + std::to_string(static_cast<int>(area)),
+            std::string("Could not determine widget role for area ") + getNameFromArea(area),
             std::string("Invalid dock area")
           );
           break;
@@ -238,6 +238,8 @@ namespace sdl {
       // Add the item using the base handler.
       const int index = addItem(widget);
 
+      // TODO: We should probably create a tab widget with all relevant widgets
+      // in case a single dock widget area contains more than one widget.
       // Register this item in the internal table of information if
       // a valid index was generated.
       if (index >= 0) {

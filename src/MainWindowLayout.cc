@@ -1,7 +1,7 @@
 
 # include "MainWindowLayout.hh"
 
-# include <iostream>
+# include <sstream>
 
 namespace sdl {
   namespace app {
@@ -9,7 +9,7 @@ namespace sdl {
     MainWindowLayout::MainWindowLayout(const utils::Boxf& area,
                                        const float& margin,
                                        const utils::Sizef& centralWidgetSize):
-      core::Layout(nullptr, margin, false),
+      core::Layout(nullptr, margin, true),
       m_area(area),
       m_infos(),
 
@@ -71,7 +71,7 @@ namespace sdl {
       if (!isValidDockWidgetRole(info->second.role)) {
         error(
           std::string("Could not remove item \"") + item->getName() + "\" which is not a dock widget",
-          std::string("Role \"") + std::to_string(static_cast<int>(info->second.role)) + " is not a valid dock widget role"
+          std::string("Role \"") + getNameFromRole(info->second.role) + " is not a valid dock widget role"
         );
       }
 
@@ -518,11 +518,8 @@ namespace sdl {
 
           // Only care for the horizontal direction, vertical direction will be handled later.
           if (usable.first) {
-            std::cout << "[LAY] Role " << index << " can be used to "
-                      << std::to_string(static_cast<int>(action.getHorizontalPolicy()))
-                      << " and "
-                      << std::to_string(static_cast<int>(action.getVerticalPolicy()))
-                      << std::endl;
+            log("Role " + std::to_string(index) + " can be used to perform action " + action.toString());
+
             rolesToUse.insert(index);
           }
         }
@@ -544,14 +541,16 @@ namespace sdl {
           {
             // Check whether this area can expand.
             if (rolesData[*role].policy.canExpandHorizontally()) {
-              std::cout << "[LAY] Role " << *role << " can be expanded horizontally" << std::endl;
+              log("Role " + std::to_string(*role) + " can be expanded horizontally");
               rolesToExpand.insert(*role);
             }
           }
 
-          std::cout << "[LAY] Saved " << rolesToExpand.size() << " which can expand compared to "
-                    << rolesToUse.size() << " which can extend"
-                    << std::endl;
+          log(
+            "Saved " + std::to_string(rolesToExpand.size()) + " which can expand compared to " +
+            std::to_string(rolesToUse.size()) + " which can extend",
+            utils::Level::Info
+          );
           // Check whether we could select at least one area to expand: if this is not the
           // case we can proceed to extend the areas with only a `Grow` flag.
           if (!rolesToExpand.empty()) {
@@ -744,11 +743,8 @@ namespace sdl {
 
           // Only care for the vertical direction, horizontal direction will be handled later.
           if (usable.second) {
-            std::cout << "[LAY] Role " << index << " can be used to "
-                      << std::to_string(static_cast<int>(action.getHorizontalPolicy()))
-                      << " and "
-                      << std::to_string(static_cast<int>(action.getVerticalPolicy()))
-                      << std::endl;
+            log("Role " + std::to_string(index) + " can be used to perform action " + action.toString());
+
             rolesToUse.insert(index);
           }
         }
@@ -770,14 +766,16 @@ namespace sdl {
           {
             // Check whether this area can expand.
             if (rolesData[*role].policy.canExpandVertically()) {
-              std::cout << "[LAY] Role " << *role << " can be expanded vertically" << std::endl;
+              log("Role " + std::to_string(*role) + " can be expanded vertically");
               rolesToExpand.insert(*role);
             }
           }
 
-          std::cout << "[LAY] Saved " << rolesToExpand.size() << " which can expand compared to "
-                    << rolesToUse.size() << " which can extend"
-                    << std::endl;
+          log(
+            "Saved " + std::to_string(rolesToExpand.size()) + " which can expand compared to " +
+            std::to_string(rolesToUse.size()) + " which can extend",
+            utils::Level::Info
+          );
           // Check whether we could select at least one area to expand: if this is not the
           // case we can proceed to extend the areas with only a `Grow` flag.
           if (!rolesToExpand.empty()) {
@@ -830,14 +828,16 @@ namespace sdl {
       // Create a default policy.
       core::Layout::WidgetInfo policy;
 
-      std::cout << "[CON] Computing policy for roles: ";
+      std::stringstream ss;
+      ss << "Computing policy for roles: ";
       for (std::unordered_set<WidgetRole>::const_iterator role = roles.cbegin() ;
            role != roles.cend() ;
            ++role)
       {
-        std::cout << getNameFromRole(*role) << " ";
+        ss << getNameFromRole(*role) << " ";
       }
-      std::cout << " out of " << m_infos.size() << " info" << std::endl;
+      ss << "out of " << m_infos.size() << " info";
+      log(ss.str(), utils::Level::Notice);
 
       // Traverse the internal set of widgets to determine the global policy.
       for (InfosMap::const_iterator info = m_infos.cbegin() ;
@@ -850,12 +850,11 @@ namespace sdl {
         // Check whether the widget belongs to the input role: if this is not the
         // case we do not consider it for the determination of the global policy.
         if (roles.count(item.role) == 0) {
-          std::cout << "[CON] Widget assumes role " << getNameFromRole(item.role) << ", no need to consider it" << std::endl;
           // No need to consider this item.
           continue;
         }
 
-        std::cout << "[CON] Considering widget assuming correct role " << getNameFromRole(item.role) << std::endl;
+        log("Considering widget assuming correct role " + getNameFromRole(item.role));
 
         // We now know that the widget does assume the input role: we shall use it for
         // the determination of the global policy.
@@ -876,10 +875,10 @@ namespace sdl {
         // In order to keep things simple we will use the dedicated handler from this class.
         consolidatePolicyFromItem(policy, wigInfo);
 
-        std::cout << "[CON] Policy is: min=" << policy.min.toString()
-                  << ", hint=" << policy.hint.toString()
-                  << ", max=" << policy.max.toString()
-                  << std::endl;
+        log(
+          "Policy is now: min=" + policy.min.toString() + ", hint= " + policy.hint.toString() + ", max= " + policy.hint.toString(),
+          utils::Level::Notice
+        );
       }
 
       // Return the computed policy for the input areas.
