@@ -168,9 +168,31 @@ namespace sdl {
                               const std::vector<WidgetInfo>& widgetsInfo,
                               RolesInfo& roles);
 
+        /**
+         * @brief - Used to compute the global size policy for the input roles from the
+         *          widgets described by the array `widgetsInfo`. Basically combines the
+         *          individual widget's policies into a single global one which is the
+         *          less restrictive and can be used as a rwa approximation of the widgets
+         *          seen as a single one.
+         * @param roles - a set of roles which indicates the widgets to consider.
+         * @param widgetsInfo - the information about the policy for individual widgets.
+         * @return - a single policy for all the widgets assuming the input roles. This
+         *           includes a minimum and maximum size, a hint and a policy.
+         */
         core::Layout::WidgetInfo
         computeSizePolicyForRoles(const std::unordered_set<WidgetRole>& roles,
                                   const std::vector<WidgetInfo>& widgetsInfo) const;
+
+        /**
+         * @brief - Similar to `computeSizePolicyForDockWidgets` but dedicated to compute
+         *          a policy for dock widgets. This is a bit special because the dock
+         *          widgets staks in the vertical direction and thus we cannot just select
+         *          the minimum/maximum item from the policies.
+         * @param widgetsInfo - the information about the policy for individual widgets.
+         * @return - a single policyt for all the dock widgets assuming the input roles.
+         */
+        core::Layout::WidgetInfo
+        computeSizePolicyForDockWidgets(const std::vector<WidgetInfo>& widgetsInfo) const;
 
         utils::Sizef
         computeSizeOfRoles(const std::vector<core::Layout::WidgetInfo>& roles) const noexcept;

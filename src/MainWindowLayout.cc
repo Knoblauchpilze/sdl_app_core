@@ -623,13 +623,8 @@ namespace sdl {
       // First, compute a global policy for each relevant area. We need to aggregate a
       // global policy for all the dock widgets as they will be assigned a single height
       // in the layout.
-      dockRoles.clear();
-      dockRoles.insert(WidgetRole::LeftDockWidget);
-      dockRoles.insert(WidgetRole::TopDockWidget);
-      dockRoles.insert(WidgetRole::CentralDockWidget);
-      dockRoles.insert(WidgetRole::BottomDockWidget);
-      dockRoles.insert(WidgetRole::RightDockWidget);
-      core::Layout::WidgetInfo dockAreaPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
+      // This cannot be done very easily so we use the dedicated handler.
+      core::Layout::WidgetInfo dockAreaPolicy = computeSizePolicyForDockWidgets(widgetsInfo);
 
       // Aggregate the policy for each bar.
       dockRoles.clear();
@@ -880,6 +875,134 @@ namespace sdl {
           utils::Level::Notice
         );
       }
+
+      // Return the computed policy for the input areas.
+      return policy;
+    }
+
+    core::Layout::WidgetInfo
+    MainWindowLayout::computeSizePolicyForDockWidgets(const std::vector<WidgetInfo>& widgetsInfo) const {
+      // Create a default policy.
+      core::Layout::WidgetInfo policy;
+
+      std::stringstream ss;
+      ss << "Computing policy for roles dock widgets";
+      log(ss.str(), utils::Level::Notice);
+
+      // Compute the global policy for each area.
+      WidgetInfo defaultInfo = WidgetInfo{
+        core::SizePolicy(),
+        utils::Sizef(),
+        utils::Sizef(),
+        utils::Sizef(),
+        utils::Boxf()
+      };
+
+      std::unordered_map<WidgetRole, WidgetInfo> policyForDockAreas;
+      policyForDockAreas[WidgetRole::LeftDockWidget] = defaultInfo;
+      policyForDockAreas[WidgetRole::TopDockWidget] = defaultInfo;
+      policyForDockAreas[WidgetRole::CentralDockWidget] = defaultInfo;
+      policyForDockAreas[WidgetRole::BottomDockWidget] = defaultInfo;
+      policyForDockAreas[WidgetRole::RightDockWidget] = defaultInfo;
+
+      for (std::unordered_map<WidgetRole, WidgetInfo>::iterator dockArea = policyForDockAreas.begin() ;
+           dockArea != policyForDockAreas.end() ;
+           ++dockArea)
+      {
+        // Traverse the internal set of widgets to determine the global policy.
+        for (InfosMap::const_iterator info = m_infos.cbegin() ;
+            info != m_infos.cend() ;
+            ++info)
+        {
+          // Retrieve the area associated to the current widget.
+          const ItemInfo item = info->second;
+
+          // Check whether the widget belongs to the input role: if this is not the
+          // case we do not consider it for the determination of the global policy.
+          if (item.role != dockArea->first) {
+            // No need to consider this item.
+            continue;
+          }
+
+          log("Considering widget assuming correct role " + getNameFromRole(item.role));
+
+          // We now know that the widget does assume the input role: we shall use it for
+          // the determination of the global policy.
+          // In order to do that, we need to update the dimensions which might be provided
+          // by the widget and also the policy.
+          // We will select the less restrictive policies for any area in terms of maximum
+          // size and the most restrictive policies for minimum size.
+          // To do all that, we first need to retrieve the policy of the widget associated to
+          // the information we are processing.
+
+          // Retrieve the information for this widget.
+          const WidgetInfo& wigInfo = widgetsInfo[info->first];
+
+          // First adjust the size information for the global policy. We update both the
+          // maximum and minimum size if they are larger respectively than the current
+          // maximum and minimum size. This guarantees that we will expand as much as possible
+          // and shrink as little as needed.
+          // In order to keep things simple we will use the dedicated handler from this class.
+          consolidatePolicyFromItem(dockArea->second, wigInfo);
+
+          log(
+            "Policy is now: min=" + dockArea->second.min.toString() + ", hint= " + dockArea->second.hint.toString() + ", max= " + dockArea->second.hint.toString(),
+            utils::Level::Notice
+          );
+        }
+      }
+
+      // Now that we have information for each individual dock area we can combine it into a
+      // general policy for all the areas.
+      // We first need to build a global area for the top, central and bottom dock areas, and
+      // then consolidate it with the left and right areas.
+
+      // So first handle top, central and bottom areas.
+      WidgetInfo centralDockAreas = policyForDockAreas[WidgetRole::TopDockWidget];
+
+      const WidgetInfo& central = policyForDockAreas[WidgetRole::CentralDockWidget];
+      if (centralDockAreas.min.w() < central.min.w()) {
+        centralDockAreas.min.w() = central.min.w();
+      }
+      centralDockAreas.min.h() += central.min.h();
+
+      if (centralDockAreas.max.w() < central.max.w()) {
+        centralDockAreas.max.w() = central.max.w();
+      }
+      centralDockAreas.max.h() += central.max.h();
+
+      if (central.policy.canExpandHorizontally()) {
+        centralDockAreas.policy.setHorizontalPolicy(core::SizePolicy::Expanding);
+      }
+
+      if (central.policy.canExpandVertically()) {
+        centralDockAreas.policy.setVerticalPolicy(core::SizePolicy::Expanding);
+      }
+
+      const WidgetInfo& bottom = policyForDockAreas[WidgetRole::CentralDockWidget];
+      if (centralDockAreas.min.w() < bottom.min.w()) {
+        centralDockAreas.min.w() = bottom.min.w();
+      }
+      centralDockAreas.min.h() += bottom.min.h();
+
+      if (centralDockAreas.max.w() < bottom.max.w()) {
+        centralDockAreas.max.w() = bottom.max.w();
+      }
+      centralDockAreas.max.h() += bottom.max.h();
+
+      if (bottom.policy.canExpandHorizontally()) {
+        centralDockAreas.policy.setHorizontalPolicy(core::SizePolicy::Expanding);
+      }
+
+      if (bottom.policy.canExpandVertically()) {
+        centralDockAreas.policy.setVerticalPolicy(core::SizePolicy::Expanding);
+      }
+
+      consolidatePolicyFromItem(policy, centralDockAreas);
+
+      // Now consolidate with left and right areas.
+      consolidatePolicyFromItem(policy, policyForDockAreas[WidgetRole::LeftDockWidget]);
+      consolidatePolicyFromItem(policy, policyForDockAreas[WidgetRole::RightDockWidget]);
 
       // Return the computed policy for the input areas.
       return policy;
