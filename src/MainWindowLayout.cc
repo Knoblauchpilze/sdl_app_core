@@ -401,11 +401,11 @@ namespace sdl {
       // First, compute a global policy for each relevant area.
       dockRoles.clear();
       dockRoles.insert(WidgetRole::LeftDockWidget);
-      core::Layout::WidgetInfo leftPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
+      core::Layout::WidgetInfo leftPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo, window);
 
       dockRoles.clear();
       dockRoles.insert(WidgetRole::RightDockWidget);
-      core::Layout::WidgetInfo rightPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
+      core::Layout::WidgetInfo rightPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo, window);
 
       // Agregate a relevant area for the top and bottom area along with the central widget.
       // As these areas as all aligned horizontally, any space used by one of them will be
@@ -418,7 +418,7 @@ namespace sdl {
       dockRoles.insert(WidgetRole::TopDockWidget);
       dockRoles.insert(WidgetRole::CentralDockWidget);
       dockRoles.insert(WidgetRole::BottomDockWidget);
-      core::Layout::WidgetInfo centralPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
+      core::Layout::WidgetInfo centralPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo, window);
 
       // Once policies for each area are computed, we can start the optimization process.
       // We basically try to allocate fairly the remaining space between each area at any point
@@ -624,20 +624,20 @@ namespace sdl {
       // global policy for all the dock widgets as they will be assigned a single height
       // in the layout.
       // This cannot be done very easily so we use the dedicated handler.
-      core::Layout::WidgetInfo dockAreaPolicy = computeSizePolicyForDockWidgets(widgetsInfo);
+      core::Layout::WidgetInfo dockAreaPolicy = computeSizePolicyForDockWidgets(widgetsInfo, window);
 
       // Aggregate the policy for each bar.
       dockRoles.clear();
       dockRoles.insert(WidgetRole::MenuBar);
-      core::Layout::WidgetInfo menuBarPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
+      core::Layout::WidgetInfo menuBarPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo, window);
 
       dockRoles.clear();
       dockRoles.insert(WidgetRole::ToolBar);
-      core::Layout::WidgetInfo toolBarPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
+      core::Layout::WidgetInfo toolBarPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo, window);
 
       dockRoles.clear();
       dockRoles.insert(WidgetRole::StatusBar);
-      core::Layout::WidgetInfo statusBarPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo);
+      core::Layout::WidgetInfo statusBarPolicy = computeSizePolicyForRoles(dockRoles, widgetsInfo, window);
 
       // Once policies for each area are computed, we can start the optimization process.
       // We basically try to allocate fairly the remaining space between each area at any point
@@ -818,7 +818,8 @@ namespace sdl {
 
     core::Layout::WidgetInfo
     MainWindowLayout::computeSizePolicyForRoles(const std::unordered_set<WidgetRole>& roles,
-                                                const std::vector<WidgetInfo>& widgetsInfo) const
+                                                const std::vector<WidgetInfo>& widgetsInfo,
+                                                const utils::Sizef& size) const
     {
       // Create a default policy.
       core::Layout::WidgetInfo policy;
@@ -869,7 +870,7 @@ namespace sdl {
         // and shrink as little as needed.
         // In order to keep things simple we will use the dedicated handler from this class.
         std::unordered_set<WidgetRole> roles({item.role});
-        consolidatePolicyFromItem(roles, policy, wigInfo);
+        consolidatePolicyFromItem(roles, policy, wigInfo, size);
 
         log(
           "Policy is now: min=" + policy.min.toString() + ", hint= " + policy.hint.toString() + ", max= " + policy.hint.toString(),
@@ -882,7 +883,9 @@ namespace sdl {
     }
 
     core::Layout::WidgetInfo
-    MainWindowLayout::computeSizePolicyForDockWidgets(const std::vector<WidgetInfo>& widgetsInfo) const {
+    MainWindowLayout::computeSizePolicyForDockWidgets(const std::vector<WidgetInfo>& widgetsInfo,
+                                                      const utils::Sizef& size) const
+    {
       // Create a default policy.
       core::Layout::WidgetInfo policy;
 
@@ -949,7 +952,7 @@ namespace sdl {
           // maximum and minimum size. This guarantees that we will expand as much as possible
           // and shrink as little as needed.
           // In order to keep things simple we will use the dedicated handler from this class.
-          consolidatePolicyFromItem(roles, dockArea->second, wigInfo);
+          consolidatePolicyFromItem(roles, dockArea->second, wigInfo, size);
 
           log(
             "Policy is now: min=" + dockArea->second.min.toString() + ", hint= " + dockArea->second.hint.toString() + ", max= " + dockArea->second.hint.toString(),
@@ -1008,13 +1011,13 @@ namespace sdl {
       roles.insert(WidgetRole::TopDockWidget);
       roles.insert(WidgetRole::CentralDockWidget);
       roles.insert(WidgetRole::BottomDockWidget);
-      consolidatePolicyFromItem(roles, policy, centralDockAreas);
+      consolidatePolicyFromItem(roles, policy, centralDockAreas, size);
 
       // Now consolidate with left and right areas.
       roles.insert(WidgetRole::LeftDockWidget);
-      consolidatePolicyFromItem(roles, policy, policyForDockAreas[WidgetRole::LeftDockWidget]);
+      consolidatePolicyFromItem(roles, policy, policyForDockAreas[WidgetRole::LeftDockWidget], size);
       roles.insert(WidgetRole::RightDockWidget);
-      consolidatePolicyFromItem(roles, policy, policyForDockAreas[WidgetRole::RightDockWidget]);
+      consolidatePolicyFromItem(roles, policy, policyForDockAreas[WidgetRole::RightDockWidget], size);
 
       // Return the computed policy for the input areas.
       return policy;

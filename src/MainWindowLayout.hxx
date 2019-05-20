@@ -251,11 +251,6 @@ namespace sdl {
       }
     }
 
-
-
-
-
-
     inline
     utils::Sizef
     MainWindowLayout::computeSizeOfRoles(const std::vector<core::Layout::WidgetInfo>& roles) const noexcept {
@@ -275,9 +270,10 @@ namespace sdl {
 
     inline
     void
-    MainWindowLayout::consolidatePolicyFromItem(const std::unordered_set<WidgetRole>& /*roles*/,
+    MainWindowLayout::consolidatePolicyFromItem(const std::unordered_set<WidgetRole>& roles,
                                                 WidgetInfo& policy,
-                                                const WidgetInfo& item) const noexcept
+                                                const WidgetInfo& item,
+                                                const utils::Sizef& size) const noexcept
     {
       // Update minimum size only if it is larger than the current minimum.
       if (item.min.w() > policy.min.w()) {
@@ -299,6 +295,17 @@ namespace sdl {
 
       // Do not update size hint, we assume regular distribution during the
       // process.
+      // On the other hand we now need to update the maximum size of the policy
+      // based on the roles it is supposed to serve.
+      utils::Sizef max = computeMaxSizeFromRoles(size, roles);
+
+      if (policy.max.w() > max.w()) {
+        policy.max.w() = max.w();
+      }
+
+      if (policy.max.h() > max.h()) {
+        policy.max.h() = max.h();
+      }
 
       // Update the policy if it contains flag `expanding`: this allows widgets
       // to expand if needed and does not prevent anything from shrinking because
@@ -310,6 +317,67 @@ namespace sdl {
       if (item.policy.canExpandVertically()) {
         policy.policy.setVerticalPolicy(core::SizePolicy::Expanding);
       }
+    }
+
+    inline
+    utils::Sizef
+    MainWindowLayout::computeMaxSizeFromRoles(const utils::Sizef& size,
+                                              const std::unordered_set<WidgetRole>& roles) const noexcept
+    {
+      // The maximum size without constraints correspond to the input maximum size.
+      utils::Sizef maxSize = size;
+
+      // If the central widget role does exist in there, we can return early: indeed
+      // the central widget will be allowed all of the space.
+      if (roles.count(WidgetRole::CentralDockWidget)) {
+        return maxSize;
+      }
+
+      // Now compute the portion of the width and height which is assigned to the roles
+      // by traversing the input array.
+      // We now know that the central widget does not belong to the input `roles` so we
+      // can safely add percentages.
+      float wPerc = 0.0f;
+      float hPerc = 0.0f;
+
+      for (std::unordered_set<WidgetRole>::const_iterator role = roles.cbegin() ;
+           role != roles.cend() ;
+           ++role)
+      {
+        // Retrieve the percentage based on the role.
+        switch (*role) {
+          case WidgetRole::MenuBar:
+            hPerc += m_menuBarPercentage;
+            break;
+          case WidgetRole::StatusBar:
+            hPerc += m_statusBarPercentage;
+            break;
+          case WidgetRole::ToolBar:
+            hPerc += m_toolBarPercentage;
+            break;
+          case WidgetRole::LeftDockWidget:
+            wPerc += m_leftAreaPercentage;
+            break;
+          case WidgetRole::RightDockWidget:
+            wPerc += m_rightAreaPercentage;
+            break;
+          case WidgetRole::TopDockWidget:
+            hPerc += m_topAreaPercentage;
+            break;
+          case WidgetRole::BottomDockWidget:
+            hPerc += m_bottomAreaPercentage;
+            break;
+          default:
+            break;
+        }
+      }
+
+      // Scale the size by the percentage assigned to the input roles.
+      maxSize.w() = wPerc;
+      maxSize.h() = hPerc;
+
+      // This is the maximum size available for all the roles.
+      return maxSize;
     }
 
   }

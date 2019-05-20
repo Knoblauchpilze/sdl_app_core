@@ -176,12 +176,16 @@ namespace sdl {
          *          seen as a single one.
          * @param roles - a set of roles which indicates the widgets to consider.
          * @param widgetsInfo - the information about the policy for individual widgets.
+         * @param size - the maximum size which can be assigned to all widgets. This allows
+         *               to compute upper bounds of the dimensions based on the role of the
+         *               policy to compute.
          * @return - a single policy for all the widgets assuming the input roles. This
          *           includes a minimum and maximum size, a hint and a policy.
          */
         core::Layout::WidgetInfo
         computeSizePolicyForRoles(const std::unordered_set<WidgetRole>& roles,
-                                  const std::vector<WidgetInfo>& widgetsInfo) const;
+                                  const std::vector<WidgetInfo>& widgetsInfo,
+                                  const utils::Sizef& size) const;
 
         /**
          * @brief - Similar to `computeSizePolicyForDockWidgets` but dedicated to compute
@@ -189,10 +193,14 @@ namespace sdl {
          *          widgets staks in the vertical direction and thus we cannot just select
          *          the minimum/maximum item from the policies.
          * @param widgetsInfo - the information about the policy for individual widgets.
+         * @param size - the maximum size which can be assigned to all widgets. This allows
+         *               to compute upper bounds of the dimensions based on the role of the
+         *               policy to compute.
          * @return - a single policyt for all the dock widgets assuming the input roles.
          */
         core::Layout::WidgetInfo
-        computeSizePolicyForDockWidgets(const std::vector<WidgetInfo>& widgetsInfo) const;
+        computeSizePolicyForDockWidgets(const std::vector<WidgetInfo>& widgetsInfo,
+                                        const utils::Sizef& size) const;
 
         utils::Sizef
         computeSizeOfRoles(const std::vector<core::Layout::WidgetInfo>& roles) const noexcept;
@@ -211,11 +219,17 @@ namespace sdl {
          * @param item - the policy to merge with `policy`. Should contain the description of
          *               the policy applied to an element filling the role of `role` in this
          *               layout.
+         * @param size - the maximum available size to all roles.
          */
         void
         consolidatePolicyFromItem(const std::unordered_set<WidgetRole>& roles,
                                   WidgetInfo& policy,
-                                  const WidgetInfo& item) const noexcept;
+                                  const WidgetInfo& item,
+                                  const utils::Sizef& size) const noexcept;
+
+        utils::Sizef
+        computeMaxSizeFromRoles(const utils::Sizef& size,
+                                const std::unordered_set<WidgetRole>& roles) const noexcept;
 
       private:
 
