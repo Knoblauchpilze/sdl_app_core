@@ -197,10 +197,25 @@ namespace sdl {
         utils::Sizef
         computeSizeOfRoles(const std::vector<core::Layout::WidgetInfo>& roles) const noexcept;
 
-        static
+        /**
+         * @brief - Used to keep the less restrictive policy from the input/output argument
+         *          `policy` and provided policy `item`. The policy is assumed to correspond
+         *          to the input `roles` so that we can apply internal information about the
+         *          maximum and minimum bounds of each area.
+         *          Note that the `policy` argument will be modified with the policy computed
+         *          using the `item` element.
+         * @param roles - the roles which are fit by the `policy` argument: allows to adjust the
+         *                maximum size with the internal factor.
+         * @param policy - output argument which will receive the merging of the existing value
+         *                 of `policy` and the `item` policy.
+         * @param item - the policy to merge with `policy`. Should contain the description of
+         *               the policy applied to an element filling the role of `role` in this
+         *               layout.
+         */
         void
-        consolidatePolicyFromItem(WidgetInfo& policy,
-                                  const WidgetInfo& item) noexcept;
+        consolidatePolicyFromItem(const std::unordered_set<WidgetRole>& roles,
+                                  WidgetInfo& policy,
+                                  const WidgetInfo& item) const noexcept;
 
       private:
 

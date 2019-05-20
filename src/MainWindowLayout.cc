@@ -868,7 +868,8 @@ namespace sdl {
         // maximum and minimum size. This guarantees that we will expand as much as possible
         // and shrink as little as needed.
         // In order to keep things simple we will use the dedicated handler from this class.
-        consolidatePolicyFromItem(policy, wigInfo);
+        std::unordered_set<WidgetRole> roles({item.role});
+        consolidatePolicyFromItem(roles, policy, wigInfo);
 
         log(
           "Policy is now: min=" + policy.min.toString() + ", hint= " + policy.hint.toString() + ", max= " + policy.hint.toString(),
@@ -905,10 +906,15 @@ namespace sdl {
       policyForDockAreas[WidgetRole::BottomDockWidget] = defaultInfo;
       policyForDockAreas[WidgetRole::RightDockWidget] = defaultInfo;
 
+      std::unordered_set<WidgetRole> roles;
+
       for (std::unordered_map<WidgetRole, WidgetInfo>::iterator dockArea = policyForDockAreas.begin() ;
            dockArea != policyForDockAreas.end() ;
            ++dockArea)
       {
+        roles.clear();
+        roles.insert(dockArea->first);
+
         // Traverse the internal set of widgets to determine the global policy.
         for (InfosMap::const_iterator info = m_infos.cbegin() ;
             info != m_infos.cend() ;
@@ -943,7 +949,7 @@ namespace sdl {
           // maximum and minimum size. This guarantees that we will expand as much as possible
           // and shrink as little as needed.
           // In order to keep things simple we will use the dedicated handler from this class.
-          consolidatePolicyFromItem(dockArea->second, wigInfo);
+          consolidatePolicyFromItem(roles, dockArea->second, wigInfo);
 
           log(
             "Policy is now: min=" + dockArea->second.min.toString() + ", hint= " + dockArea->second.hint.toString() + ", max= " + dockArea->second.hint.toString(),
@@ -998,11 +1004,17 @@ namespace sdl {
         centralDockAreas.policy.setVerticalPolicy(core::SizePolicy::Expanding);
       }
 
-      consolidatePolicyFromItem(policy, centralDockAreas);
+      roles.clear();
+      roles.insert(WidgetRole::TopDockWidget);
+      roles.insert(WidgetRole::CentralDockWidget);
+      roles.insert(WidgetRole::BottomDockWidget);
+      consolidatePolicyFromItem(roles, policy, centralDockAreas);
 
       // Now consolidate with left and right areas.
-      consolidatePolicyFromItem(policy, policyForDockAreas[WidgetRole::LeftDockWidget]);
-      consolidatePolicyFromItem(policy, policyForDockAreas[WidgetRole::RightDockWidget]);
+      roles.insert(WidgetRole::LeftDockWidget);
+      consolidatePolicyFromItem(roles, policy, policyForDockAreas[WidgetRole::LeftDockWidget]);
+      roles.insert(WidgetRole::RightDockWidget);
+      consolidatePolicyFromItem(roles, policy, policyForDockAreas[WidgetRole::RightDockWidget]);
 
       // Return the computed policy for the input areas.
       return policy;

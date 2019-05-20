@@ -275,8 +275,9 @@ namespace sdl {
 
     inline
     void
-    MainWindowLayout::consolidatePolicyFromItem(WidgetInfo& policy,
-                                                const WidgetInfo& item) noexcept
+    MainWindowLayout::consolidatePolicyFromItem(const std::unordered_set<WidgetRole>& /*roles*/,
+                                                WidgetInfo& policy,
+                                                const WidgetInfo& item) const noexcept
     {
       // Update minimum size only if it is larger than the current minimum.
       if (item.min.w() > policy.min.w()) {
