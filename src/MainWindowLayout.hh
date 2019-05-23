@@ -61,6 +61,12 @@ namespace sdl {
         void
         removeDockWidget(core::SdlWidget* item);
 
+      protected:
+
+        void
+        adjustWidgetToConstraints(const utils::Sizef& window,
+                                  std::vector<WidgetInfo>& widgets) const noexcept override;
+
       private:
 
         /**
@@ -99,6 +105,10 @@ namespace sdl {
 
         utils::Boxi
         getGridCoordinatesFromRole(const WidgetRole& role) const;
+
+        utils::Sizef
+        computeMaxSizeForRole(const utils::Sizef& window,
+                              const WidgetRole& role) const;
 
       private:
 

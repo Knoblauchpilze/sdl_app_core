@@ -183,6 +183,55 @@ namespace sdl {
     }
 
     inline
+    utils::Sizef
+    MainWindowLayout::computeMaxSizeForRole(const utils::Sizef& window,
+                                            const WidgetRole& role) const
+    {
+      // Each role provides a maximum size either through width or height regulation.
+      // At first assumes we can take up all the input window and adjust using the
+      // provided `role`.
+
+      float wMax = window.w();
+      float hMax = window.h();
+
+      // Apply width constraints.
+      switch (role) {
+        case WidgetRole::LeftDockWidget:
+          wMax = window.w() * m_leftAreaPercentage;
+          break;
+        case WidgetRole::RightDockWidget:
+          wMax = window.w() * m_rightAreaPercentage;
+          break;
+        default:
+          break;
+      }
+
+      // Apply height constraints.
+      switch (role) {
+        case WidgetRole::MenuBar:
+          hMax = window.h() * m_menuBarPercentage;
+          break;
+        case WidgetRole::ToolBar:
+          hMax = window.h() * m_toolBarPercentage;
+          break;
+        case WidgetRole::TopDockWidget:
+          hMax = window.h() * m_topAreaPercentage;
+          break;
+        case WidgetRole::BottomDockWidget:
+          hMax = window.h() * m_bottomAreaPercentage;
+          break;
+        case WidgetRole::StatusBar:
+          hMax = window.h() * m_statusBarPercentage;
+          break;
+        default:
+          break;
+      }
+
+      // Return the maximum size for this role.
+      return utils::Sizef(wMax, hMax);
+    }
+
+    inline
     void
     MainWindowLayout::addItemWithRoleAndArea(core::SdlWidget* widget,
                                              const WidgetRole& role,

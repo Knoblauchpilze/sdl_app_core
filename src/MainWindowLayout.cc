@@ -32,6 +32,73 @@ namespace sdl {
     MainWindowLayout::~MainWindowLayout() {}
 
     void
+    MainWindowLayout::adjustWidgetToConstraints(const utils::Sizef& window,
+                                                std::vector<WidgetInfo>& widgets) const noexcept {
+      // This method is used to adjust each cell to the constraints needed to provide a
+      // nice layout. We still want to benefit from the processing done by the parent
+      // 'GridLayout' class but we also add to want a layer by using the internal variables
+      // such as `m_menuBarPercentage` and so on.
+      // Thus we first apply the parent handler and then proceed to update the produced
+      // array of constraints.
+
+      // Apply the parent handler.
+      graphic::GridLayout::adjustWidgetToConstraints(window, widgets);
+
+      // Now adjust the size of each widget based on the widget associated to it and the
+      // constraints of its related area.
+
+      // Traverse the input array.
+      for (unsigned widget = 0u ; widget < widgets.size() ; ++widget) {
+        // Find the corresponding widget role and area.
+        const InfosMap::const_iterator info = m_infos.find(widget);
+        if (info == m_infos.cend()) {
+          error(
+            std::string("Could not adjust widget ") + std::to_string(widget) + " to minimum constraints",
+            std::string("Inexisting widget")
+          );
+        }
+
+        // Compute the maximum size which can be assigned to this widget based on its role.
+        utils::Sizef max = computeMaxSizeForRole(window, info->second.role);
+
+        // Update the maximum size for this widget if needed.
+        WidgetInfo& data = widgets[widget];
+        if (data.max.w() > max.w()) {
+          data.max.w() = max.w();
+        }
+        if (data.max.h() > max.h()) {
+          data.max.w() = max.w();
+        }
+
+        // Handle adjustment for hint and minimum size as we may have modified the maximum
+        // size.
+        if (data.hint.w() > data.max.w()) {
+          data.hint.w() = data.max.w();
+        }
+        if (data.hint.w() > data.max.w()) {
+          data.hint.h() = data.max.w();
+        }
+
+        if (data.hint.isValid()) {
+          if (data.min.w() > data.hint.w()) {
+            data.min.w() = data.hint.w();
+          }
+          if (data.min.w() > data.hint.w()) {
+            data.min.h() = data.hint.w();
+          }
+        }
+        else {
+          if (data.min.w() > data.max.w()) {
+            data.min.w() = data.max.w();
+          }
+          if (data.min.w() > data.max.w()) {
+            data.min.h() = data.max.w();
+          }
+        }
+      }
+    }
+
+    void
     MainWindowLayout::removeAll(const WidgetRole& role) {
       // Traverse the internal table of content and remove each one which role matches
       // the input value. The process is not as straightforward as it seems as we cannot
