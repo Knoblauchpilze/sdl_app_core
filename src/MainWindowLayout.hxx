@@ -68,12 +68,8 @@ namespace sdl {
     MainWindowLayout::addDockWidget(core::SdlWidget* item,
                                     const DockWidgetArea& area)
     {
-      // Use internal handler.
-      addItemWithRoleAndArea(
-        item,
-        determineDockWidgetRoleFromArea(area),
-        area
-      );
+      // Determine the role from the input `area` and use the internal handler.
+      addItemWithRoleAndArea(item, roleFromArea(area), area);
     }
 
     inline
@@ -89,11 +85,49 @@ namespace sdl {
     inline
     void
     MainWindowLayout::removeToolBar(core::SdlWidget* item) {
-      // Try to retrieve the index for this item.
-      const int index = getIndexAndCheck(item, WidgetRole::ToolBar);
-
       // Remove it using the dedicated handler.
-      removeItemFromIndex(index);
+      removeItemFromRole(item, WidgetRole::ToolBar);
+    }
+
+    inline
+    void
+    MainWindowLayout::removeDockWidget(core::SdlWidget* item) {
+      // Before trying to remove the widget, we need to first determine
+      // its precise role. Indeed based on the area in which the widget
+      // is located, its role will be different.
+      // So first, try to retrieve the index of this widget inside the
+      // internal array.
+      const int id = getIndexOf(item);
+
+      // Check whether we could find this item.
+      if (!isValidIndex(id)) {
+        error(
+          std::string("Cannot get index for item \"") + item->getName() + "\" from layout",
+          std::string("Widget is not managed by this layout")
+        );
+      }
+
+      // Check that this item is registered in the information array.
+      InfosMap::const_iterator info = m_infos.find(id);
+      if (info == m_infos.cend()) {
+        error(
+          std::string("Cannot retrieve role for item \"") + item->getName() + "\"",
+          std::string("Inexisting key")
+        );
+      }
+
+      // Check whether the role for this item is actually a dock widget. In
+      // any other case we abort the deletion of the item as it is not what
+      // is expected by the caller.
+      if (!isDockWidgetRole(info->second.role)) {
+        error(
+          std::string("Could not remove item \"") + item->getName() + "\" which is not a dock widget",
+          std::string("Role \"") + roleToName(info->second.role) + " is not a valid dock widget role"
+        );
+      }
+
+      // The input item is actually a dock widget we can remove it.
+      removeItem(item);
     }
 
     inline
@@ -103,7 +137,7 @@ namespace sdl {
       // corresponding entry in the internal information map.
 
       // Remove the item using the base class handler.
-      core::Layout::removeItemFromIndex(item);
+      graphic::GridLayout::removeItemFromIndex(item);
 
       // Erase the corresponding entry in the internal table.
       const std::size_t count = m_infos.erase(item);
@@ -119,114 +153,33 @@ namespace sdl {
     }
 
     inline
-    std::string
-    MainWindowLayout::getNameFromArea(const DockWidgetArea& area) noexcept {
-      switch (area) {
-        case DockWidgetArea::LeftArea:
-          return "left_area";
-        case DockWidgetArea::RightArea:
-          return "right_area";
-        case DockWidgetArea::TopArea:
-          return "top_area";
-        case DockWidgetArea::BottomArea:
-          return "bottom_area";
-        case DockWidgetArea::CentralArea:
-          return "central_area";
-        default:
-          return "unknow_area";
-      }
-    }
-
-    inline
-    std::string
-    MainWindowLayout::getNameFromRole(const WidgetRole& role) noexcept {
+    utils::Boxi
+    MainWindowLayout::getGridCoordinatesFromRole(const WidgetRole& role) const {
       switch (role) {
         case WidgetRole::MenuBar:
-          return "menu_bar";
-        case WidgetRole::StatusBar:
-          return "status_bar";
+          return utils::Boxi(0, 0, 3, 1);
         case WidgetRole::ToolBar:
-          return "tool_bar";
+          return utils::Boxi(0, 1, 3, 1);
         case WidgetRole::LeftDockWidget:
-          return "left_dock_widget";
+          return utils::Boxi(0, 2, 1, 3);
         case WidgetRole::RightDockWidget:
-          return "right_dock_widget";
+          return utils::Boxi(2, 2, 1, 3);
         case WidgetRole::TopDockWidget:
-          return "top_dock_widget";
+          return utils::Boxi(1, 2, 1, 1);
         case WidgetRole::BottomDockWidget:
-          return "bottom_dock_widget";
+          return utils::Boxi(1, 3, 1, 1);
         case WidgetRole::CentralDockWidget:
-          return "central_dock_widget";
+          return utils::Boxi(1, 4, 1, 1);
+        case WidgetRole::StatusBar:
+          return utils::Boxi(0, 5, 3, 1);
         default:
-          return "unknown_role";
-      }
-    }
-
-    inline
-    bool
-    MainWindowLayout::isValidDockWidgetRole(const WidgetRole& role) noexcept {
-      return
-        role == WidgetRole::LeftDockWidget ||
-        role == WidgetRole::RightDockWidget ||
-        role == WidgetRole::TopDockWidget ||
-        role == WidgetRole::BottomDockWidget ||
-        role == WidgetRole::CentralDockWidget
-      ;
-    }
-
-    inline
-    WidgetRole
-    MainWindowLayout::determineDockWidgetRoleFromArea(const DockWidgetArea& area) {
-      WidgetRole role;
-
-      switch (area) {
-        case DockWidgetArea::LeftArea:
-          role = WidgetRole::LeftDockWidget;
-          break;
-        case DockWidgetArea::RightArea:
-          role = WidgetRole::RightDockWidget;
-          break;
-        case DockWidgetArea::TopArea:
-          role = WidgetRole::TopDockWidget;
-          break;
-        case DockWidgetArea::BottomArea:
-          role = WidgetRole::BottomDockWidget;
-          break;
-        case DockWidgetArea::CentralArea:
-          role = WidgetRole::CentralDockWidget;
-          break;
-        default:
-          error(
-            std::string("Could not determine widget role for area ") + getNameFromArea(area),
-            std::string("Invalid dock area")
-          );
           break;
       }
 
-      return role;
-    }
-
-    inline
-    void
-    MainWindowLayout::assignPercentagesFromCentralWidget(const utils::Sizef& centralWidgetSize) {
-      // Left and right areas share equal percentage of the remaining space.
-      const float sidePercentage = (1.0f - centralWidgetSize.w()) / 2.0f;
-      m_leftAreaPercentage = sidePercentage;
-      m_rightAreaPercentage = sidePercentage;
-
-      // From the remaining vertical space, the top and bottom areas take
-      // up to 60%, toolbars 20% and the menu and status bars share the rest.
-      const float remaining = 1.0f - centralWidgetSize.h();
-
-      const float periphericalAreas = 0.6f * remaining;
-      const float toolbarsPercentage = 0.2f * remaining;
-      const float menuAndStatus = (1.0f - periphericalAreas - toolbarsPercentage);
-
-      m_menuBarPercentage = menuAndStatus / 2.0f;
-      m_toolBarPercentage = toolbarsPercentage;
-      m_topAreaPercentage = periphericalAreas / 2.0f;
-      m_bottomAreaPercentage = periphericalAreas / 2.0f;
-      m_statusBarPercentage = menuAndStatus / 2.0f;
+      error(
+        std::string("Cannot determine grid coordinates for role \"") + roleToName(role) + "\"",
+        std::string("Unknown role")
+      );
     }
 
     inline
@@ -235,8 +188,11 @@ namespace sdl {
                                              const WidgetRole& role,
                                              const DockWidgetArea& area)
     {
+      // Retrieve the coordinates for this role.
+      utils::Boxi gridCoords = getGridCoordinatesFromRole(role);
+
       // Add the item using the base handler.
-      const int index = addItem(widget);
+      const int index = addItem(widget, gridCoords.x(), gridCoords.y(), gridCoords.w(), gridCoords.h());
 
       // TODO: We should probably create a tab widget with all relevant widgets
       // in case a single dock widget area contains more than one widget.
@@ -249,135 +205,6 @@ namespace sdl {
           widget
         };
       }
-    }
-
-    inline
-    utils::Sizef
-    MainWindowLayout::computeSizeOfRoles(const std::vector<core::Layout::WidgetInfo>& roles) const noexcept {
-      // Create a default size.
-      utils::Sizef achievedSize;
-
-      // Traverse the input information and append the size to the global achieved size.
-      for (unsigned index = 0u ; index < roles.size() ; ++index) {
-        // Increment the achieved size with the dimensions of the current box.
-        achievedSize.w() += roles[index].area.w();
-        achievedSize.h() += roles[index].area.h();
-      }
-
-      // Return the computed size.
-      return achievedSize;
-    }
-
-    inline
-    void
-    MainWindowLayout::consolidatePolicyFromItem(const std::unordered_set<WidgetRole>& roles,
-                                                WidgetInfo& policy,
-                                                const WidgetInfo& item,
-                                                const utils::Sizef& size) const noexcept
-    {
-      // Update minimum size only if it is larger than the current minimum.
-      if (item.min.w() > policy.min.w()) {
-        policy.min.w() = item.min.w();
-      }
-
-      if (item.min.h() > policy.min.h()) {
-        policy.min.h() = item.min.h();
-      }
-
-      // Update maximum size only if it is larger than the current maximum.
-      if (item.max.w() > policy.max.w()) {
-        policy.max.w() = item.max.w();
-      }
-
-      if (item.max.h() > policy.max.h()) {
-        policy.max.h() = item.max.h();
-      }
-
-      // Do not update size hint, we assume regular distribution during the
-      // process.
-      // On the other hand we now need to update the maximum size of the policy
-      // based on the roles it is supposed to serve.
-      utils::Sizef max = computeMaxSizeFromRoles(size, roles);
-
-      if (policy.max.w() > max.w()) {
-        policy.max.w() = max.w();
-      }
-
-      if (policy.max.h() > max.h()) {
-        policy.max.h() = max.h();
-      }
-
-      // Update the policy if it contains flag `expanding`: this allows widgets
-      // to expand if needed and does not prevent anything from shrinking because
-      // we do not provide any size hint.
-      if (item.policy.canExpandHorizontally()) {
-        policy.policy.setHorizontalPolicy(core::SizePolicy::Expanding);
-      }
-
-      if (item.policy.canExpandVertically()) {
-        policy.policy.setVerticalPolicy(core::SizePolicy::Expanding);
-      }
-    }
-
-    inline
-    utils::Sizef
-    MainWindowLayout::computeMaxSizeFromRoles(const utils::Sizef& size,
-                                              const std::unordered_set<WidgetRole>& roles) const noexcept
-    {
-      // The maximum size without constraints correspond to the input maximum size.
-      utils::Sizef maxSize = size;
-
-      // If the central widget role does exist in there, we can return early: indeed
-      // the central widget will be allowed all of the space.
-      if (roles.count(WidgetRole::CentralDockWidget)) {
-        return maxSize;
-      }
-
-      // Now compute the portion of the width and height which is assigned to the roles
-      // by traversing the input array.
-      // We now know that the central widget does not belong to the input `roles` so we
-      // can safely add percentages.
-      float wPerc = 0.0f;
-      float hPerc = 0.0f;
-
-      for (std::unordered_set<WidgetRole>::const_iterator role = roles.cbegin() ;
-           role != roles.cend() ;
-           ++role)
-      {
-        // Retrieve the percentage based on the role.
-        switch (*role) {
-          case WidgetRole::MenuBar:
-            hPerc += m_menuBarPercentage;
-            break;
-          case WidgetRole::StatusBar:
-            hPerc += m_statusBarPercentage;
-            break;
-          case WidgetRole::ToolBar:
-            hPerc += m_toolBarPercentage;
-            break;
-          case WidgetRole::LeftDockWidget:
-            wPerc += m_leftAreaPercentage;
-            break;
-          case WidgetRole::RightDockWidget:
-            wPerc += m_rightAreaPercentage;
-            break;
-          case WidgetRole::TopDockWidget:
-            hPerc += m_topAreaPercentage;
-            break;
-          case WidgetRole::BottomDockWidget:
-            hPerc += m_bottomAreaPercentage;
-            break;
-          default:
-            break;
-        }
-      }
-
-      // Scale the size by the percentage assigned to the input roles.
-      maxSize.w() = wPerc;
-      maxSize.h() = hPerc;
-
-      // This is the maximum size available for all the roles.
-      return maxSize;
     }
 
   }

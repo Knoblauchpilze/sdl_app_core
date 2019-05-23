@@ -5,27 +5,14 @@
 # include <unordered_map>
 # include <unordered_set>
 # include <maths_utils/Box.hh>
-# include <sdl_core/Layout.hh>
+# include <sdl_graphic/GridLayout.hh>
 # include <sdl_core/SizePolicy.hh>
 # include "WidgetRole.hh"
-# include "RolesInfo.hh"
 
 namespace sdl {
   namespace app {
 
-    class MainWindowLayout: public core::Layout {
-      public:
-
-        enum class DockWidgetArea {
-          None        = 0,
-          LeftArea    = 1 << 0,
-          RightArea   = 1 << 1,
-          TopArea     = 1 << 2,
-          BottomArea  = 1 << 3,
-          CentralArea = 1 << 4,
-          All         = 1 << 5
-        };
-
+    class MainWindowLayout: public graphic::GridLayout {
       public:
 
         /**
@@ -74,7 +61,7 @@ namespace sdl {
         void
         removeDockWidget(core::SdlWidget* item);
 
-      protected:
+      private:
 
         /**
          * @brief - Describes additional information to locate the widget
@@ -97,44 +84,6 @@ namespace sdl {
 
         using InfosMap = std::unordered_map<int, ItemInfo>;
 
-        void
-        updatePrivate(const utils::Boxf& window) override;
-
-        void
-        invalidate() noexcept override;
-
-        void
-        removeItemFromIndex(int item) override;
-
-      private:
-
-        // Inline functions.
-
-        static
-        std::string
-        getNameFromArea(const DockWidgetArea& area) noexcept;
-
-        static
-        std::string
-        getNameFromRole(const WidgetRole& role) noexcept;
-
-        static
-        bool
-        isValidDockWidgetRole(const WidgetRole& role) noexcept;
-
-        WidgetRole
-        determineDockWidgetRoleFromArea(const DockWidgetArea& area);
-
-        void
-        assignPercentagesFromCentralWidget(const utils::Sizef& centralWidgetSize);
-
-        void
-        addItemWithRoleAndArea(core::SdlWidget* widget,
-                               const WidgetRole& role,
-                               const DockWidgetArea& area = DockWidgetArea::None);
-
-        // Implemented functions.
-
         /**
          * @brief - Remove all the widgets of this layout which are currently
          *          assuming the input `role`.
@@ -145,91 +94,33 @@ namespace sdl {
         void
         removeAll(const WidgetRole& role);
 
+        void
+        removeItemFromIndex(int item) override;
+
+        utils::Boxi
+        getGridCoordinatesFromRole(const WidgetRole& role) const;
+
+      private:
+
+        void
+        assignPercentagesFromCentralWidget(const utils::Sizef& centralWidgetSize);
+
+        void
+        addItemWithRoleAndArea(core::SdlWidget* widget,
+                               const WidgetRole& role,
+                               const DockWidgetArea& area = DockWidgetArea::None);
+
         /**
-         * @brief - Used to retrieve the index of the input `widget` and check that
-         *          it is registered with the provided role inside this layout. If
-         *          this is not the case an error is raised.
-         *          If the widget effectively has this role, its index is returned.
+         * @brief - Used to remove the input `widget` assuming it has the specified
+         *          `role` inside this layout. If this is not the case an error is
+         *          raised. If the widget effectively has this role, it is removed
+         *          from the layout by calling the parent method.
          * @param widget - the widget for whith the index should be retrieved.
          * @param role - the role for which the index should be registered.
-         * @return - the index of this widget in the layout.
-         */
-        int
-        getIndexAndCheck(core::SdlWidget* widget,
-                         const WidgetRole& role);
-
-        void
-        adjustRolesHorizontally(const utils::Sizef& window,
-                                const std::vector<WidgetInfo>& widgetsInfo,
-                                RolesInfo& roles);
-
-        void
-        adjustRolesVertically(const utils::Sizef& window,
-                              const std::vector<WidgetInfo>& widgetsInfo,
-                              RolesInfo& roles);
-
-        /**
-         * @brief - Used to compute the global size policy for the input roles from the
-         *          widgets described by the array `widgetsInfo`. Basically combines the
-         *          individual widget's policies into a single global one which is the
-         *          less restrictive and can be used as a rwa approximation of the widgets
-         *          seen as a single one.
-         * @param roles - a set of roles which indicates the widgets to consider.
-         * @param widgetsInfo - the information about the policy for individual widgets.
-         * @param size - the maximum size which can be assigned to all widgets. This allows
-         *               to compute upper bounds of the dimensions based on the role of the
-         *               policy to compute.
-         * @return - a single policy for all the widgets assuming the input roles. This
-         *           includes a minimum and maximum size, a hint and a policy.
-         */
-        core::Layout::WidgetInfo
-        computeSizePolicyForRoles(const std::unordered_set<WidgetRole>& roles,
-                                  const std::vector<WidgetInfo>& widgetsInfo,
-                                  const utils::Sizef& size) const;
-
-        /**
-         * @brief - Similar to `computeSizePolicyForDockWidgets` but dedicated to compute
-         *          a policy for dock widgets. This is a bit special because the dock
-         *          widgets staks in the vertical direction and thus we cannot just select
-         *          the minimum/maximum item from the policies.
-         * @param widgetsInfo - the information about the policy for individual widgets.
-         * @param size - the maximum size which can be assigned to all widgets. This allows
-         *               to compute upper bounds of the dimensions based on the role of the
-         *               policy to compute.
-         * @return - a single policyt for all the dock widgets assuming the input roles.
-         */
-        core::Layout::WidgetInfo
-        computeSizePolicyForDockWidgets(const std::vector<WidgetInfo>& widgetsInfo,
-                                        const utils::Sizef& size) const;
-
-        utils::Sizef
-        computeSizeOfRoles(const std::vector<core::Layout::WidgetInfo>& roles) const noexcept;
-
-        /**
-         * @brief - Used to keep the less restrictive policy from the input/output argument
-         *          `policy` and provided policy `item`. The policy is assumed to correspond
-         *          to the input `roles` so that we can apply internal information about the
-         *          maximum and minimum bounds of each area.
-         *          Note that the `policy` argument will be modified with the policy computed
-         *          using the `item` element.
-         * @param roles - the roles which are fit by the `policy` argument: allows to adjust the
-         *                maximum size with the internal factor.
-         * @param policy - output argument which will receive the merging of the existing value
-         *                 of `policy` and the `item` policy.
-         * @param item - the policy to merge with `policy`. Should contain the description of
-         *               the policy applied to an element filling the role of `role` in this
-         *               layout.
-         * @param size - the maximum available size to all roles.
          */
         void
-        consolidatePolicyFromItem(const std::unordered_set<WidgetRole>& roles,
-                                  WidgetInfo& policy,
-                                  const WidgetInfo& item,
-                                  const utils::Sizef& size) const noexcept;
-
-        utils::Sizef
-        computeMaxSizeFromRoles(const utils::Sizef& size,
-                                const std::unordered_set<WidgetRole>& roles) const noexcept;
+        removeItemFromRole(core::SdlWidget* widget,
+                           const WidgetRole& role);
 
       private:
 
