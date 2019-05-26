@@ -166,9 +166,9 @@ namespace sdl {
           return utils::Boxi(2, 2, 1, 3);
         case WidgetRole::TopDockWidget:
           return utils::Boxi(1, 2, 1, 1);
-        case WidgetRole::BottomDockWidget:
-          return utils::Boxi(1, 3, 1, 1);
         case WidgetRole::CentralDockWidget:
+          return utils::Boxi(1, 3, 1, 1);
+        case WidgetRole::BottomDockWidget:
           return utils::Boxi(1, 4, 1, 1);
         case WidgetRole::StatusBar:
           return utils::Boxi(0, 5, 3, 1);
