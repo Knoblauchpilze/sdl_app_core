@@ -42,10 +42,26 @@ namespace sdl {
         run();
 
         void
-        addWidget(core::SdlWidget* widget);
+        setMenuBar(core::SdlWidget* item);
 
         void
-        removeWidget(core::SdlWidget* widget);
+        addToolBar(core::SdlWidget* item);
+
+        void
+        setCentralWidget(core::SdlWidget* item);
+
+        void
+        addDockWidget(core::SdlWidget* item,
+                      const DockWidgetArea& area);
+
+        void
+        setStatusBar(core::SdlWidget* item);
+
+        void
+        removeToolBar(core::SdlWidget* item);
+
+        void
+        removeDockWidget(core::SdlWidget* item);
 
       private:
 
@@ -57,6 +73,12 @@ namespace sdl {
 
         void
         stopRendering() noexcept;
+
+        void
+        addWidget(core::SdlWidget* widget);
+
+        void
+        removeWidget(core::SdlWidget* widget);
 
         utils::Boxf
         getCachedSize() noexcept;

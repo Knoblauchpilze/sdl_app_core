@@ -36,48 +36,86 @@ namespace sdl {
 
     inline
     void
-    SdlApplication::addWidget(core::SdlWidget* widget) {
-      // Check degenrate cases.
-      if (widget == nullptr) {
-        error(std::string("Cannot add null widget"));
-      }
-
+    SdlApplication::setMenuBar(core::SdlWidget* item) {
       std::lock_guard<std::mutex> guard(m_renderLocker);
 
-      // Set up the widget with internal elements.
-      widget->setEventsQueue(m_eventsDispatcher.get());
-      widget->setEngine(m_engine);
+      addWidget(item);
 
-      // Add the widget to the internal layout if any.
-      m_layout->setCentralWidget(widget);
-
-      // Add this widget to the internal table.
-      m_widgets[widget->getName()] = widget;
+      if (m_layout != nullptr) {
+        m_layout->setMenuBar(item);
+      }
     }
 
     inline
     void
-    SdlApplication::removeWidget(core::SdlWidget* widget) {
-      // Check degenrate cases.
-      if (widget == nullptr) {
-        error(std::string("Cannot remove null widget"));
-      }
-
+    SdlApplication::addToolBar(core::SdlWidget* item) {
       std::lock_guard<std::mutex> guard(m_renderLocker);
 
-      // Erase the widget and display the result.
-      std::size_t nbErased = m_widgets.erase(widget->getName());
-      if (nbErased != 1) {
-        log(
-          std::string("Could not remove widget \"") + widget->getName() + "\" from window, not found",
-          utils::Level::Warning
-        );
-        return;
-      }
+      addWidget(item);
 
-      // Remove the widget from the layout if any.
       if (m_layout != nullptr) {
-        m_layout->removeItem(widget);
+        m_layout->addToolBar(item);
+      }
+    }
+
+    inline
+    void
+    SdlApplication::setCentralWidget(core::SdlWidget* item) {
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      addWidget(item);
+
+      if (m_layout != nullptr) {
+        m_layout->setCentralWidget(item);
+      }
+    }
+
+    inline
+    void
+    SdlApplication::addDockWidget(core::SdlWidget* item,
+                                  const DockWidgetArea& area) {
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      addWidget(item);
+
+      if (m_layout != nullptr) {
+        m_layout->addDockWidget(item, area);
+      }
+    }
+
+    inline
+    void
+    SdlApplication::setStatusBar(core::SdlWidget* item) {
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      addWidget(item);
+
+      if (m_layout != nullptr) {
+        m_layout->setStatusBar(item);
+      }
+    }
+
+    inline
+    void
+    SdlApplication::removeToolBar(core::SdlWidget* item) {
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      removeWidget(item);
+
+      if (m_layout != nullptr) {
+        m_layout->removeToolBar(item);
+      }
+    }
+
+    inline
+    void
+    SdlApplication::removeDockWidget(core::SdlWidget* item) {
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      removeWidget(item);
+
+      if (m_layout != nullptr) {
+        m_layout->removeDockWidget(item);
       }
     }
 
@@ -101,6 +139,40 @@ namespace sdl {
       // Stop events processing.
       std::lock_guard<std::mutex> guard(m_executionLocker);
       m_renderingRunning = false;
+    }
+
+    inline
+    void
+    SdlApplication::addWidget(core::SdlWidget* widget) {
+      // Check degenrate cases.
+      if (widget == nullptr) {
+        error(std::string("Cannot add null widget"));
+      }
+
+      // Set up the widget with internal elements.
+      widget->setEventsQueue(m_eventsDispatcher.get());
+      widget->setEngine(m_engine);
+
+      // Add this widget to the internal table.
+      m_widgets[widget->getName()] = widget;
+    }
+
+    inline
+    void
+    SdlApplication::removeWidget(core::SdlWidget* widget) {
+      // Check degenrate cases.
+      if (widget == nullptr) {
+        error(std::string("Cannot remove null widget"));
+      }
+
+      // Erase the widget and display the result.
+      std::size_t nbErased = m_widgets.erase(widget->getName());
+      if (nbErased != 1) {
+        log(
+          std::string("Could not remove widget \"") + widget->getName() + "\" from window, not found",
+          utils::Level::Warning
+        );
+      }
     }
 
     inline
