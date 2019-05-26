@@ -200,7 +200,7 @@ namespace sdl {
     SdlApplication::invalidate(const utils::Boxf& area) {
       // Assign the cached size to the internal layout if any.
       if (m_layout != nullptr) {
-        m_layout->setArea(area);
+        m_layout->setRenderingArea(area);
       }
 
       // Post a new geometry update event.
