@@ -34,12 +34,6 @@ namespace sdl {
         virtual ~MainWindowLayout();
 
         void
-        setArea(const utils::Boxf& area) noexcept;
-
-        void
-        update() override;
-
-        void
         setMenuBar(core::SdlWidget* item);
 
         void
@@ -62,6 +56,9 @@ namespace sdl {
         removeDockWidget(core::SdlWidget* item);
 
       protected:
+
+        void
+        updatePrivate(const utils::Boxf& window) override;
 
         void
         adjustWidgetToConstraints(const utils::Sizef& window,

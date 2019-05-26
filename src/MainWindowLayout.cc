@@ -7,7 +7,7 @@ namespace sdl {
     MainWindowLayout::MainWindowLayout(const utils::Boxf& area,
                                        const float& margin,
                                        const utils::Sizef& centralWidgetSize):
-      graphic::GridLayout(3u, 6u, margin, nullptr),
+      graphic::GridLayout(3u, 6u, margin, nullptr, true),
       m_area(area),
       m_infos(),
 
@@ -24,9 +24,6 @@ namespace sdl {
       assignPercentagesFromCentralWidget(centralWidgetSize);
 
       setService("main_layout");
-
-      // This layout is a root layout.
-      setRootLayout(true);
     }
 
     MainWindowLayout::~MainWindowLayout() {}

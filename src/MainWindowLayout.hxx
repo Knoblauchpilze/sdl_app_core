@@ -9,35 +9,6 @@ namespace sdl {
 
     inline
     void
-    MainWindowLayout::setArea(const utils::Boxf& area) noexcept {
-      // Assign the area.
-      m_area = area;
-
-      // Invalidate the layout.
-      invalidate();
-    }
-
-    inline
-    void
-    MainWindowLayout::update() {
-      // Check if this layout is dirty.
-      if (!isDirty()) {
-        return;
-      }
-
-      // And if some items are managed by this layout.
-      if (empty()) {
-        return;
-      }
-
-      // Update with private handler.
-      updatePrivate(m_area);
-
-      recomputed();
-    }
-
-    inline
-    void
     MainWindowLayout::setMenuBar(core::SdlWidget* item) {
       // Remove existing menu bar.
       removeAll(WidgetRole::MenuBar);
@@ -128,6 +99,18 @@ namespace sdl {
 
       // The input item is actually a dock widget we can remove it.
       removeItem(item);
+    }
+
+    inline
+    void
+    MainWindowLayout::updatePrivate(const utils::Boxf& window) {
+      // And if some items are managed by this layout.
+      if (empty()) {
+        return;
+      }
+
+      // Proceed by activating the internal handler.
+      computeGeometry(window);
     }
 
     inline
