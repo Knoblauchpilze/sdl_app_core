@@ -53,6 +53,8 @@ namespace sdl {
       // Set the queue for this application so that it can post events.
       setEventsQueue(m_eventsDispatcher.get());
 
+      postEvent(std::make_shared<core::engine::ResizeEvent>(getCachedSize(), utils::Boxf()));
+
       // Create the event for this window and assign it.
       setLayout(std::make_shared<MainWindowLayout>(getCachedSize(), 5.0f));
     }
@@ -245,7 +247,6 @@ namespace sdl {
 
       // Assign the cached size to the internal layout if any.
       if (m_layout != nullptr) {
-
         postEvent(std::make_shared<core::engine::ResizeEvent>(m_cachedSize, m_layout->getRenderingArea(), m_layout.get()));
       }
 
