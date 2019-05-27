@@ -245,7 +245,8 @@ namespace sdl {
 
       // Assign the cached size to the internal layout if any.
       if (m_layout != nullptr) {
-        postEvent(std::make_shared<core::engine::ResizeEvent>(m_layout->getRenderingArea(), m_cachedSize, m_layout.get()));
+
+        postEvent(std::make_shared<core::engine::ResizeEvent>(m_cachedSize, m_layout->getRenderingArea(), m_layout.get()));
       }
 
       // Mark the event as accepted if it is directed only through this
