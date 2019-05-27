@@ -1,5 +1,5 @@
-#ifndef    SDLAPPLICATION_HXX
-# define   SDLAPPLICATION_HXX
+#ifndef    SDL_APPLICATION_HXX
+# define   SDL_APPLICATION_HXX
 
 # include "SdlApplication.hh"
 # include <core_utils/CoreWrapper.hh>
@@ -192,24 +192,14 @@ namespace sdl {
       m_layout = layout;
 
       // Provide the current size of the application to the layout.
-      invalidate(m_cachedSize);
+      invalidate();
     }
 
     inline
     void
-    SdlApplication::invalidate(const utils::Boxf& area) {
-      // Assign the cached size to the internal layout if any.
-      if (m_layout != nullptr) {
-        m_layout->setRenderingArea(area);
-      }
-
+    SdlApplication::invalidate() {
       // Post a new geometry update event.
-      postEvent(
-        std::make_shared<core::engine::Event>(
-          core::engine::Event::Type::GeometryUpdate,
-          this
-        )
-      );
+      postEvent(std::make_shared<core::engine::Event>(core::engine::Event::Type::GeometryUpdate, this));
     }
 
     inline
@@ -254,4 +244,4 @@ namespace sdl {
   }
 }
 
-#endif    /* SDLAPPLICATION_HXX */
+#endif    /* SDL_APPLICATION_HXX */

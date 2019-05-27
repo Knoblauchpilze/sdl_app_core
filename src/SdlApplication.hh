@@ -1,5 +1,5 @@
-#ifndef    SDLAPPLICATION_HH
-# define   SDLAPPLICATION_HH
+#ifndef    SDL_APPLICATION_HH
+# define   SDL_APPLICATION_HH
 
 # include <mutex>
 # include <thread>
@@ -87,7 +87,7 @@ namespace sdl {
         setLayout(MainWindowLayoutShPtr layout);
 
         void
-        invalidate(const utils::Boxf& area);
+        invalidate();
 
         void
         stop();
@@ -160,4 +160,4 @@ namespace sdl {
 
 # include "SdlApplication.hxx"
 
-#endif    /* SDLAPPLICATION_HH */
+#endif    /* SDL_APPLICATION_HH */

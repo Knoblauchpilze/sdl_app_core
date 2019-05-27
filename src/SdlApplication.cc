@@ -243,9 +243,9 @@ namespace sdl {
       // Acquire the lock on this application.
       std::lock_guard<std::mutex> guard(m_renderLocker);
 
-      // Update the layout if any.
+      // Assign the cached size to the internal layout if any.
       if (m_layout != nullptr) {
-        m_layout->update();
+        postEvent(std::make_shared<core::engine::ResizeEvent>(m_layout->getRenderingArea(), m_cachedSize, m_layout.get()));
       }
 
       // Mark the event as accepted if it is directed only through this
@@ -361,13 +361,10 @@ namespace sdl {
       m_engine->setDrawingCanvas(m_canvas);
 
       // Assign the cached size.
-      // TODO: We should probably have some kind of layout mechanism in the application. Maybe using a
-      // inherited window with a simple layout with a central widget and some dock widgets. This would
-      // allow to also increase the size of the content upon resizing.
       m_cachedSize = utils::Boxf::fromSize(size);
 
       // And request an update of the layout.
-      invalidate(m_cachedSize);
+      invalidate();
 
       // Mark the event as accepted if it is directed only through this
       // object.
