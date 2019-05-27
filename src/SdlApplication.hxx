@@ -191,6 +191,10 @@ namespace sdl {
       // Assign the new layout.
       m_layout = layout;
 
+      // Assign its events queue so that it is consistent with
+      // the internal queue of the application.
+      registerToSameQueue(m_layout.get());
+
       // Provide the current size of the application to the layout.
       invalidate();
     }
