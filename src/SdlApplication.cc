@@ -53,8 +53,6 @@ namespace sdl {
       // Set the queue for this application so that it can post events.
       setEventsQueue(m_eventsDispatcher.get());
 
-      postEvent(std::make_shared<core::engine::ResizeEvent>(getCachedSize(), utils::Boxf()));
-
       // Create the event for this window and assign it.
       setLayout(std::make_shared<MainWindowLayout>(getCachedSize(), 5.0f));
     }
