@@ -223,6 +223,11 @@ namespace sdl {
       // Retrieve the coordinates for this role.
       utils::Boxi gridCoords = getGridCoordinatesFromRole(role);
 
+      // Consolidate coordinates: indeed if no top or bottom dock widget
+      // are assigned to the layout yet, the central widget can be assigned
+      // all the central space.
+      consolidateGridCoordinatesFromRole(role, gridCoords);
+
       // Add the item using the base handler.
       const int index = addItem(widget, gridCoords.x(), gridCoords.y(), gridCoords.w(), gridCoords.h());
 

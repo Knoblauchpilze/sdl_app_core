@@ -7,7 +7,7 @@ namespace sdl {
     MainWindowLayout::MainWindowLayout(const utils::Boxf& area,
                                        const float& margin,
                                        const utils::Sizef& centralWidgetSize):
-      graphic::GridLayout(3u, 6u, margin, nullptr, true),
+      graphic::GridLayout(3u, 4u, margin, nullptr, true),
       m_area(area),
       m_infos(),
 
@@ -143,7 +143,9 @@ namespace sdl {
           continue;
         }
         else {
-          // Remove the item we found.
+          // Remove the item we found: we need to account for the removal of content widgets,
+          // which are not directly registered in here but rather in the central layout.
+
           removeItem(info->second.widget);
         }
       }
@@ -170,6 +172,66 @@ namespace sdl {
       m_topAreaPercentage = periphericalAreas / 2.0f;
       m_bottomAreaPercentage = periphericalAreas / 2.0f;
       m_statusBarPercentage = menuAndStatus / 2.0f;
+    }
+
+    void
+    MainWindowLayout::consolidateGridCoordinatesFromRole(const WidgetRole& role,
+                                                         utils::Boxi& gridCoords) const
+    {
+      // The consolidation only happens for top, central or bottom dock widgets.
+      if (role != WidgetRole::TopDockWidget &&
+          role != WidgetRole::CentralDockWidget &&
+          role != WidgetRole::BottomDockWidget)
+      {
+        // No consolidation can occurr.
+        return;
+      }
+
+      // In order to consolidate the dimension, we first need to determine whether some
+      // widgets for the corresponding role do exist.
+      InfosMap::const_iterator potentialTopDock = std::find_if(
+        m_infos.cbegin(), m_infos.cend(),
+        [](const std::pair<int, ItemInfo>& value) {
+          return value.second.role == WidgetRole::TopDockWidget;
+        }
+      );
+
+      InfosMap::const_iterator potentialCentralDock = std::find_if(
+        m_infos.cbegin(), m_infos.cend(),
+        [](const std::pair<int, ItemInfo>& value) {
+          return value.second.role == WidgetRole::CentralDockWidget;
+        }
+      );
+
+      InfosMap::const_iterator potentialBottomDock = std::find_if(
+        m_infos.cbegin(), m_infos.cend(),
+        [](const std::pair<int, ItemInfo>& value) {
+          return value.second.role == WidgetRole::BottomDockWidget;
+        }
+      );
+
+      const bool hasTopDock = (potentialTopDock != m_infos.cend());
+      const bool hasCentralDock = (potentialCentralDock != m_infos.cend());
+      const bool hasBottomDock = (potentialBottomDock != m_infos.cend());
+
+      // Now we can compute the consolidated dimensions based on the input role
+      // assigned to the coordinates.
+      switch (role) {
+        case WidgetRole::TopDockWidget:
+          gridCoords.h() = gridCoords.h() + (hasCentralDock ? 0 : 1) + (hasBottomDock ? 0 : 1);
+          break;
+        case WidgetRole::CentralDockWidget:
+          gridCoords.y() = gridCoords.y() - (hasTopDock ? 0 : 1);
+          gridCoords.h() = gridCoords.h() + (hasTopDock ? 0 : 1) + (hasBottomDock ? 0 : 1);
+          break;
+        case WidgetRole::BottomDockWidget:
+          gridCoords.y() = gridCoords.y() - (hasTopDock ? 0 : 1) - (hasCentralDock ? 0 : 1);
+          gridCoords.h() = gridCoords.h() + (hasTopDock ? 0 : 1) + (hasCentralDock ? 0 : 1);
+          break;
+        default:
+          // No consolidation in case the role is not recognized.
+          break;
+      }
     }
 
     void
