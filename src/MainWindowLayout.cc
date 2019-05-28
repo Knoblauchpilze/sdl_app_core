@@ -29,8 +29,8 @@ namespace sdl {
     MainWindowLayout::~MainWindowLayout() {}
 
     void
-    MainWindowLayout::adjustWidgetToConstraints(const utils::Sizef& window,
-                                                std::vector<WidgetInfo>& widgets) const noexcept {
+    MainWindowLayout::adjustItemToConstraints(const utils::Sizef& window,
+                                              std::vector<WidgetInfo>& items) const noexcept {
       // This method is used to adjust each cell to the constraints needed to provide a
       // nice layout. We still want to benefit from the processing done by the parent
       // 'GridLayout' class but we also add to want a layer by using the internal variables
@@ -39,27 +39,27 @@ namespace sdl {
       // array of constraints.
 
       // Apply the parent handler.
-      graphic::GridLayout::adjustWidgetToConstraints(window, widgets);
+      graphic::GridLayout::adjustItemToConstraints(window, items);
 
-      // Now adjust the size of each widget based on the widget associated to it and the
+      // Now adjust the size of each item based on the item associated to it and the
       // constraints of its related area.
 
       // Traverse the input array.
-      for (unsigned widget = 0u ; widget < widgets.size() ; ++widget) {
-        // Find the corresponding widget role and area.
-        const InfosMap::const_iterator info = m_infos.find(widget);
+      for (unsigned item = 0u ; item < items.size() ; ++item) {
+        // Find the corresponding item role and area.
+        const InfosMap::const_iterator info = m_infos.find(item);
         if (info == m_infos.cend()) {
           error(
-            std::string("Could not adjust widget ") + std::to_string(widget) + " to minimum constraints",
-            std::string("Inexisting widget")
+            std::string("Could not adjust item ") + std::to_string(item) + " to minimum constraints",
+            std::string("Inexisting item")
           );
         }
 
-        // Compute the maximum size which can be assigned to this widget based on its role.
+        // Compute the maximum size which can be assigned to this item based on its role.
         utils::Sizef max = computeMaxSizeForRole(window, info->second.role);
 
-        // Update the maximum size for this widget if needed.
-        WidgetInfo& data = widgets[widget];
+        // Update the maximum size for this item if needed.
+        WidgetInfo& data = items[item];
         if (data.max.w() > max.w()) {
           data.max.w() = max.w();
         }

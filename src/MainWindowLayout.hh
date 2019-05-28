@@ -61,8 +61,8 @@ namespace sdl {
         updatePrivate(const utils::Boxf& window) override;
 
         void
-        adjustWidgetToConstraints(const utils::Sizef& window,
-                                  std::vector<WidgetInfo>& widgets) const noexcept override;
+        adjustItemToConstraints(const utils::Sizef& window,
+                                std::vector<WidgetInfo>& items) const noexcept override;
 
       private:
 
