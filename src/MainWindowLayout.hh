@@ -103,17 +103,18 @@ namespace sdl {
         utils::Boxi
         getGridCoordinatesFromRole(const WidgetRole& role) const;
 
+        bool
+        doesRoleTriggersConsolidation(const WidgetRole& role) const noexcept;
+
         /**
-         * @brief - Used to consolidate the input `gridCoords` by assuming it corresponds
-         *          to the input `role`. This allows for example to extend the area allocated
+         * @brief - Used to consolidate the grid coordinates associated to the central widgets
+         *          based on the widgets registered widgets in this layout.
+         *          This allows for example to extend the area allocated
          *          to the central widget if no top or bottom dock widgets are registered for
          *          this layout yet.
-         * @param role - the role associated to the input `gridCoords`.
-         * @param gridCoords - the input grid coordinates for the input role.
          */
         void
-        consolidateGridCoordinatesFromRole(const WidgetRole& role,
-                                           utils::Boxi& gridCoords) const;
+        consolidateGridCoordinates();
 
         utils::Sizef
         computeMaxSizeForRole(const utils::Sizef& window,

@@ -163,6 +163,15 @@ namespace sdl {
         std::string("Cannot determine grid coordinates for role \"") + roleToName(role) + "\"",
         std::string("Unknown role")
       );
+
+      // Silent compiler, even though `error` will throw.
+      return utils::Boxi();
+    }
+
+    inline
+    bool
+    MainWindowLayout::doesRoleTriggersConsolidation(const WidgetRole& role) const noexcept {
+      return role != WidgetRole::TopDockWidget && role != WidgetRole::CentralDockWidget && role != WidgetRole::BottomDockWidget;
     }
 
     inline
@@ -223,11 +232,6 @@ namespace sdl {
       // Retrieve the coordinates for this role.
       utils::Boxi gridCoords = getGridCoordinatesFromRole(role);
 
-      // Consolidate coordinates: indeed if no top or bottom dock widget
-      // are assigned to the layout yet, the central widget can be assigned
-      // all the central space.
-      consolidateGridCoordinatesFromRole(role, gridCoords);
-
       // Add the item using the base handler.
       const int index = addItem(widget, gridCoords.x(), gridCoords.y(), gridCoords.w(), gridCoords.h());
 
@@ -241,6 +245,11 @@ namespace sdl {
           area,
           widget
         };
+
+        // Consolidate coordinates: indeed if no top or bottom dock widget
+        // are assigned to the layout yet, the central widget can be assigned
+        // all the central space.
+        consolidateGridCoordinates();
       }
     }
 

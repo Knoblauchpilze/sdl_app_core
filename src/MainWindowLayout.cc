@@ -7,7 +7,7 @@ namespace sdl {
     MainWindowLayout::MainWindowLayout(const utils::Boxf& area,
                                        const float& margin,
                                        const utils::Sizef& centralWidgetSize):
-      graphic::GridLayout(3u, 4u, margin, nullptr, true),
+      graphic::GridLayout(3u, 6u, margin, nullptr, true),
       m_area(area),
       m_infos(),
 
@@ -175,19 +175,8 @@ namespace sdl {
     }
 
     void
-    MainWindowLayout::consolidateGridCoordinatesFromRole(const WidgetRole& role,
-                                                         utils::Boxi& gridCoords) const
-    {
-      // The consolidation only happens for top, central or bottom dock widgets.
-      if (role != WidgetRole::TopDockWidget &&
-          role != WidgetRole::CentralDockWidget &&
-          role != WidgetRole::BottomDockWidget)
-      {
-        // No consolidation can occurr.
-        return;
-      }
-
-      // In order to consolidate the dimension, we first need to determine whether some
+    MainWindowLayout::consolidateGridCoordinates() {
+      // In order to consolidate the dimensions, we first need to determine whether some
       // widgets for the corresponding role do exist.
       InfosMap::const_iterator potentialTopDock = std::find_if(
         m_infos.cbegin(), m_infos.cend(),
@@ -216,21 +205,37 @@ namespace sdl {
 
       // Now we can compute the consolidated dimensions based on the input role
       // assigned to the coordinates.
-      switch (role) {
-        case WidgetRole::TopDockWidget:
-          gridCoords.h() = gridCoords.h() + (hasCentralDock ? 0 : 1) + (hasBottomDock ? 0 : 1);
-          break;
-        case WidgetRole::CentralDockWidget:
-          gridCoords.y() = gridCoords.y() - (hasTopDock ? 0 : 1);
-          gridCoords.h() = gridCoords.h() + (hasTopDock ? 0 : 1) + (hasBottomDock ? 0 : 1);
-          break;
-        case WidgetRole::BottomDockWidget:
-          gridCoords.y() = gridCoords.y() - (hasTopDock ? 0 : 1) - (hasCentralDock ? 0 : 1);
-          gridCoords.h() = gridCoords.h() + (hasTopDock ? 0 : 1) + (hasCentralDock ? 0 : 1);
-          break;
-        default:
-          // No consolidation in case the role is not recognized.
-          break;
+      utils::Boxi topBox = getGridCoordinatesFromRole(WidgetRole::TopDockWidget);
+      utils::Boxi centralBox = getGridCoordinatesFromRole(WidgetRole::CentralDockWidget);
+      utils::Boxi bottomBox = getGridCoordinatesFromRole(WidgetRole::BottomDockWidget);
+
+      topBox.h() = topBox.h() + (hasCentralDock ? 0 : 1) + (hasBottomDock ? 0 : 1);
+
+      centralBox.y() = centralBox.y() - (hasTopDock ? 0 : 1);
+      centralBox.h() = centralBox.h() + (hasTopDock ? 0 : 1) + (hasBottomDock ? 0 : 1);
+
+      bottomBox.y() = bottomBox.y() - (hasTopDock ? 0 : 1) - (hasCentralDock ? 0 : 1);
+      bottomBox.h() = bottomBox.h() + (hasTopDock ? 0 : 1) + (hasCentralDock ? 0 : 1);
+
+      // Now update each widget with the new boxes.
+      for (InfosMap::const_iterator item = m_infos.cbegin() ;
+           item != m_infos.cend() ;
+           ++item)
+      {
+        // Update the grid coordinates if needed.
+        switch (item->second.role) {
+          case WidgetRole::TopDockWidget:
+            updateGridCoordinates(item->first, topBox);
+            break;
+          case WidgetRole::CentralDockWidget:
+            updateGridCoordinates(item->first, centralBox);
+            break;
+          case WidgetRole::BottomDockWidget:
+            updateGridCoordinates(item->first, bottomBox);
+            break;
+          default:
+            break;
+        }
       }
     }
 
@@ -262,14 +267,21 @@ namespace sdl {
         );
       }
 
-      // Check whether the role for this item is actually a dock widget. In
-      // any other case we abort the deletion of the item as it is not what
-      // is expected by the caller.
+      // Check whether the role for this item is actually valid considering the
+      // input `role`. In any other case we abort the deletion of the item as it
+      // is not what is expected by the caller.
       if (role != info->second.role) {
         error(
           std::string("Could not remove item \"") + widget->getName() + "\" which is not a dock widget",
           std::string("Role \"") + roleToName(info->second.role) + " does not match expected role \"" + roleToName(role)
         );
+      }
+
+      // We should also update the dimensions for central widgets if needed: indeed
+      // if a top dock widget is removed, we might use the available space for the
+      // central widget for example.
+      if (doesRoleTriggersConsolidation(info->second.role)) {
+        consolidateGridCoordinates();
       }
 
       // Remove the item using the parent method.
