@@ -48,7 +48,6 @@ namespace sdl {
 
       // Create the event listener and register this application as listener.
       m_eventsDispatcher = std::make_shared<core::engine::EventsDispatcher>(eventFramerate, m_engine, true);
-      m_eventsDispatcher->addListener(this);
 
       // Set the queue for this application so that it can post events.
       setEventsQueue(m_eventsDispatcher.get());
@@ -199,41 +198,6 @@ namespace sdl {
       auto end = std::chrono::steady_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
       return static_cast<float>(duration);
-    }
-
-    bool
-    SdlApplication::handleEvent(core::engine::EventShPtr e) {
-      // This function is made to react to all the events produced by
-      // the system and also to events posted by objects in the
-      // hierarchy.
-      // In addition to that, the `QuitEvent`s should be processed
-      // in here to stop the application.
-
-      // Handle this event using the base handler.
-      const bool recognized = core::engine::EngineObject::handleEvent(e);
-
-      // Check whether the event has been accepted before dispatching
-      // to children widgets.
-      if (!e->isAccepted()) {
-        // We need to trnasmit the event to the widgets added to the
-        // window if any.
-        for (WidgetsMap::iterator widgetIt = m_widgets.begin() ;
-            widgetIt != m_widgets.end() ;
-            ++widgetIt)
-        {
-          core::SdlWidget* widget = widgetIt->second;
-
-          // Perform event handling for this widget using the input event `e`.
-          withSafetyNet(
-            [widget, e]() {
-              widget->event(e);
-            },
-            std::string("widget_event")
-          );
-        }
-      }
-
-      return recognized;
     }
 
     bool

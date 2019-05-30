@@ -109,9 +109,6 @@ namespace sdl {
         renderCanvas();
 
         bool
-        handleEvent(core::engine::EventShPtr e) override;
-
-        bool
         geometryUpdateEvent(const core::engine::Event& e) override;
 
         bool
