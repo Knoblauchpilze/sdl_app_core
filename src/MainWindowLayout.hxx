@@ -62,55 +62,13 @@ namespace sdl {
 
     inline
     void
-    MainWindowLayout::removeDockWidget(core::SdlWidget* item) {
-      // Before trying to remove the widget, we need to first determine
-      // its precise role. Indeed based on the area in which the widget
-      // is located, its role will be different.
-      // So first, try to retrieve the index of this widget inside the
-      // internal array.
-      const int id = getIndexOf(item);
+    MainWindowLayout::setEventsQueue(core::engine::EventsQueue* queue) noexcept {
+      // Use the base handler to register `this` to the provided `queue`.
+      core::engine::EngineObject::setEventsQueue(queue);
 
-      // Check whether we could find this item.
-      if (!isValidIndex(id)) {
-        error(
-          std::string("Cannot get index for item \"") + item->getName() + "\" from layout",
-          std::string("Widget is not managed by this layout")
-        );
-      }
-
-      // Check that this item is registered in the information array.
-      InfosMap::const_iterator info = m_infos.find(id);
-      if (info == m_infos.cend()) {
-        error(
-          std::string("Cannot retrieve role for item \"") + item->getName() + "\"",
-          std::string("Inexisting key")
-        );
-      }
-
-      // Check whether the role for this item is actually a dock widget. In
-      // any other case we abort the deletion of the item as it is not what
-      // is expected by the caller.
-      if (!isDockWidgetRole(info->second.role)) {
-        error(
-          std::string("Could not remove item \"") + item->getName() + "\" which is not a dock widget",
-          std::string("Role \"") + roleToName(info->second.role) + " is not a valid dock widget role"
-        );
-      }
-
-      // The input item is actually a dock widget we can remove it.
-      removeItem(item);
-    }
-
-    inline
-    void
-    MainWindowLayout::updatePrivate(const utils::Boxf& window) {
-      // And if some items are managed by this layout.
-      if (empty()) {
-        return;
-      }
-
-      // Proceed by activating the internal handler.
-      computeGeometry(window);
+      // Register both children layout to this queue.
+      registerToSameQueue(&m_hLayout);
+      registerToSameQueue(&m_vLayout);
     }
 
     inline
@@ -120,7 +78,7 @@ namespace sdl {
       // corresponding entry in the internal information map.
 
       // Remove the item using the base class handler.
-      graphic::GridLayout::removeItemFromIndex(item);
+      core::Layout::removeItemFromIndex(item);
 
       // Erase the corresponding entry in the internal table.
       const std::size_t count = m_infos.erase(item);
@@ -137,26 +95,43 @@ namespace sdl {
 
     inline
     utils::Boxi
-    MainWindowLayout::getGridCoordinatesFromRole(const WidgetRole& role) const {
-      switch (role) {
-        case WidgetRole::MenuBar:
-          return utils::Boxi(0, 0, 3, 1);
-        case WidgetRole::ToolBar:
-          return utils::Boxi(0, 1, 3, 1);
-        case WidgetRole::LeftDockWidget:
-          return utils::Boxi(0, 2, 1, 3);
-        case WidgetRole::RightDockWidget:
-          return utils::Boxi(2, 2, 1, 3);
-        case WidgetRole::TopDockWidget:
-          return utils::Boxi(1, 2, 1, 1);
-        case WidgetRole::CentralDockWidget:
-          return utils::Boxi(1, 3, 1, 1);
-        case WidgetRole::BottomDockWidget:
-          return utils::Boxi(1, 4, 1, 1);
-        case WidgetRole::StatusBar:
-          return utils::Boxi(0, 5, 3, 1);
-        default:
-          break;
+    MainWindowLayout::getGridCoordinatesFromRole(const WidgetRole& role,
+                                                 const bool hRole) const
+    {
+      if (hRole) {
+        switch (role) {
+          case WidgetRole::LeftDockWidget:
+            return utils::Boxi(0, 0, 1, 3);
+          case WidgetRole::TopDockWidget:
+            return utils::Boxi(1, 0, 1, 1);
+          case WidgetRole::CentralDockWidget:
+            return utils::Boxi(1, 1, 1, 1);
+          case WidgetRole::BottomDockWidget:
+            return utils::Boxi(1, 2, 1, 1);
+          case WidgetRole::RightDockWidget:
+            return utils::Boxi(2, 0, 1, 3);
+          default:
+            break;
+        }
+      }
+
+      if (!hRole) {
+        switch (role) {
+          case WidgetRole::MenuBar:
+            return utils::Boxi(0, 0, 1, 1);
+          case WidgetRole::ToolBar:
+            return utils::Boxi(0, 1, 1, 1);
+          case WidgetRole::TopDockWidget:
+            return utils::Boxi(0, 2, 1, 1);
+          case WidgetRole::CentralDockWidget:
+            return utils::Boxi(0, 3, 1, 1);
+          case WidgetRole::BottomDockWidget:
+            return utils::Boxi(0, 4, 1, 1);
+          case WidgetRole::StatusBar:
+            return utils::Boxi(0, 5, 1, 1);
+          default:
+            break;
+        }
       }
 
       error(
@@ -166,12 +141,6 @@ namespace sdl {
 
       // Silent compiler, even though `error` will throw.
       return utils::Boxi();
-    }
-
-    inline
-    bool
-    MainWindowLayout::doesRoleTriggersConsolidation(const WidgetRole& role) const noexcept {
-      return role != WidgetRole::TopDockWidget && role != WidgetRole::CentralDockWidget && role != WidgetRole::BottomDockWidget;
     }
 
     inline
@@ -229,28 +198,72 @@ namespace sdl {
                                              const WidgetRole& role,
                                              const DockWidgetArea& area)
     {
-      // Retrieve the coordinates for this role.
-      utils::Boxi gridCoords = getGridCoordinatesFromRole(role);
-
       // Add the item using the base handler.
-      const int index = addItem(widget, gridCoords.x(), gridCoords.y(), gridCoords.w(), gridCoords.h());
+      const int index = addItem(widget);
+
+      // Check whether the widget could be inserted in the layout.
+      if (index < 0) {
+        return;
+      }
 
       // TODO: We should probably create a tab widget with all relevant widgets
       // in case a single dock widget area contains more than one widget.
-      // Register this item in the internal table of information if
-      // a valid index was generated.
-      if (index >= 0) {
-        m_infos[index] = ItemInfo{
-          role,
-          area,
-          widget
-        };
 
-        // Consolidate coordinates: indeed if no top or bottom dock widget
-        // are assigned to the layout yet, the central widget can be assigned
-        // all the central space.
-        consolidateGridCoordinates();
+      // Create the virtual layout item associated to this widget. Based on the
+      // role and area of the input `widget` we will add the virtual item into
+      // the internal layouts.
+      // Based on the role of the widget, the virtual layout item wil be set to
+      // only care about specific dimensions.
+
+      // Define properties for the virtual layout item based on the role which
+      // shall be assumed by the widget.
+      bool manageWidth = false;
+      bool manageHeight = false;
+
+      switch (role) {
+        case WidgetRole::MenuBar:
+        case WidgetRole::ToolBar:
+        case WidgetRole::StatusBar:
+          manageHeight = true;
+          break;
+        case WidgetRole::LeftDockWidget:
+        case WidgetRole::RightDockWidget:
+          manageWidth = true;
+          break;
+        case WidgetRole::TopDockWidget:
+        case WidgetRole::CentralDockWidget:
+        case WidgetRole::BottomDockWidget:
+          manageWidth = true;
+          manageHeight = true;
+          break;
+        default:
+          break;
       }
+
+      // Retrieve the grid coordinates based on the assumed `role` of the widget.
+      VirtualLayoutItemShPtr item = std::make_shared<VirtualLayoutItem>(widget->getName());
+
+      // Register the widget in the corresponding layouts.
+      if (manageWidth) {
+        utils::Boxi box = getGridCoordinatesFromRole(role, true);
+        item->setManageWidth();
+        m_hLayout.addItem(item.get(), box.x(), box.h(), box.w(), box.h());
+      }
+
+      if (manageHeight) {
+        utils::Boxi box = getGridCoordinatesFromRole(role, false);
+        item->setManageHeight();
+        m_vLayout.addItem(item.get(), box.x(), box.h(), box.w(), box.h());
+      }
+
+      // Register this item in the internal table of information if a valid index
+      // was generated.
+      m_infos[index] = ItemInfo{
+        role,
+        area,
+        widget,
+        item
+      };
     }
 
   }

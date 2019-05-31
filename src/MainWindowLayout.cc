@@ -4,11 +4,9 @@
 namespace sdl {
   namespace app {
 
-    MainWindowLayout::MainWindowLayout(const utils::Boxf& area,
-                                       const float& margin,
+    MainWindowLayout::MainWindowLayout(const float& margin,
                                        const utils::Sizef& centralWidgetSize):
-      graphic::GridLayout(3u, 6u, margin, nullptr, true),
-      m_area(area),
+      core::Layout(nullptr, margin, true, std::string("main_window_layout"), true),
       m_infos(),
 
       m_leftAreaPercentage(),
@@ -18,81 +16,101 @@ namespace sdl {
       m_toolBarPercentage(),
       m_topAreaPercentage(),
       m_bottomAreaPercentage(),
-      m_statusBarPercentage()
+      m_statusBarPercentage(),
+
+      m_hLayout(1u, 6u, margin, nullptr, true),
+      m_vLayout(3u, 3u, margin, nullptr, true)
     {
       // Assign the percentages from the input central widget size.
       assignPercentagesFromCentralWidget(centralWidgetSize);
 
       setService("main_layout");
+
+      // Assign events queue to internal layouts.
+      registerToSameQueue(&m_hLayout);
+      registerToSameQueue(&m_vLayout);
     }
 
     MainWindowLayout::~MainWindowLayout() {}
 
     void
-    MainWindowLayout::adjustItemToConstraints(const utils::Sizef& window,
-                                              std::vector<WidgetInfo>& items) const noexcept {
-      // This method is used to adjust each cell to the constraints needed to provide a
-      // nice layout. We still want to benefit from the processing done by the parent
-      // 'GridLayout' class but we also add to want a layer by using the internal variables
-      // such as `m_menuBarPercentage` and so on.
-      // Thus we first apply the parent handler and then proceed to update the produced
-      // array of constraints.
+    MainWindowLayout::removeDockWidget(core::SdlWidget* item) {
+      // Before trying to remove the widget, we need to first determine
+      // its precise role. Indeed based on the area in which the widget
+      // is located, its role will be different.
+      // So first, try to retrieve the index of this widget inside the
+      // internal array.
+      const int id = getIndexOf(item);
 
-      // Apply the parent handler.
-      graphic::GridLayout::adjustItemToConstraints(window, items);
-
-      // Now adjust the size of each item based on the item associated to it and the
-      // constraints of its related area.
-
-      // Traverse the input array.
-      for (unsigned item = 0u ; item < items.size() ; ++item) {
-        // Find the corresponding item role and area.
-        const InfosMap::const_iterator info = m_infos.find(item);
-        if (info == m_infos.cend()) {
-          error(
-            std::string("Could not adjust item ") + std::to_string(item) + " to minimum constraints",
-            std::string("Inexisting item")
-          );
-        }
-
-        // Compute the maximum size which can be assigned to this item based on its role.
-        utils::Sizef max = computeMaxSizeForRole(window, info->second.role);
-
-        // Update the maximum size for this item if needed.
-        WidgetInfo& data = items[item];
-        if (data.max.w() > max.w()) {
-          data.max.w() = max.w();
-        }
-        if (data.max.h() > max.h()) {
-          data.max.w() = max.w();
-        }
-
-        // Handle adjustment for hint and minimum size as we may have modified the maximum
-        // size.
-        if (data.hint.w() > data.max.w()) {
-          data.hint.w() = data.max.w();
-        }
-        if (data.hint.w() > data.max.w()) {
-          data.hint.h() = data.max.w();
-        }
-
-        if (data.hint.isValid()) {
-          if (data.min.w() > data.hint.w()) {
-            data.min.w() = data.hint.w();
-          }
-          if (data.min.w() > data.hint.w()) {
-            data.min.h() = data.hint.w();
-          }
-        }
-        else {
-          if (data.min.w() > data.max.w()) {
-            data.min.w() = data.max.w();
-          }
-          if (data.min.w() > data.max.w()) {
-            data.min.h() = data.max.w();
-          }
-        }
+      // Check whether we could find this item.
+      if (!isValidIndex(id)) {
+        error(
+          std::string("Cannot get index for item \"") + item->getName() + "\" from layout",
+          std::string("Widget is not managed by this layout")
+        );
       }
+
+      // Check that this item is registered in the information array.
+      InfosMap::const_iterator info = m_infos.find(id);
+      if (info == m_infos.cend()) {
+        error(
+          std::string("Cannot retrieve role for item \"") + item->getName() + "\"",
+          std::string("Inexisting key")
+        );
+      }
+
+      // Check whether the role for this item is actually a dock widget. In
+      // any other case we abort the deletion of the item as it is not what
+      // is expected by the caller.
+      if (!isDockWidgetRole(info->second.role)) {
+        error(
+          std::string("Could not remove item \"") + item->getName() + "\" which is not a dock widget",
+          std::string("Role \"") + roleToName(info->second.role) + " is not a valid dock widget role"
+        );
+      }
+
+      // The input item is actually a dock widget we can remove it.
+      removeItem(item);
+    }
+
+    void
+    MainWindowLayout::computeGeometry(const utils::Boxf& window) {
+      // To fully build the layout we need to compute the repartition in both direction (horizontal and
+      // vertical) using the two internal layouts.
+      // Each layout will use virtual layout item so that we do not pollute the existing widgets with
+      // unecessary events.
+      // Once this is done, we need to retrieve the properties of each area and build the final areas
+      // for each widget.
+      // We use the standard process to subtract the margin from the input size and to compute information
+      // about the widgets, so that we get a way to iterate on registered widgets.
+
+      // Compute geometry of internal layouts.
+      m_hLayout.updatePrivate(window);
+      m_vLayout.updatePrivate(window);
+
+      // Now build the area to assign to each widget based on the internal virtual items.
+      std::vector<utils::Boxf> boxes(m_infos.size());
+
+      log("Main window layout is now assigning " + std::to_string(boxes.size()), utils::Level::Notice);
+
+      int id = 0;
+      for (InfosMap::const_iterator widgetInfo = m_infos.cbegin() ;
+           widgetInfo != m_infos.cend() ;
+           ++widgetInfo)
+      {
+        // Retrieve the widget's info.
+        const ItemInfo& info = widgetInfo->second;
+
+        // The box is obtained directly through the virtual layout item associated to this widget.
+        boxes[id] = info.item->getRenderingArea();
+
+        log("Box is thus " + boxes[id].toString(), utils::Level::Warning);
+
+        ++id;
+      }
+
+      // Assign the areas using the dedicated handler.
+      assignRenderingAreas(boxes, window);
     }
 
     void
@@ -143,9 +161,7 @@ namespace sdl {
           continue;
         }
         else {
-          // Remove the item we found: we need to account for the removal of content widgets,
-          // which are not directly registered in here but rather in the central layout.
-
+          // Remove the item we found.
           removeItem(info->second.widget);
         }
       }
@@ -172,71 +188,6 @@ namespace sdl {
       m_topAreaPercentage = periphericalAreas / 2.0f;
       m_bottomAreaPercentage = periphericalAreas / 2.0f;
       m_statusBarPercentage = menuAndStatus / 2.0f;
-    }
-
-    void
-    MainWindowLayout::consolidateGridCoordinates() {
-      // In order to consolidate the dimensions, we first need to determine whether some
-      // widgets for the corresponding role do exist.
-      InfosMap::const_iterator potentialTopDock = std::find_if(
-        m_infos.cbegin(), m_infos.cend(),
-        [](const std::pair<int, ItemInfo>& value) {
-          return value.second.role == WidgetRole::TopDockWidget;
-        }
-      );
-
-      InfosMap::const_iterator potentialCentralDock = std::find_if(
-        m_infos.cbegin(), m_infos.cend(),
-        [](const std::pair<int, ItemInfo>& value) {
-          return value.second.role == WidgetRole::CentralDockWidget;
-        }
-      );
-
-      InfosMap::const_iterator potentialBottomDock = std::find_if(
-        m_infos.cbegin(), m_infos.cend(),
-        [](const std::pair<int, ItemInfo>& value) {
-          return value.second.role == WidgetRole::BottomDockWidget;
-        }
-      );
-
-      const bool hasTopDock = (potentialTopDock != m_infos.cend());
-      const bool hasCentralDock = (potentialCentralDock != m_infos.cend());
-      const bool hasBottomDock = (potentialBottomDock != m_infos.cend());
-
-      // Now we can compute the consolidated dimensions based on the input role
-      // assigned to the coordinates.
-      utils::Boxi topBox = getGridCoordinatesFromRole(WidgetRole::TopDockWidget);
-      utils::Boxi centralBox = getGridCoordinatesFromRole(WidgetRole::CentralDockWidget);
-      utils::Boxi bottomBox = getGridCoordinatesFromRole(WidgetRole::BottomDockWidget);
-
-      topBox.h() = topBox.h() + (hasCentralDock ? 0 : 1) + (hasBottomDock ? 0 : 1);
-
-      centralBox.y() = centralBox.y() - (hasTopDock ? 0 : 1);
-      centralBox.h() = centralBox.h() + (hasTopDock ? 0 : 1) + (hasBottomDock ? 0 : 1);
-
-      bottomBox.y() = bottomBox.y() - (hasTopDock ? 0 : 1) - (hasCentralDock ? 0 : 1);
-      bottomBox.h() = bottomBox.h() + (hasTopDock ? 0 : 1) + (hasCentralDock ? 0 : 1);
-
-      // Now update each widget with the new boxes.
-      for (InfosMap::const_iterator item = m_infos.cbegin() ;
-           item != m_infos.cend() ;
-           ++item)
-      {
-        // Update the grid coordinates if needed.
-        switch (item->second.role) {
-          case WidgetRole::TopDockWidget:
-            updateGridCoordinates(item->first, topBox);
-            break;
-          case WidgetRole::CentralDockWidget:
-            updateGridCoordinates(item->first, centralBox);
-            break;
-          case WidgetRole::BottomDockWidget:
-            updateGridCoordinates(item->first, bottomBox);
-            break;
-          default:
-            break;
-        }
-      }
     }
 
     void
@@ -275,13 +226,6 @@ namespace sdl {
           std::string("Could not remove item \"") + widget->getName() + "\" which is not a dock widget",
           std::string("Role \"") + roleToName(info->second.role) + " does not match expected role \"" + roleToName(role)
         );
-      }
-
-      // We should also update the dimensions for central widgets if needed: indeed
-      // if a top dock widget is removed, we might use the available space for the
-      // central widget for example.
-      if (doesRoleTriggersConsolidation(info->second.role)) {
-        consolidateGridCoordinates();
       }
 
       // Remove the item using the parent method.

@@ -5,18 +5,20 @@
 # include <unordered_map>
 # include <unordered_set>
 # include <maths_utils/Box.hh>
-# include <sdl_graphic/GridLayout.hh>
+# include <sdl_core/Layout.hh>
 # include <sdl_core/SizePolicy.hh>
+# include <sdl_graphic/GridLayout.hh>
 # include "WidgetRole.hh"
+# include "VirtualLayoutItem.hh"
 
 namespace sdl {
   namespace app {
 
-    class MainWindowLayout: public graphic::GridLayout {
+    class MainWindowLayout: public core::Layout {
       public:
 
         /**
-         * @brief - The area available for the layout.
+         * @brief - Creates a new main window layout with the specified area.
          * @param margin - the margin around the borders of the layout. Expressed in pixels and similar
          *                 for width and height.
          * @param centralWidgetSize - a size describing both for width and height the percentage of the
@@ -27,8 +29,7 @@ namespace sdl {
          *                            total area and `1` meaning that it occupies all the available
          *                            space.
          */
-        MainWindowLayout(const utils::Boxf& area,
-                         const float& margin = 1.0f,
+        MainWindowLayout(const float& margin = 1.0f,
                          const utils::Sizef& centralWidgetSize = utils::Sizef(0.7f, 0.5f));
 
         virtual ~MainWindowLayout();
@@ -55,21 +56,34 @@ namespace sdl {
         void
         removeDockWidget(core::SdlWidget* item);
 
+        /**
+         * @brief - Reimplementation of the `EngineObject` method which allows this
+         *          class to not only register itself to the provided events queue
+         *          but also its chidlren layouts.
+         * @param queue - the queue to register.
+         */
+        void
+        setEventsQueue(core::engine::EventsQueue* queue) noexcept override;
+
       protected:
 
         void
-        updatePrivate(const utils::Boxf& window) override;
+        computeGeometry(const utils::Boxf& window) override;
 
-        void
-        adjustItemToConstraints(const utils::Sizef& window,
-                                std::vector<WidgetInfo>& items) const noexcept override;
+        utils::Boxi
+        getGridCoordinatesFromRole(const WidgetRole& role,
+                                   const bool hRole) const;
+
+        // void
+        // adjustItemToConstraints(const utils::Sizef& window,
+        //                         std::vector<WidgetInfo>& items) const noexcept override;
 
       private:
 
         /**
          * @brief - Describes additional information to locate the widget
          *          in the layout. Each data is linked to a widget which
-         *          is represneted through the `widget` attribute. To get
+         *          is represented through the `widget` attribute. To get
          *          the index of the item in the parent `m_items` table
          *          one can use the `getIndexOf` method.
          *          The role of the widget is specified using the `role`
@@ -78,11 +92,17 @@ namespace sdl {
          *          Note that if the role for the widget is not set to
          *          `DockWidget` the `area` attribute is not relevant and
          *          set to its default value, i.e. `None`.
+         *          Finally due to the way we handle the repartition of
+         *          the widgets, we associate a virtual layout item to any
+         *          new widget so that we can gather information from the
+         *          internal layouts without polluting the real widgets
+         *          with uneeded events.
          */
         struct ItemInfo {
           WidgetRole role;
           DockWidgetArea area;
           core::SdlWidget* widget;
+          VirtualLayoutItemShPtr item;
         };
 
         using InfosMap = std::unordered_map<int, ItemInfo>;
@@ -99,22 +119,6 @@ namespace sdl {
 
         void
         removeItemFromIndex(int item) override;
-
-        utils::Boxi
-        getGridCoordinatesFromRole(const WidgetRole& role) const;
-
-        bool
-        doesRoleTriggersConsolidation(const WidgetRole& role) const noexcept;
-
-        /**
-         * @brief - Used to consolidate the grid coordinates associated to the central widgets
-         *          based on the widgets registered widgets in this layout.
-         *          This allows for example to extend the area allocated
-         *          to the central widget if no top or bottom dock widgets are registered for
-         *          this layout yet.
-         */
-        void
-        consolidateGridCoordinates();
 
         utils::Sizef
         computeMaxSizeForRole(const utils::Sizef& window,
@@ -144,7 +148,6 @@ namespace sdl {
 
       private:
 
-        utils::Boxf m_area;
         InfosMap m_infos;
 
         /**
@@ -173,6 +176,12 @@ namespace sdl {
         float m_topAreaPercentage;
         float m_bottomAreaPercentage;
         float m_statusBarPercentage;
+
+        /**
+         * @brief - These layouts allow to handle the repartition of items in both axes.
+         */
+        graphic::GridLayout m_hLayout;
+        graphic::GridLayout m_vLayout;
 
     };
 
