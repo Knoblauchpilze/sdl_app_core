@@ -53,7 +53,7 @@ namespace sdl {
       setEventsQueue(m_eventsDispatcher.get());
 
       // Create the event for this window and assign it.
-      setLayout(std::make_shared<MainWindowLayout>(getCachedSize(), 5.0f));
+      setLayout(std::make_shared<MainWindowLayout>(5.0f));
     }
 
     void
