@@ -270,14 +270,12 @@ namespace sdl {
       if (manageDims.first) {
         utils::Boxi box = getGridCoordinatesFromRole(role, true);
         item->setManageWidth(true);
-        log("Adding widget " + widget->getName() + " with role " + roleToName(role) + " to h layout with coords " + box.toString());
         m_hLayout.addItem(item.get(), box.x(), box.y(), box.w(), box.h());
       }
 
       if (manageDims.second) {
         utils::Boxi box = getGridCoordinatesFromRole(role, false);
         item->setManageHeight(true);
-        log("Adding widget " + widget->getName() + " with role " + roleToName(role) + " to v layout with coords " + box.toString());
         m_vLayout.addItem(item.get(), box.x(), box.y(), box.w(), box.h());
       }
 
