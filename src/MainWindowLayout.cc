@@ -18,8 +18,8 @@ namespace sdl {
       m_bottomAreaPercentage(),
       m_statusBarPercentage(),
 
-      m_hLayout(1u, 6u, margin, nullptr, true),
-      m_vLayout(3u, 3u, margin, nullptr, true)
+      m_hLayout(3u, 3u, margin, nullptr, true, std::string("m_hLayout")),
+      m_vLayout(1u, 6u, margin, nullptr, true, std::string("m_vLayout"))
     {
       // Assign the percentages from the input central widget size.
       assignPercentagesFromCentralWidget(centralWidgetSize);
@@ -84,8 +84,62 @@ namespace sdl {
       // We use the standard process to subtract the margin from the input size and to compute information
       // about the widgets, so that we get a way to iterate on registered widgets.
 
-      // Compute geometry of internal layouts.
+      const utils::Sizef internalSize = computeAvailableSize(window);
+
+      // We need to update the maximum size of each virtual layout item based on the inpu `window` size.
+      // This will ensure that each individual virtual item is set up with up to date information regarding
+      // its size.
+      // We need to traverse each virtual layout item and use the dedicated handler to update the maximum
+      // size to its latest value.
+      for (InfosMap::const_iterator widgetInfo = m_infos.cbegin() ;
+           widgetInfo != m_infos.cend() ;
+           ++widgetInfo)
+      {
+        utils::Sizef maxFromLayout = computeMaxSizeForRole(internalSize, widgetInfo->second.role);
+        widgetInfo->second.item->updateMaxSize(maxFromLayout);
+      }
+
+      // Compute geometry of internal layouts. Virtual layout item need to be set up in order to care about
+      // the modification of width or height based on the layout which is currently applied to them.
+      // For instance, the virtual layout item representing the central dock widget is registered in both
+      // the horizontal layout and the vertical layout. However we do not want the width computed by the
+      // `m_vLayout` to override the value computed by the `m_hLayout`. Thus we need to manually set the
+      // the manage dimensions flags between calls to each layout.
+
+      // Activate width management for each widget role.
+      for (InfosMap::const_iterator widgetInfo = m_infos.cbegin() ;
+           widgetInfo != m_infos.cend() ;
+           ++widgetInfo)
+      {
+        std::pair<bool, bool> manageDims = dimensionManagedForRole(widgetInfo->second.role);
+        widgetInfo->second.item->setManageWidth(manageDims.first);
+
+        if (manageDims.second) {
+          utils::Sizef maxFromLayout = computeMaxSizeForRole(internalSize, widgetInfo->second.role);
+          widgetInfo->second.item->updateMaxSize(maxFromLayout);
+        }
+      }
+
+      log("Updating h layout", utils::Level::Info);
       m_hLayout.updatePrivate(window);
+
+      // Activate height management for each widget role. Also, deactivate width management for each widget.
+      for (InfosMap::const_iterator widgetInfo = m_infos.cbegin() ;
+           widgetInfo != m_infos.cend() ;
+           ++widgetInfo)
+      {
+        std::pair<bool, bool> manageDims = dimensionManagedForRole(widgetInfo->second.role);
+
+        widgetInfo->second.item->setManageHeight(manageDims.second);
+        widgetInfo->second.item->setManageWidth(false);
+
+        if (manageDims.first) {
+          utils::Sizef maxFromLayout = computeMaxSizeForRole(internalSize, widgetInfo->second.role);
+          widgetInfo->second.item->updateMaxSize(maxFromLayout);
+        }
+      }
+
+      log("Updating v layout", utils::Level::Info);
       m_vLayout.updatePrivate(window);
 
       // Now build the area to assign to each widget based on the internal virtual items.
@@ -93,7 +147,6 @@ namespace sdl {
 
       log("Main window layout is now assigning " + std::to_string(boxes.size()), utils::Level::Notice);
 
-      int id = 0;
       for (InfosMap::const_iterator widgetInfo = m_infos.cbegin() ;
            widgetInfo != m_infos.cend() ;
            ++widgetInfo)
@@ -102,11 +155,10 @@ namespace sdl {
         const ItemInfo& info = widgetInfo->second;
 
         // The box is obtained directly through the virtual layout item associated to this widget.
-        boxes[id] = info.item->getRenderingArea();
+        // TODO: Check why left dock widget is not assigned three rows.
+        boxes[widgetInfo->first] = info.item->getRenderingArea();
 
-        log("Box is thus " + boxes[id].toString(), utils::Level::Warning);
-
-        ++id;
+        log("Box for " + info.widget->getName() + " is thus " + boxes[widgetInfo->first].toString(), utils::Level::Info);
       }
 
       // Assign the areas using the dedicated handler.

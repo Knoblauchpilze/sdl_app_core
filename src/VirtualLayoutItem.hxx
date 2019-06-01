@@ -11,8 +11,8 @@ namespace sdl {
 
     inline
     void
-    VirtualLayoutItem::setManageWidth() noexcept {
-      m_manageWidth = true;
+    VirtualLayoutItem::setManageWidth(const bool managed) noexcept {
+      m_manageWidth = managed;
     }
 
     inline
@@ -23,8 +23,8 @@ namespace sdl {
 
     inline
     void
-    VirtualLayoutItem::setManageHeight() noexcept {
-      m_manageHeight = true;
+    VirtualLayoutItem::setManageHeight(const bool managed) noexcept {
+      m_manageHeight = managed;
     }
 
     inline
@@ -38,6 +38,10 @@ namespace sdl {
     VirtualLayoutItem::getRenderingArea() const noexcept {
       return m_box;
     }
+
+    inline
+    void
+    VirtualLayoutItem::makeGeometryDirty() {}
 
   }
 }

@@ -94,6 +94,36 @@ namespace sdl {
     }
 
     inline
+    std::pair<bool, bool>
+    MainWindowLayout::dimensionManagedForRole(const WidgetRole& role) const noexcept {
+      bool manageWidth = false;
+      bool manageHeight = false;
+
+      switch (role) {
+        case WidgetRole::MenuBar:
+        case WidgetRole::ToolBar:
+        case WidgetRole::StatusBar:
+          manageHeight = true;
+          break;
+        case WidgetRole::LeftDockWidget:
+        case WidgetRole::RightDockWidget:
+          manageWidth = true;
+          break;
+        case WidgetRole::TopDockWidget:
+        case WidgetRole::CentralDockWidget:
+        case WidgetRole::BottomDockWidget:
+          manageWidth = true;
+          manageHeight = true;
+          break;
+        default:
+          break;
+      }
+
+      // Return the computed values as a pair.
+      return std::make_pair(manageWidth, manageHeight);
+    }
+
+    inline
     utils::Boxi
     MainWindowLayout::getGridCoordinatesFromRole(const WidgetRole& role,
                                                  const bool hRole) const
@@ -217,42 +247,37 @@ namespace sdl {
 
       // Define properties for the virtual layout item based on the role which
       // shall be assumed by the widget.
-      bool manageWidth = false;
-      bool manageHeight = false;
-
-      switch (role) {
-        case WidgetRole::MenuBar:
-        case WidgetRole::ToolBar:
-        case WidgetRole::StatusBar:
-          manageHeight = true;
-          break;
-        case WidgetRole::LeftDockWidget:
-        case WidgetRole::RightDockWidget:
-          manageWidth = true;
-          break;
-        case WidgetRole::TopDockWidget:
-        case WidgetRole::CentralDockWidget:
-        case WidgetRole::BottomDockWidget:
-          manageWidth = true;
-          manageHeight = true;
-          break;
-        default:
-          break;
-      }
+      std::pair<bool, bool> manageDims = dimensionManagedForRole(role);
 
       // Retrieve the grid coordinates based on the assumed `role` of the widget.
-      VirtualLayoutItemShPtr item = std::make_shared<VirtualLayoutItem>(widget->getName());
+      // We also need to assign the size hints for this item. The important part
+      // is to keep values from the input `widget` and to account for the maximum
+      // size available based on the `role`.
+      // Right now we cannot guarantee that the area defined for this layout is
+      // the one which will be used during the optimization process. We will use
+      // the maximum size of the `widget` for now and update it when the relevant
+      // `computeGeometry` call is processed.
+
+      VirtualLayoutItemShPtr item = std::make_shared<VirtualLayoutItem>(
+        widget->getName(),
+        widget->getMinSize(),
+        widget->getSizeHint(),
+        widget->getMaxSize(),
+        widget->getSizePolicy()
+      );
 
       // Register the widget in the corresponding layouts.
-      if (manageWidth) {
+      if (manageDims.first) {
         utils::Boxi box = getGridCoordinatesFromRole(role, true);
-        item->setManageWidth();
+        item->setManageWidth(true);
+        log("Adding widget " + widget->getName() + " with role " + roleToName(role) + " to h layout with coords " + box.toString());
         m_hLayout.addItem(item.get(), box.x(), box.h(), box.w(), box.h());
       }
 
-      if (manageHeight) {
+      if (manageDims.second) {
         utils::Boxi box = getGridCoordinatesFromRole(role, false);
-        item->setManageHeight();
+        item->setManageHeight(true);
+        log("Adding widget " + widget->getName() + " with role " + roleToName(role) + " to v layout with coords " + box.toString());
         m_vLayout.addItem(item.get(), box.x(), box.h(), box.w(), box.h());
       }
 

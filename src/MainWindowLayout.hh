@@ -70,13 +70,24 @@ namespace sdl {
         void
         computeGeometry(const utils::Boxf& window) override;
 
+        /**
+         * @brief - Used to determine which dimensions are managed by the internal
+         *          layout's constraints for a specific role. Indeeed the menu bar
+         *          for example will always be assigned the complete width of the
+         *          layout no matter its dimensions. So we do not want it to interfere
+         *          with the repartition of the width of the window for other widgets.
+         * @param role - the role for which the dimensions should be checked for
+         *               micro-management.
+         * @return - true if the role has its dimensions managed by the maximum
+         *           constraints of this layout. The first element of the returned pair
+         *           corresponds to the width while the second corresponds to the height.
+         */
+        std::pair<bool, bool>
+        dimensionManagedForRole(const WidgetRole& role) const noexcept;
+
         utils::Boxi
         getGridCoordinatesFromRole(const WidgetRole& role,
                                    const bool hRole) const;
-
-        // void
-        // adjustItemToConstraints(const utils::Sizef& window,
-        //                         std::vector<WidgetInfo>& items) const noexcept override;
 
       private:
 
@@ -179,6 +190,13 @@ namespace sdl {
 
         /**
          * @brief - These layouts allow to handle the repartition of items in both axes.
+         *          The `m_hLayout` handles the positioning of items along the x axis (i.e.
+         *          handling of their widths) while the `m_vLayout` handles the computing
+         *          of the heights of widgets.
+         *          The dimension of the `m_hLayout` is thus 1column x 6 rows and for the
+         *          `m_vLayout` it is 3 columns x 3 rows.
+         *          Note that some widgets are added to only one layout, which means we
+         *          have to handle the missing dimension afterwards.
          */
         graphic::GridLayout m_hLayout;
         graphic::GridLayout m_vLayout;

@@ -11,7 +11,10 @@ namespace sdl {
       public:
 
         VirtualLayoutItem(const std::string& name,
-                          const utils::Sizef& hint = utils::Sizef());
+                          const utils::Sizef& min = utils::Sizef(),
+                          const utils::Sizef& hint = utils::Sizef(),
+                          const utils::Sizef& max = utils::Sizef::max(),
+                          const core::SizePolicy& policy = core::SizePolicy());
 
         virtual ~VirtualLayoutItem();
 
@@ -21,9 +24,11 @@ namespace sdl {
          *          for their width component.
          *          Note that the `setManageHeight` can also be activated at the same time,
          *          both flags are not mutually exclusive.
+         * @param managed - true if the width for this virtual layout item is managed,
+         *                  false otherwise.
          */
         void
-        setManageWidth() noexcept;
+        setManageWidth(const bool managed) noexcept;
 
         bool
         isWidthManaged() const noexcept;
@@ -34,9 +39,11 @@ namespace sdl {
          *          for their height component.
          *          Note that the `setManageWidth` can also be activated at the same time,
          *          both flags are not mutually exclusive.
+         * @param managed - true if the width for this virtual layout item is managed,
+         *                  false otherwise.
          */
         void
-        setManageHeight() noexcept;
+        setManageHeight(const bool managed) noexcept;
 
         bool
         isHeightManaged() const noexcept;
@@ -54,6 +61,28 @@ namespace sdl {
          */
         utils::Boxf
         getRenderingArea() const noexcept override;
+
+        /**
+         * @brief - Used to update the internal maximum size based on the value provided in
+         *          the input `upperBound` size. This new size will replace the old maixmum
+         *          size in case it is smaller than the initial value.
+         *          Of course we also take care of the minimum size so that we keep a valid
+         *          configuration for this widget.
+         *          Note that if no valid configuration can be found, an error is raised.
+         * @param upperBound - the maximum size which should be checked against the internal
+         *                     maximum size.
+         */
+        void
+        updateMaxSize(const utils::Sizef& upperBound);
+
+      protected:
+
+        /**
+         * @brief - Reimplementation of the base `LayoutItem` class method so that it does not
+         *          trigger any events creation.
+         */
+        void
+        makeGeometryDirty() override;
 
       private:
 
