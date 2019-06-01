@@ -271,14 +271,14 @@ namespace sdl {
         utils::Boxi box = getGridCoordinatesFromRole(role, true);
         item->setManageWidth(true);
         log("Adding widget " + widget->getName() + " with role " + roleToName(role) + " to h layout with coords " + box.toString());
-        m_hLayout.addItem(item.get(), box.x(), box.h(), box.w(), box.h());
+        m_hLayout.addItem(item.get(), box.x(), box.y(), box.w(), box.h());
       }
 
       if (manageDims.second) {
         utils::Boxi box = getGridCoordinatesFromRole(role, false);
         item->setManageHeight(true);
         log("Adding widget " + widget->getName() + " with role " + roleToName(role) + " to v layout with coords " + box.toString());
-        m_vLayout.addItem(item.get(), box.x(), box.h(), box.w(), box.h());
+        m_vLayout.addItem(item.get(), box.x(), box.y(), box.w(), box.h());
       }
 
       // Register this item in the internal table of information if a valid index

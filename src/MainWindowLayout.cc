@@ -155,7 +155,6 @@ namespace sdl {
         const ItemInfo& info = widgetInfo->second;
 
         // The box is obtained directly through the virtual layout item associated to this widget.
-        // TODO: Check why left dock widget is not assigned three rows.
         boxes[widgetInfo->first] = info.item->getRenderingArea();
 
         log("Box for " + info.widget->getName() + " is thus " + boxes[widgetInfo->first].toString(), utils::Level::Info);
