@@ -109,15 +109,6 @@ namespace sdl {
         void
         updateMaxSize(const utils::Sizef& upperBound);
 
-      protected:
-
-        /**
-         * @brief - Reimplementation of the base `LayoutItem` class method so that it does not
-         *          trigger any events creation.
-         */
-        void
-        makeGeometryDirty() override;
-
       private:
 
         bool m_manageWidth;

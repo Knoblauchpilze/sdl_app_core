@@ -69,10 +69,6 @@ namespace sdl {
       return m_box;
     }
 
-    inline
-    void
-    VirtualLayoutItem::makeGeometryDirty() {}
-
   }
 }
 

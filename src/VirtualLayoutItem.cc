@@ -48,8 +48,6 @@ namespace sdl {
         m_box.y() = box.y();
         m_box.h() = box.h();
       }
-
-      log("Virtual item has size " + box.toString() + " and local " + m_box.toString(), utils::Level::Info);
     }
 
     void
@@ -69,8 +67,6 @@ namespace sdl {
       utils::Sizef min = getMinSize();
       utils::Sizef hint = getSizeHint();
       utils::Sizef max = getMaxSize();
-
-      log("Updating max size to " + upperBound.toString() + " from max " + max.toString());
 
       // First, let's handle trivial cases where the maximum size is already smaller
       // than the `upperBound`. If this is the case, as we assume that the initial
@@ -166,7 +162,6 @@ namespace sdl {
       setMinSize(min);
       setSizeHint(hint);
       setMaxSize(max);
-
     }
 
   }
