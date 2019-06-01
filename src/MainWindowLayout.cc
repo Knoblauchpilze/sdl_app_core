@@ -154,7 +154,96 @@ namespace sdl {
       log("Updating v layout", utils::Level::Info);
       m_vLayout.updatePrivate(window);
 
-      // Now build the area to assign to each widget based on the internal virtual items.
+      // Now build the area to assign to each widget based on the internal virtual items. There are
+      // only two exceptions to the general process: the left and right dock widget. Indeed we have
+      // to not manage the height of these widgets because of the following:
+      //
+      // Imagine a situation where we have a left dock widget and a central widget. We will only
+      // consider the heigth aspect of the problem (as the width part works just fine).
+      // The representation in terms of grid coordinates in the vertical layout is as below:
+      //
+      //  +------+-------------------+
+      //  |      |   Inexisting top  |
+      //  |      +-------------------+
+      //  |      |                   |
+      //  | Left |   Central widget  |
+      //  |      |                   |
+      //  |      +-------------------+
+      //  |      | Inexisting bottom |
+      //  +------+-------------------+
+      //
+      // The grid layout during the optimization process will assign only a third of the available area
+      // to the central widget because the `LeftDockWidget` would exist in the row 0 and 2 which will
+      // result in an incorrect layout. At least not what we would expect.
+      //
+      // The solution to this problem is to make the left dock area not managed in height: this way it
+      // will be assigned the total height available. But if we now consider the following situation:
+      //
+      //  +--------------------------+
+      //  |        Menu bar          |
+      //  +------+-------------------+
+      //  |      |   Inexisting top  |
+      //  |      +-------------------+
+      //  |      |                   |
+      //  | Left |   Central widget  |
+      //  |      |                   |
+      //  |      +-------------------+
+      //  |      | Inexisting bottom |
+      //  +------+-------------------+
+      //
+      // We see that even this solution is not withyout flaws. Indeed we do not want to assign a height
+      // corresponding to all the available height to the left dock widget but rather a height which
+      // corresponds to the combined height of the top, central and bottom dock areas.
+      // Note that this also applies to the right dock area.
+      // So when encountering such a widget, we need to perform the needed computations to assign a valid
+      // height and ordinate to these dock areas.
+
+      // Perform the computations to determine the height and ordinate to assign to top and right dock
+      // areas beforehand.
+      float offsetOrdinate = getMargin().h();
+      float heightTop = 0.0f;
+      float heightCentral = 0.0f;
+      float heightBottom = 0.0f;
+
+      for (InfosMap::const_iterator widgetInfo = m_infos.cbegin() ;
+           widgetInfo != m_infos.cend() ;
+           ++widgetInfo)
+      {
+        const WidgetRole& role = widgetInfo->second.role;
+        const utils::Boxf area = widgetInfo->second.item->getRenderingArea();
+
+        // Check whether this item is useful for our computation: we keep track of the
+        // largest widget encountered so far for each role.
+        if (role == WidgetRole::TopDockWidget && area.h() >= heightTop) {
+          heightTop = area.h();
+        }
+
+        if (role == WidgetRole::CentralDockWidget && area.h() >= heightCentral) {
+          heightCentral = area.h();
+        }
+
+        if (role == WidgetRole::BottomDockWidget && area.h() >= heightBottom) {
+          heightBottom = area.h();
+        }
+
+        // We also keep track of the smallest ordinate which is not taken by any role above
+        // the left and right dock areas.
+        if (role == WidgetRole::MenuBar && area.y() + area.h() / 2.0f >= offsetOrdinate) {
+          offsetOrdinate = area.y() + area.h() / 2.0f;
+        }
+
+        if (role == WidgetRole::ToolBar && area.y() + area.h() / 2.0f >= offsetOrdinate) {
+          offsetOrdinate = area.y() + area.h() / 2.0f;
+        }
+
+        if (role == WidgetRole::MenuBar && area.y() + area.h() / 2.0f >= offsetOrdinate) {
+          offsetOrdinate = area.y() + area.h() / 2.0f;
+        }
+      }
+
+      // Gather final values from each virtual item to assign to left and right dock areas.
+      const float combinedHeight = heightTop + heightCentral + heightBottom;
+
       std::vector<utils::Boxf> boxes(m_infos.size());
 
       log("Main window layout is now assigning " + std::to_string(boxes.size()), utils::Level::Notice);
@@ -165,6 +254,12 @@ namespace sdl {
       {
         // Retrieve the widget's info.
         const ItemInfo& info = widgetInfo->second;
+
+        // Check for special case of left and right dock areas.
+        if (info.role == WidgetRole::LeftDockWidget || info.role == WidgetRole::RightDockWidget) {
+          info.item->setY(offsetOrdinate + combinedHeight / 2.0f);
+          info.item->setHeight(combinedHeight);
+        }
 
         // The box is obtained directly through the virtual layout item associated to this widget.
         boxes[widgetInfo->first] = info.item->getRenderingArea();
@@ -244,7 +339,7 @@ namespace sdl {
 
       const float periphericalAreas = 0.6f * remaining;
       const float toolbarsPercentage = 0.2f * remaining;
-      const float menuAndStatus = (1.0f - periphericalAreas - toolbarsPercentage);
+      const float menuAndStatus = (remaining - periphericalAreas - toolbarsPercentage);
 
       m_menuBarPercentage = menuAndStatus / 2.0f;
       m_toolBarPercentage = toolbarsPercentage;
