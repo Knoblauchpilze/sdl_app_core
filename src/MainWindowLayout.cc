@@ -6,7 +6,7 @@ namespace sdl {
 
     MainWindowLayout::MainWindowLayout(const float& margin,
                                        const utils::Sizef& centralWidgetSize):
-      core::Layout(nullptr, margin, true, std::string("main_window_layout"), true),
+      core::Layout(std::string("main_window_layout"), nullptr, margin, true, true),
       m_infos(),
 
       m_leftAreaPercentage(),
@@ -18,8 +18,8 @@ namespace sdl {
       m_bottomAreaPercentage(),
       m_statusBarPercentage(),
 
-      m_hLayout(3u, 3u, margin, nullptr, true, std::string("m_hLayout")),
-      m_vLayout(1u, 6u, margin, nullptr, true, std::string("m_vLayout"))
+      m_hLayout(std::string("m_hLayout"), nullptr, 3u, 3u, margin, true, true),
+      m_vLayout(std::string("m_vLayout"), nullptr, 1u, 6u, margin, true, true)
     {
       // Assign the percentages from the input central widget size.
       assignPercentagesFromCentralWidget(centralWidgetSize);
@@ -126,8 +126,8 @@ namespace sdl {
         }
       }
 
-      log("Updating h layout", utils::Level::Info);
-      m_hLayout.updatePrivate(window);
+      log("Updating h layout", utils::Level::Notice);
+      m_hLayout.update(window);
 
       // Activate height management for each widget role. Also, deactivate width management for each widget.
       for (InfosMap::const_iterator widgetInfo = m_infos.cbegin() ;
@@ -151,8 +151,8 @@ namespace sdl {
         }
       }
 
-      log("Updating v layout", utils::Level::Info);
-      m_vLayout.updatePrivate(window);
+      log("Updating v layout", utils::Level::Notice);
+      m_vLayout.update(window);
 
       // Now build the area to assign to each widget based on the internal virtual items. There are
       // only two exceptions to the general process: the left and right dock widget. Indeed we have
@@ -242,11 +242,12 @@ namespace sdl {
       }
 
       // Gather final values from each virtual item to assign to left and right dock areas.
-      const float combinedHeight = heightTop + heightCentral + heightBottom;
+      float combinedHeight = heightTop + heightCentral + heightBottom;
+      if (utils::fuzzyEqual(combinedHeight, 0.0f)) {
+        combinedHeight = internalSize.h();
+      }
 
       std::vector<utils::Boxf> boxes(m_infos.size());
-
-      log("Main window layout is now assigning " + std::to_string(boxes.size()), utils::Level::Notice);
 
       for (InfosMap::const_iterator widgetInfo = m_infos.cbegin() ;
            widgetInfo != m_infos.cend() ;
@@ -263,8 +264,6 @@ namespace sdl {
 
         // The box is obtained directly through the virtual layout item associated to this widget.
         boxes[widgetInfo->first] = info.item->getRenderingArea();
-
-        log("Box for " + info.widget->getName() + " is thus " + boxes[widgetInfo->first].toString(), utils::Level::Info);
       }
 
       // Assign the areas using the dedicated handler.
