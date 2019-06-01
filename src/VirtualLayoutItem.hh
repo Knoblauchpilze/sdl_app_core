@@ -34,6 +34,23 @@ namespace sdl {
         isWidthManaged() const noexcept;
 
         /**
+         * @brief - Used to assign a position along the x cooridnate for this virtual layout
+         *          item. Note that this function doesn't have any effect if the width of this
+         *          item is set to managed.
+         * @param x - the x coordinate to assign to this layout item.
+         */
+        void
+        setX(const float& x) noexcept;
+
+        /**
+         * @brief - Used to assign a width for this virtual layout item. Note that this function
+         *          doesn't have any effect if the width of this item is set to managed.
+         * @param width - the width to assign to this layout item.
+         */
+        void
+        setWidth(const float& width) noexcept;
+
+        /**
          * @brief - Indicates that this item should manage the height of another item.
          *          This indicates that received `Resize` events should only be considered
          *          for their height component.
@@ -47,6 +64,23 @@ namespace sdl {
 
         bool
         isHeightManaged() const noexcept;
+
+        /**
+         * @brief - Used to assign a position along the y cooridnate for this virtual layout
+         *          item. Note that this function doesn't have any effect if the height of this
+         *          item is set to managed.
+         * @param y - the y coordinate to assign to this layout item.
+         */
+        void
+        setY(const float& y) noexcept;
+
+        /**
+         * @brief - Used to assign a height for this virtual layout item. Note that this function
+         *          doesn't have any effect if the height of this item is set to managed.
+         * @param height - the height to assign to this layout item.
+         */
+        void
+        setHeight(const float& height) noexcept;
 
         void
         postLocalEvent(core::engine::EventShPtr e) override;
