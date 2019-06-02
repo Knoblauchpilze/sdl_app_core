@@ -212,12 +212,6 @@ namespace sdl {
         postEvent(std::make_shared<core::engine::ResizeEvent>(m_cachedSize, m_layout->getRenderingArea(), m_layout.get()));
       }
 
-      // Mark the event as accepted if it is directed only through this
-      // object.
-      if (isReceiver(e)) {
-        e.accept();
-      }
-
       // Use base handle to determine whether the event was recognized.
       return core::engine::EngineObject::geometryUpdateEvent(e);
     }
@@ -270,12 +264,6 @@ namespace sdl {
       // Now render the content of the window and make it visible to the user.
       engine->renderWindow(m_window);
 
-      // Mark the event as accepted if it is directed only through this
-      // object.
-      if (isReceiver(e)) {
-        e.accept();
-      }
-
       // Use base handler to determine whether the event was recognized.
       return core::engine::EngineObject::repaintEvent(e);
     }
@@ -285,12 +273,6 @@ namespace sdl {
       // We need to trigger a global leave event so that no widget stays selected
       // or in highlight mode when the mouse is not in the window anymore.
       postEvent(std::make_shared<core::engine::Event>(core::engine::Event::Type::Leave));
-
-      // Mark the event as accepted if it is directed only through this
-      // object.
-      if (isReceiver(e)) {
-        e.accept();
-      }
 
       // Use base handle to determine whether the event was recognized.
       return core::engine::EngineObject::windowLeaveEvent(e);
@@ -329,12 +311,6 @@ namespace sdl {
 
       // And request an update of the layout.
       invalidate();
-
-      // Mark the event as accepted if it is directed only through this
-      // object.
-      if (isReceiver(e)) {
-        e.accept();
-      }
 
       // Use base handler to determine whether the event was recognized.
       return core::engine::EngineObject::windowResizeEvent(e);

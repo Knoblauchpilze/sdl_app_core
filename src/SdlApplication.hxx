@@ -235,12 +235,6 @@ namespace sdl {
       // Stop rendering.
       stopRendering();
 
-      // Mark the event as accepted if it is directed only through this
-      // object.
-      if (isReceiver(e)) {
-        e.accept();
-      }
-
       // Use base handler to determine whether the event was recognized.
       return core::engine::EngineObject::quitEvent(e);
     }
