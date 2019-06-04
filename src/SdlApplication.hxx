@@ -150,7 +150,7 @@ namespace sdl {
       }
 
       // Set up the widget with internal elements.
-      widget->setEventsQueue(m_eventsDispatcher.get());
+      registerToSameQueue(widget);
       widget->setEngine(m_engine);
 
       // Add this widget to the internal table.
