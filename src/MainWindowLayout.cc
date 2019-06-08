@@ -34,7 +34,9 @@ namespace sdl {
       setNeedsConvert(false);
 
       m_hLayout.setVirtual(true);
+      m_hLayout.setNested(true);
       m_vLayout.setVirtual(true);
+      m_vLayout.setNested(true);
 
       // m_hLayout.allowLog(false);
       // m_vLayout.allowLog(false);
