@@ -177,7 +177,7 @@ namespace sdl {
       }
 
       // Cache the current size of this window.
-      m_cachedSize = utils::Boxf::fromSize(size);
+      m_cachedSize = utils::Boxf(0.0f, 0.0f, size.w(), size.h());
 
       // Finally create the engine decorator which will use the newly created
       // window and canvases.
@@ -233,6 +233,7 @@ namespace sdl {
       // Keep a local reference to the engine to be able to pass it through the
       // lambda expression.
       std::shared_ptr<core::engine::Engine> engine = m_engine;
+      utils::Sizef dims = m_cachedSize.toSize();
 
       // Clear the window.
       // TODO: Should handle only the region to update.
@@ -247,9 +248,12 @@ namespace sdl {
 
         // Draw this object (caching is handled by the object itself).
         withSafetyNet(
-          [widget, engine]() {
+          [widget, engine, dims]() {
             utils::Uuid texture = widget->draw();
             utils::Boxf render = widget->getRenderingArea();
+
+            render.x() += (dims.w() / 2.0f);
+            render.y() = (dims.h() / 2.0f) - render.y();
 
             engine->drawTexture(
               texture,

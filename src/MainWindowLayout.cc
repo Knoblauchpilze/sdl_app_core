@@ -34,9 +34,9 @@ namespace sdl {
       setNeedsConvert(false);
 
       m_hLayout.setVirtual(true);
-      m_hLayout.setNested(true);
+      // m_hLayout.setNested(true);
       m_vLayout.setVirtual(true);
-      m_vLayout.setNested(true);
+      // m_vLayout.setNested(true);
 
       // m_hLayout.allowLog(false);
       // m_vLayout.allowLog(false);
@@ -133,7 +133,7 @@ namespace sdl {
         else {
           // The role do not support width management, we thus need to assign the total width
           // available to the virtual layout item.
-          widgetInfo->second.item->setX(window.w() / 2.0f);
+          widgetInfo->second.item->setX(0.0f);
           widgetInfo->second.item->setWidth(internalSize.w());
         }
       }
@@ -158,7 +158,7 @@ namespace sdl {
         else {
           // The role do not support height management, we thus need to assign the total height
           // available to the virtual layout item.
-          widgetInfo->second.item->setY(window.h() / 2.0f);
+          widgetInfo->second.item->setY(0.0f);
           widgetInfo->second.item->setHeight(internalSize.h());
         }
       }
@@ -203,7 +203,7 @@ namespace sdl {
       //  |      | Inexisting bottom |
       //  +------+-------------------+
       //
-      // We see that even this solution is not withyout flaws. Indeed we do not want to assign a height
+      // We see that even this solution is not without flaws. Indeed we do not want to assign a height
       // corresponding to all the available height to the left dock widget but rather a height which
       // corresponds to the combined height of the top, central and bottom dock areas.
       // Note that this also applies to the right dock area.
@@ -212,10 +212,15 @@ namespace sdl {
 
       // Perform the computations to determine the height and ordinate to assign to top and right dock
       // areas beforehand.
-      float offsetOrdinate = getMargin().h();
+      float offsetOrdinate = std::numeric_limits<float>::lowest();
+      float heightMenu = 0.0f;
+      float heightTool = 0.0f;
       float heightTop = 0.0f;
       float heightCentral = 0.0f;
       float heightBottom = 0.0f;
+      float heightStatus = 0.0f;
+
+      bool noInfoForDockAreas = true;
 
       for (InfosMap::const_iterator widgetInfo = m_infos.cbegin() ;
            widgetInfo != m_infos.cend() ;
@@ -226,6 +231,14 @@ namespace sdl {
 
         // Check whether this item is useful for our computation: we keep track of the
         // largest widget encountered so far for each role.
+        if (role == WidgetRole::MenuBar && area.h() >= heightMenu) {
+          heightMenu = area.h();
+        }
+
+        if (role == WidgetRole::ToolBar && area.h() >= heightTool) {
+          heightTool = area.h();
+        }
+
         if (role == WidgetRole::TopDockWidget && area.h() >= heightTop) {
           heightTop = area.h();
         }
@@ -238,25 +251,38 @@ namespace sdl {
           heightBottom = area.h();
         }
 
+        if (role == WidgetRole::StatusBar && area.h() >= heightStatus) {
+          heightStatus = area.h();
+        }
+
         // We also keep track of the smallest ordinate which is not taken by any role above
         // the left and right dock areas.
-        if (role == WidgetRole::MenuBar && area.y() + area.h() / 2.0f >= offsetOrdinate) {
-          offsetOrdinate = area.y() + area.h() / 2.0f;
+        if (role == WidgetRole::MenuBar && area.y() - area.h() / 2.0f > offsetOrdinate) {
+          noInfoForDockAreas = false;
+          offsetOrdinate = area.y() - area.h() / 2.0f;
         }
 
-        if (role == WidgetRole::ToolBar && area.y() + area.h() / 2.0f >= offsetOrdinate) {
-          offsetOrdinate = area.y() + area.h() / 2.0f;
+        if (role == WidgetRole::ToolBar && area.y() - area.h() / 2.0f > offsetOrdinate) {
+          noInfoForDockAreas = false;
+          offsetOrdinate = area.y() - area.h() / 2.0f;
         }
 
-        if (role == WidgetRole::MenuBar && area.y() + area.h() / 2.0f >= offsetOrdinate) {
-          offsetOrdinate = area.y() + area.h() / 2.0f;
+        if (role == WidgetRole::MenuBar && area.y() - area.h() / 2.0f > offsetOrdinate) {
+          noInfoForDockAreas = false;
+          offsetOrdinate = area.y() - area.h() / 2.0f;
         }
       }
 
       // Gather final values from each virtual item to assign to left and right dock areas.
       float combinedHeight = heightTop + heightCentral + heightBottom;
       if (utils::fuzzyEqual(combinedHeight, 0.0f)) {
-        combinedHeight = internalSize.h();
+        combinedHeight = internalSize.h() - (heightMenu + heightTool + heightStatus);
+      }
+      if (noInfoForDockAreas) {
+        offsetOrdinate = 0.0f;
+      }
+      else {
+        offsetOrdinate = offsetOrdinate - combinedHeight / 2.0f;
       }
 
       std::vector<utils::Boxf> boxes(m_infos.size());
@@ -270,7 +296,7 @@ namespace sdl {
 
         // Check for special case of left and right dock areas.
         if (info.role == WidgetRole::LeftDockWidget || info.role == WidgetRole::RightDockWidget) {
-          info.item->setY(offsetOrdinate + combinedHeight / 2.0f);
+          info.item->setY(offsetOrdinate);
           info.item->setHeight(combinedHeight);
         }
 
