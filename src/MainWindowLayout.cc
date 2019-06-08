@@ -18,8 +18,8 @@ namespace sdl {
       m_bottomAreaPercentage(),
       m_statusBarPercentage(),
 
-      m_hLayout(std::string("m_hLayout"), nullptr, 3u, 3u, margin, true, true),
-      m_vLayout(std::string("m_vLayout"), nullptr, 1u, 6u, margin, true, true)
+      m_hLayout(std::string("m_hLayout"), nullptr, 3u, 3u, margin, false, true),
+      m_vLayout(std::string("m_vLayout"), nullptr, 1u, 6u, margin, false, true)
     {
       // Assign the percentages from the input central widget size.
       assignPercentagesFromCentralWidget(centralWidgetSize);
@@ -29,6 +29,10 @@ namespace sdl {
       // Assign events queue to internal layouts.
       registerToSameQueue(&m_hLayout);
       registerToSameQueue(&m_vLayout);
+
+      m_hLayout.allowLog(false);
+      m_vLayout.allowLog(false);
+      allowLog(false);
     }
 
     MainWindowLayout::~MainWindowLayout() {}
