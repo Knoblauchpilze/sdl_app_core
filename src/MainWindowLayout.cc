@@ -6,7 +6,7 @@ namespace sdl {
 
     MainWindowLayout::MainWindowLayout(const float& margin,
                                        const utils::Sizef& centralWidgetSize):
-      core::Layout(std::string("main_window_layout"), nullptr, margin, true, false),
+      core::Layout(std::string("main_window_layout"), nullptr, margin),
       m_infos(),
 
       m_leftAreaPercentage(),
@@ -18,8 +18,8 @@ namespace sdl {
       m_bottomAreaPercentage(),
       m_statusBarPercentage(),
 
-      m_hLayout(std::string("m_hLayout"), nullptr, 3u, 3u, margin, false, true),
-      m_vLayout(std::string("m_vLayout"), nullptr, 1u, 6u, margin, false, true)
+      m_hLayout(std::string("m_hLayout"), nullptr, 3u, 3u, margin),
+      m_vLayout(std::string("m_vLayout"), nullptr, 1u, 6u, margin)
     {
       // Assign the percentages from the input central widget size.
       assignPercentagesFromCentralWidget(centralWidgetSize);
@@ -30,9 +30,15 @@ namespace sdl {
       registerToSameQueue(&m_hLayout);
       registerToSameQueue(&m_vLayout);
 
-      m_hLayout.allowLog(false);
-      m_vLayout.allowLog(false);
-      allowLog(false);
+      // Update properties of layouts.
+      setNeedsConvert(false);
+
+      m_hLayout.setVirtual(true);
+      m_vLayout.setVirtual(true);
+
+      // m_hLayout.allowLog(false);
+      // m_vLayout.allowLog(false);
+      // allowLog(false);
     }
 
     MainWindowLayout::~MainWindowLayout() {}
