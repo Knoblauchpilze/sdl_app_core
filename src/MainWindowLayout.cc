@@ -6,7 +6,7 @@ namespace sdl {
 
     MainWindowLayout::MainWindowLayout(const float& margin,
                                        const utils::Sizef& centralWidgetSize):
-      core::Layout(std::string("main_window_layout"), nullptr, margin, true, true),
+      core::Layout(std::string("main_window_layout"), nullptr, margin, true, false),
       m_infos(),
 
       m_leftAreaPercentage(),
