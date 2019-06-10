@@ -5,6 +5,7 @@
 # include <sdl_engine/Color.hh>
 # include <sdl_engine/SdlEngine.hh>
 # include <sdl_engine/PaintEvent.hh>
+# include <sdl_graphic/TabWidget.hh>
 
 namespace sdl {
   namespace app {
@@ -15,7 +16,7 @@ namespace sdl {
                                    const utils::Sizei& size,
                                    const bool resizable,
                                    const float& framerate,
-                                   const float& eventFramerate):
+                                   const float& eventsFramerate):
       core::engine::EngineObject(name),
 
       m_title(title),
@@ -30,6 +31,16 @@ namespace sdl {
       m_engine(nullptr),
 
       m_layout(nullptr),
+
+      m_menuBar(nullptr),
+      m_toolBar(nullptr),
+      m_topArea(nullptr),
+      m_leftArea(nullptr),
+      m_rightArea(nullptr),
+      m_centralWidget(nullptr),
+      m_bottomArea(nullptr),
+      m_statusBar(nullptr),
+
       m_widgets(),
 
       m_renderLocker(),
@@ -41,19 +52,10 @@ namespace sdl {
       setService("app");
 
       // Create the engine and the window.
-      create(size, resizable);
+      create(size, eventsFramerate, resizable);
 
       // Assign the desired icon.
       setIcon(icon);
-
-      // Create the event listener and register this application as listener.
-      m_eventsDispatcher = std::make_shared<core::engine::EventsDispatcher>(eventFramerate, m_engine, true);
-
-      // Set the queue for this application so that it can post events.
-      setEventsQueue(m_eventsDispatcher.get());
-
-      // Create the event for this window and assign it.
-      setLayout(std::make_shared<MainWindowLayout>(5.0f));
     }
 
     void
@@ -157,7 +159,222 @@ namespace sdl {
     }
 
     void
+    SdlApplication::setMenuBar(core::SdlWidget* item) {
+      // Lock this app to prevent data races.
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      // Share data with this widget.
+      shareDataWithWidget(item);
+
+      // Insert it into the layout if any.
+      if (m_layout != nullptr) {
+        m_layout->setMenuBar(item);
+      }
+
+      // Register it in the internal variable. Do not
+      // forget to release memory used by previous
+      // iterations.
+      if (m_menuBar != nullptr) {
+        delete m_menuBar;
+      }
+      m_menuBar = item;
+    }
+
+    void
+    SdlApplication::addToolBar(core::SdlWidget* item) {
+      // Lock this app to prevent data races.
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      // Share data with this widget.
+      shareDataWithWidget(item);
+
+      // We need to insert this item into the corresponding
+      // tab widget. We should also set the tab widget to
+      // visible if needed so that it gets space upon calling
+      // the layout's recompute method.
+      if (m_toolBar == nullptr) {
+        error(
+          std::string("Could not add tool bar \"") + item->getName() + "\"",
+          std::string("Invalid tab widget")
+        );
+      }
+
+      m_toolBar->insertTab(m_toolBar->getTabsCount(), item);
+      // Make the tab widget visible if needed.
+      if (!m_toolBar->isVisible()) {
+        m_toolBar->setVisible(true);
+
+        // Trigger a layout recomputation.
+        if (m_layout != nullptr) {
+          m_layout->invalidate();
+        }
+      }
+    }
+
+    void
+    SdlApplication::setCentralWidget(core::SdlWidget* item) {
+      // Lock this app to prevent data races.
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      // Share data with this widget.
+      shareDataWithWidget(item);
+
+      // Insert it into the layout if any.
+      if (m_layout != nullptr) {
+        m_layout->setCentralWidget(item);
+      }
+
+      // Register it in the internal variable. Do not
+      // forget to release memory used by previous
+      // iterations.
+      if (m_centralWidget != nullptr) {
+        delete m_centralWidget;
+      }
+      m_centralWidget = item;
+    }
+
+    void
+    SdlApplication::addDockWidget(core::SdlWidget* item,
+                                  const DockWidgetArea& area)
+    {
+      // Lock this app to prevent data races.
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      // Share data with this widget.
+      shareDataWithWidget(item);
+
+      // We need to insert this item into the corresponding
+      // tab widget. We should also set the tab widget to
+      // visible if needed so that it gets space upon calling
+      // the layout's recompute method.
+      graphic::TabWidget* tab = getTabFromArea(area);
+
+      if (tab == nullptr) {
+        error(
+          std::string("Could not add dock widget \"") + item->getName() + "\" as dock widget in area \"" + areaToName(area) + "\"",
+          std::string("Invalid tab widget")
+        );
+      }
+
+      tab->insertTab(tab->getTabsCount(), item);
+      // Make the tab widget visible if needed.
+      if (!tab->isVisible()) {
+        tab->setVisible(true);
+
+        // Trigger a layout recomputation.
+        if (m_layout != nullptr) {
+          m_layout->invalidate();
+        }
+      }
+
+      m_widgets[item->getName()] = area;
+    }
+
+    void
+    SdlApplication::setStatusBar(core::SdlWidget* item) {
+      // Lock this app to prevent data races.
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      // Share data with this widget.
+      shareDataWithWidget(item);
+
+      // Insert it into the layout if any.
+      if (m_layout != nullptr) {
+        m_layout->setStatusBar(item);
+      }
+
+      // Register it in the internal variable. Do not
+      // forget to release memory used by previous
+      // iterations.
+      if (m_statusBar != nullptr) {
+        delete m_statusBar;
+      }
+      m_statusBar = item;
+    }
+
+    void
+    SdlApplication::removeToolBar(core::SdlWidget* item) {
+      // Lock this app to prevent data races.
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      if (item == nullptr) {
+        error(
+          std::string("Could not remove null tool bar from application"),
+          std::string("Invalid null item")
+        );
+      }
+
+      // Remove the item from the corresponding tab widget.
+      if (m_toolBar == nullptr) {
+        error(
+          std::string("Could not remove took bar \"") + item->getName() + "\"",
+          std::string("Invalid tab widget")
+        );
+      }
+
+      // Remove the item from the tab widget.
+      m_toolBar->removeTab(item);
+
+      // Hide the tab widget if needed.
+      if (m_toolBar->getTabsCount() == 0) {
+        m_toolBar->setVisible(false);
+
+        // Trigger a layout recomputation.
+        if( m_layout != nullptr) {
+          m_layout->invalidate();
+        }
+      }
+    }
+
+    void
+    SdlApplication::removeDockWidget(core::SdlWidget* item) {
+      // Lock this app to prevent data races.
+      std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      if (item == nullptr) {
+        error(
+          std::string("Could not remove null dock widget from application"),
+          std::string("Invalid null item")
+        );
+      }
+
+      // We need to remove the dock widget from its associated area.
+      // To do so we first need to retrieve it.
+      WidgetsMap::const_iterator area = m_widgets.find(item->getName());
+      if (area == m_widgets.cend()) {
+        error(
+          std::string("Could not remove dock widget \"") + item->getName() + "\" from application",
+          std::string("No such widget")
+        );
+      }
+
+      // Now retrieve the tab associated to this area.
+      graphic::TabWidget* tab = getTabFromArea(area->second);
+
+      if (tab == nullptr) {
+        error(
+          std::string("Could not add dock widget \"") + item->getName() + "\" as dock widget in area \"" + areaToName(area->second) + "\"",
+          std::string("Invalid tab widget")
+        );
+      }
+
+      // Remove the item from the tab widget.
+      tab->removeTab(item);
+
+      // Hide the tab widget if needed.
+      if (tab->getTabsCount() == 0) {
+        tab->setVisible(false);
+
+        // Trigger a layout recomputation.
+        if( m_layout != nullptr) {
+          m_layout->invalidate();
+        }
+      }
+    }
+
+    void
     SdlApplication::create(const utils::Sizei& size,
+                           const float eventsFramerate,
                            const bool resizable)
     {
       // Create the engine to use to perform rendering.
@@ -182,6 +399,77 @@ namespace sdl {
       // Finally create the engine decorator which will use the newly created
       // window and canvases.
       m_engine = std::make_shared<AppDecorator>(engine, m_canvas, m_palette, m_window);
+
+      // Create the event listener and register this application as listener.
+      m_eventsDispatcher = std::make_shared<core::engine::EventsDispatcher>(eventsFramerate, m_engine, true);
+
+      // Set the queue for this application so that it can post events.
+      setEventsQueue(m_eventsDispatcher.get());
+
+      // Trigger the `build`method so that dock widgets are created.
+      build();
+    }
+
+    void
+    SdlApplication::build() {
+      // Create the layout for this window and assign it.
+      setLayout(std::make_shared<MainWindowLayout>(5.0f));
+
+      // Create dock widget for relevant areas and add them to the
+      // layout as non visible items.
+
+      // Toolbar
+      m_toolBar = new graphic::TabWidget(
+        std::string("toolbar_tabwidget"),
+        nullptr,
+        graphic::TabWidget::TabPosition::North
+      );
+      shareDataWithWidget(m_toolBar);
+      m_toolBar->setVisible(false);
+
+      m_layout->addToolBar(m_toolBar);
+
+      // Dock widgets for each area.
+      m_topArea = new graphic::TabWidget(
+        std::string("top_dock_tabwidget"),
+        nullptr,
+        graphic::TabWidget::TabPosition::North
+      );
+      shareDataWithWidget(m_topArea);
+      m_topArea->setVisible(false);
+
+      m_layout->addDockWidget(m_topArea, DockWidgetArea::TopArea);
+
+      m_leftArea = new graphic::TabWidget(
+        std::string("left_dock_tabwidget"),
+        nullptr,
+        graphic::TabWidget::TabPosition::North
+      );
+      shareDataWithWidget(m_leftArea);
+      m_leftArea->setVisible(false);
+
+      m_layout->addDockWidget(m_leftArea, DockWidgetArea::LeftArea);
+
+      m_rightArea = new graphic::TabWidget(
+        std::string("right_dock_tabwidget"),
+        nullptr,
+        graphic::TabWidget::TabPosition::North
+      );
+      shareDataWithWidget(m_rightArea);
+      m_rightArea->setVisible(false);
+
+      m_layout->addDockWidget(m_rightArea, DockWidgetArea::RightArea);
+
+      m_bottomArea = new graphic::TabWidget(
+        std::string("bottom_dock_tabwidget"),
+        nullptr,
+        graphic::TabWidget::TabPosition::North
+      );
+      shareDataWithWidget(m_bottomArea);
+      m_bottomArea->setVisible(false);
+
+      m_layout->addDockWidget(m_bottomArea, DockWidgetArea::BottomArea);
+
     }
 
     float
@@ -240,29 +528,36 @@ namespace sdl {
       engine->clearWindow(m_window);
 
       // Draw each child widget.
-      for (WidgetsMap::iterator widgetIt = m_widgets.begin() ;
-          widgetIt != m_widgets.end() ;
-          ++widgetIt)
-      {
-        core::SdlWidget* widget = widgetIt->second;
+      if (m_menuBar != nullptr && m_menuBar->isVisible()) {
+        drawWidget(m_menuBar);
+      }
 
-        // Draw this object (caching is handled by the object itself).
-        withSafetyNet(
-          [widget, engine, dims]() {
-            utils::Uuid texture = widget->draw();
-            utils::Boxf render = widget->getRenderingArea();
+      if (m_toolBar != nullptr && m_toolBar->isVisible()) {
+        drawWidget(m_toolBar);
+      }
 
-            render.x() += (dims.w() / 2.0f);
-            render.y() = (dims.h() / 2.0f) - render.y();
+      if (m_topArea != nullptr && m_topArea->isVisible()) {
+        drawWidget(m_topArea);
+      }
 
-            engine->drawTexture(
-              texture,
-              nullptr,
-              &render
-            );
-          },
-          std::string("draw_widget")
-        );
+      if (m_leftArea != nullptr && m_leftArea->isVisible()) {
+        drawWidget(m_leftArea);
+      }
+
+      if (m_centralWidget != nullptr && m_centralWidget->isVisible()) {
+        drawWidget(m_centralWidget);
+      }
+
+      if (m_rightArea != nullptr && m_rightArea->isVisible()) {
+        drawWidget(m_rightArea);
+      }
+
+      if (m_bottomArea != nullptr && m_bottomArea->isVisible()) {
+        drawWidget(m_bottomArea);
+      }
+
+      if (m_statusBar != nullptr && m_statusBar->isVisible()) {
+        drawWidget(m_statusBar);
       }
 
       // Now render the content of the window and make it visible to the user.
@@ -318,6 +613,31 @@ namespace sdl {
 
       // Use base handler to determine whether the event was recognized.
       return core::engine::EngineObject::windowResizeEvent(e);
+    }
+
+    void
+    SdlApplication::drawWidget(core::SdlWidget* widget) {
+      // Retrieve drawing variables.
+      std::shared_ptr<core::engine::Engine> engine = m_engine;
+      const utils::Sizef dims = m_cachedSize.toSize();
+
+      // Surround with safety net and proceed to draw the widget.
+      withSafetyNet(
+        [widget, engine, dims]() {
+          utils::Uuid texture = widget->draw();
+          utils::Boxf render = widget->getRenderingArea();
+
+          render.x() += (dims.w() / 2.0f);
+          render.y() = (dims.h() / 2.0f) - render.y();
+
+          engine->drawTexture(
+            texture,
+            nullptr,
+            &render
+          );
+        },
+        std::string("drawWidget(") + widget->getName() + ")"
+       );
     }
 
   }

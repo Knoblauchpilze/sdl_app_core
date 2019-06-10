@@ -12,13 +12,29 @@ namespace sdl {
       stop();
 
       // Clear widgets.
-      for (WidgetsMap::const_iterator widget = m_widgets.cbegin() ;
-           widget != m_widgets.cend() ;
-           ++widget)
-      {
-        if (widget->second != nullptr) {
-          delete widget->second;
-        }
+      if (m_menuBar != nullptr) {
+        delete m_menuBar;
+      }
+      if (m_toolBar != nullptr) {
+        delete m_toolBar;
+      }
+      if (m_topArea != nullptr) {
+        delete m_topArea;
+      }
+      if (m_leftArea != nullptr) {
+        delete m_leftArea;
+      }
+      if (m_rightArea != nullptr) {
+        delete m_rightArea;
+      }
+      if (m_centralWidget != nullptr) {
+        delete m_centralWidget;
+      }
+      if (m_bottomArea != nullptr) {
+        delete m_bottomArea;
+      }
+      if (m_statusBar != nullptr) {
+        delete m_statusBar;
       }
     }
 
@@ -32,91 +48,6 @@ namespace sdl {
     void
     SdlApplication::setIcon(const std::string& icon) {
       m_engine->setWindowIcon(m_window, icon);
-    }
-
-    inline
-    void
-    SdlApplication::setMenuBar(core::SdlWidget* item) {
-      std::lock_guard<std::mutex> guard(m_renderLocker);
-
-      addWidget(item);
-
-      if (m_layout != nullptr) {
-        m_layout->setMenuBar(item);
-      }
-    }
-
-    inline
-    void
-    SdlApplication::addToolBar(core::SdlWidget* item) {
-      std::lock_guard<std::mutex> guard(m_renderLocker);
-
-      addWidget(item);
-
-      if (m_layout != nullptr) {
-        m_layout->addToolBar(item);
-      }
-    }
-
-    inline
-    void
-    SdlApplication::setCentralWidget(core::SdlWidget* item) {
-      std::lock_guard<std::mutex> guard(m_renderLocker);
-
-      addWidget(item);
-
-      if (m_layout != nullptr) {
-        m_layout->setCentralWidget(item);
-      }
-    }
-
-    inline
-    void
-    SdlApplication::addDockWidget(core::SdlWidget* item,
-                                  const DockWidgetArea& area) {
-      std::lock_guard<std::mutex> guard(m_renderLocker);
-
-      addWidget(item);
-
-      if (m_layout != nullptr) {
-        m_layout->addDockWidget(item, area);
-      }
-    }
-
-    inline
-    void
-    SdlApplication::setStatusBar(core::SdlWidget* item) {
-      std::lock_guard<std::mutex> guard(m_renderLocker);
-
-      addWidget(item);
-
-      if (m_layout != nullptr) {
-        m_layout->setStatusBar(item);
-      }
-    }
-
-    inline
-    void
-    SdlApplication::removeToolBar(core::SdlWidget* item) {
-      std::lock_guard<std::mutex> guard(m_renderLocker);
-
-      removeWidget(item);
-
-      if (m_layout != nullptr) {
-        m_layout->removeToolBar(item);
-      }
-    }
-
-    inline
-    void
-    SdlApplication::removeDockWidget(core::SdlWidget* item) {
-      std::lock_guard<std::mutex> guard(m_renderLocker);
-
-      removeWidget(item);
-
-      if (m_layout != nullptr) {
-        m_layout->removeDockWidget(item);
-      }
     }
 
     inline
@@ -143,7 +74,8 @@ namespace sdl {
 
     inline
     void
-    SdlApplication::addWidget(core::SdlWidget* widget) {
+    SdlApplication::shareDataWithWidget(core::SdlWidget* widget)
+    {
       // Check degenrate cases.
       if (widget == nullptr) {
         error(std::string("Cannot add null widget"));
@@ -152,27 +84,33 @@ namespace sdl {
       // Set up the widget with internal elements.
       registerToSameQueue(widget);
       widget->setEngine(m_engine);
-
-      // Add this widget to the internal table.
-      m_widgets[widget->getName()] = widget;
     }
 
     inline
-    void
-    SdlApplication::removeWidget(core::SdlWidget* widget) {
-      // Check degenrate cases.
-      if (widget == nullptr) {
-        error(std::string("Cannot remove null widget"));
+    graphic::TabWidget*
+    SdlApplication::getTabFromArea(const DockWidgetArea& area) {
+      // Return the corresponding tab widget from the input `area`. If no area
+      // can be matched, an error is raised.
+      switch (area) {
+        case DockWidgetArea::TopArea:
+          return m_topArea;
+        case DockWidgetArea::LeftArea:
+          return m_leftArea;
+        case DockWidgetArea::RightArea:
+          return m_rightArea;
+        case DockWidgetArea::BottomArea:
+          return m_bottomArea;
+        default:
+          break;
       }
 
-      // Erase the widget and display the result.
-      std::size_t nbErased = m_widgets.erase(widget->getName());
-      if (nbErased != 1) {
-        log(
-          std::string("Could not remove widget \"") + widget->getName() + "\" from window, not found",
-          utils::Level::Warning
-        );
-      }
+      error(
+        std::string("Could not retrieve tab widget from application for area \"") + areaToName(area) + "\"",
+        std::string("Invalid area")
+      );
+
+      // Silent the compiler.
+      return nullptr;
     }
 
     inline

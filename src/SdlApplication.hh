@@ -12,6 +12,7 @@
 # include <sdl_engine/Palette.hh>
 # include <sdl_engine/Event.hh>
 # include <sdl_engine/EventsDispatcher.hh>
+# include <sdl_graphic/TabWidget.hh>
 # include "AppDecorator.hh"
 # include "MainWindowLayout.hh"
 
@@ -28,7 +29,7 @@ namespace sdl {
                        const utils::Sizei& size = utils::Sizei(640, 480),
                        const bool resizable = true,
                        const float& framerate = 60.0f,
-                       const float& eventFramerate = 30.0f);
+                       const float& eventsFramerate = 30.0f);
 
         virtual ~SdlApplication();
 
@@ -75,10 +76,18 @@ namespace sdl {
         stopRendering() noexcept;
 
         void
-        addWidget(core::SdlWidget* widget);
+        shareDataWithWidget(core::SdlWidget* widget);
 
-        void
-        removeWidget(core::SdlWidget* widget);
+        /**
+         * @brief - Returns one of the internal tab widget variable based on the input `area`.
+         *          This allows to easily manipulate dock widget area instead of always having
+         *          to rely on a switch.
+         *          Note that if the `area` does not match any tab widget an error is raised.
+         * @param area - the area for which the corresponding tab widget should be returned.
+         * @return - the tab widget corresponding to the input `area`.
+         */
+        graphic::TabWidget*
+        getTabFromArea(const DockWidgetArea& area);
 
         utils::Boxf
         getCachedSize() noexcept;
@@ -92,9 +101,31 @@ namespace sdl {
         void
         stop();
 
+        /**
+         * @brief - Used to create basic properties of the application such as the
+         *          engine, the general canvas which will be used to render widgets
+         *          and the events queue.
+         *          Also triggers a call to the `build` method.
+         * @param size - the size of the window to create.
+         * @param eventsFramerate - the framrerate to maintain while processing
+         *                          events, expressed in fps.
+         * @param resizable - true if the window should be made resizable, false
+         *                    otherwise.
+         */
         void
         create(const utils::Sizei& size,
+               const float eventsFramerate,
                const bool resizable);
+
+        /**
+         * @brief - Creates the dock widgets related to each area and hide each one
+         *          of them. They will be revealed if needed when the user adds items
+         *          inside them along the way.
+         *          It also creates the layout to use to position widgets inside the
+         *          area available for this application.
+         */
+        void
+        build();
 
         /**
          * @brief - Used to perform the rendering of the offscreen canvas to the
@@ -126,9 +157,18 @@ namespace sdl {
         bool
         quitEvent(const core::engine::QuitEvent& e) override;
 
+        /**
+         * @brief - Used to draw the input `widget` assuming it is not null.
+         *          No checks are performed to determine whether it is actually
+         *          not null so use with care.
+         * @param widget - the widget to draw.
+         */
+        void
+        drawWidget(core::SdlWidget* widget);
+
       private:
 
-        using WidgetsMap = std::unordered_map<std::string, core::SdlWidget*>;
+        using WidgetsMap = std::unordered_map<std::string, DockWidgetArea>;
 
         std::string m_title;
 
@@ -142,6 +182,15 @@ namespace sdl {
         AppDecoratorShPtr m_engine;
 
         MainWindowLayoutShPtr m_layout;
+        core::SdlWidget* m_menuBar;
+        graphic::TabWidget* m_toolBar;
+        graphic::TabWidget* m_topArea;
+        graphic::TabWidget* m_leftArea;
+        graphic::TabWidget* m_rightArea;
+        core::SdlWidget* m_centralWidget;
+        graphic::TabWidget* m_bottomArea;
+        core::SdlWidget* m_statusBar;
+
         WidgetsMap m_widgets;
 
         std::mutex m_renderLocker;
