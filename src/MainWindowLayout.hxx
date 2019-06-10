@@ -73,6 +73,26 @@ namespace sdl {
 
     inline
     void
+    MainWindowLayout::invalidate() {
+      // Use the base handler to perform needed internal changes.
+      Layout::invalidate();
+
+      // Also update status of virtual items.
+
+      // Retrieve widgets' info.
+      std::vector<core::Layout::WidgetInfo> infos = computeItemsInfo();
+
+      // Update internal values.
+      for (InfosMap::iterator info = m_infos.begin() ;
+           info != m_infos.cend() ;
+           ++info)
+      {
+        info->second.item->setVisible(infos[info->first].visible);
+      }
+    }
+
+    inline
+    void
     MainWindowLayout::removeItemFromIndex(int item) {
       // We need to both remove the item using the base handler and also remove the
       // corresponding entry in the internal information map.
@@ -236,9 +256,6 @@ namespace sdl {
         return;
       }
 
-      // TODO: We should probably create a tab widget with all relevant widgets
-      // in case a single dock widget area contains more than one widget.
-
       // Create the virtual layout item associated to this widget. Based on the
       // role and area of the input `widget` we will add the virtual item into
       // the internal layouts.
@@ -265,6 +282,7 @@ namespace sdl {
         widget->getMaxSize(),
         widget->getSizePolicy()
       );
+      item->setVisible(widget->isVisible());
 
       // Register the widget in the corresponding layouts.
       if (manageDims.first) {

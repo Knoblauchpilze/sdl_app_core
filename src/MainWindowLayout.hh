@@ -65,6 +65,14 @@ namespace sdl {
         void
         setEventsQueue(core::engine::EventsQueue* queue) noexcept override;
 
+        /**
+         * @brief - Reimplementation of the base `LayoutItem` method in order to
+         *          provide specialization to update virtual layout items based
+         *          on the visibility status of the associated physical widgets.
+         */
+        void
+        invalidate() override;
+
       protected:
 
         void
