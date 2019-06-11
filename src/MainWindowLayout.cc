@@ -98,17 +98,26 @@ namespace sdl {
 
       const utils::Sizef internalSize = computeAvailableSize(window);
 
+      // Retrieve widgets' info.
+      std::vector<core::Layout::WidgetInfo> infos = computeItemsInfo();
+
       // We need to update the maximum size of each virtual layout item based on the inpu `window` size.
       // This will ensure that each individual virtual item is set up with up to date information regarding
       // its size.
       // We need to traverse each virtual layout item and use the dedicated handler to update the maximum
       // size to its latest value.
+      // In addition to that we need to update the visibility status of the virtual layout item based on the
+      // current visibility status of each widget.
       for (InfosMap::const_iterator widgetInfo = m_infos.cbegin() ;
            widgetInfo != m_infos.cend() ;
            ++widgetInfo)
       {
+        // Update max size.
         utils::Sizef maxFromLayout = computeMaxSizeForRole(internalSize, widgetInfo->second.role);
         widgetInfo->second.item->updateMaxSize(maxFromLayout);
+
+        // Update visibility status.
+        widgetInfo->second.item->setVisible(infos[widgetInfo->first].visible);
       }
 
       // Compute geometry of internal layouts. Virtual layout item need to be set up in order to care about
