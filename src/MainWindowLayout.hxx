@@ -73,26 +73,6 @@ namespace sdl {
 
     inline
     void
-    MainWindowLayout::invalidate() {
-      // Use the base handler to perform needed internal changes.
-      Layout::invalidate();
-
-      // Also update status of virtual items.
-
-      // Retrieve widgets' info.
-      std::vector<core::Layout::WidgetInfo> infos = computeItemsInfo();
-
-      // Update internal values.
-      for (InfosMap::iterator info = m_infos.begin() ;
-           info != m_infos.cend() ;
-           ++info)
-      {
-        info->second.item->setVisible(infos[info->first].visible);
-      }
-    }
-
-    inline
-    void
     MainWindowLayout::removeItemFromIndex(int item) {
       // We need to both remove the item using the base handler and also remove the
       // corresponding entry in the internal information map.
