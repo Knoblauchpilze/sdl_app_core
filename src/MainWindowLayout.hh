@@ -71,6 +71,17 @@ namespace sdl {
         computeGeometry(const utils::Boxf& window) override;
 
         /**
+         * @brief - Reimplementation of the base `Layout` method to provide update of the
+         *          internal associations table which describes the role for each widget.
+         * @param logicID - the logical id which has just been removed.
+         * @param physID - the physical id which has just been removed.
+         * @return - true as this layout always needs a rebuild when an item is removed.
+         */
+        bool
+        onIndexRemoved(const int logicID,
+                       const int physID) override;
+
+        /**
          * @brief - Used to determine which dimensions are managed by the internal
          *          layout's constraints for a specific role. Indeeed the menu bar
          *          for example will always be assigned the complete width of the
@@ -127,9 +138,6 @@ namespace sdl {
          */
         void
         removeAll(const WidgetRole& role);
-
-        void
-        removeItemFromIndex(int item) override;
 
         utils::Sizef
         computeMaxSizeForRole(const utils::Sizef& window,

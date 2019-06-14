@@ -72,25 +72,24 @@ namespace sdl {
     }
 
     inline
-    void
-    MainWindowLayout::removeItemFromIndex(int item) {
-      // We need to both remove the item using the base handler and also remove the
-      // corresponding entry in the internal information map.
-
-      // Remove the item using the base class handler.
-      core::Layout::removeItemFromIndex(item);
-
+    bool
+    MainWindowLayout::onIndexRemoved(const int logicID,
+                                     const int /*physID*/)
+    {
       // Erase the corresponding entry in the internal table.
-      const std::size_t count = m_infos.erase(item);
+      const std::size_t count = m_infos.erase(logicID);
 
       // Check whether we could remove the input item.
       if (count != 1) {
         log(
-          std::string("Invalid removed item count while deleting item ") + std::to_string(item) +
+          std::string("Invalid removed item count while deleting item ") + std::to_string(logicID) +
           std::string("(removed ") + std::to_string(count) + " item(s))",
           utils::Level::Warning
         );
       }
+
+      // We need a rebuild.
+      return true;
     }
 
     inline
