@@ -625,7 +625,7 @@ namespace sdl {
       withSafetyNet(
         [widget, engine, dims]() {
           utils::Uuid texture = widget->draw();
-          utils::Boxf render = widget->getRenderingArea();
+          utils::Boxf render = widget->getDrawingArea();
 
           render.x() += (dims.w() / 2.0f);
           render.y() = (dims.h() / 2.0f) - render.y();
