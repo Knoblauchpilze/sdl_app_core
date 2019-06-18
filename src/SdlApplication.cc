@@ -618,23 +618,12 @@ namespace sdl {
     void
     SdlApplication::drawWidget(core::SdlWidget* widget) {
       // Retrieve drawing variables.
-      std::shared_ptr<core::engine::Engine> engine = m_engine;
       const utils::Sizef dims = m_cachedSize.toSize();
 
       // Surround with safety net and proceed to draw the widget.
       withSafetyNet(
-        [widget, engine, dims]() {
-          utils::Uuid texture = widget->draw();
-          utils::Boxf render = widget->getDrawingArea();
-
-          render.x() += (dims.w() / 2.0f);
-          render.y() = (dims.h() / 2.0f) - render.y();
-
-          engine->drawTexture(
-            texture,
-            nullptr,
-            &render
-          );
+        [widget, dims]() {
+          widget->draw(dims);
         },
         std::string("drawWidget(") + widget->getName() + ")"
        );
