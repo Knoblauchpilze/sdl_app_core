@@ -162,7 +162,7 @@ namespace sdl {
 
     inline
     bool
-    SdlApplication::refreshEvent(const core::engine::PaintEvent& e) {
+    SdlApplication::refreshEvent(const core::engine::Event& e) {
       log(std::string("Should handle refresh event"), utils::Level::Warning);
       return core::engine::EngineObject::refreshEvent(e);
     }
