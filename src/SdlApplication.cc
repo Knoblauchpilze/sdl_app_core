@@ -524,7 +524,6 @@ namespace sdl {
       utils::Sizef dims = m_cachedSize.toSize();
 
       // Clear the window.
-      // TODO: Should handle only the region to update.
       engine->clearWindow(m_window);
 
       // Draw each child widget.
