@@ -1,7 +1,7 @@
 
 # include "SdlApplication.hh"
-# include <chrono>
 # include <thread>
+# include <core_utils/Chrono.hh>
 # include <sdl_engine/Color.hh>
 # include <sdl_engine/SdlEngine.hh>
 # include <sdl_engine/PaintEvent.hh>
@@ -485,6 +485,7 @@ namespace sdl {
       // Compute the elapsed time and return it as a floating point value.
       auto end = std::chrono::steady_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
       return static_cast<float>(duration);
     }
 
@@ -617,12 +618,23 @@ namespace sdl {
     void
     SdlApplication::drawWidget(core::SdlWidget* widget) {
       // Retrieve drawing variables.
+      std::shared_ptr<core::engine::Engine> engine = m_engine;
       const utils::Sizef dims = m_cachedSize.toSize();
 
       // Surround with safety net and proceed to draw the widget.
       withSafetyNet(
-        [widget, dims]() {
-          widget->draw(dims);
+        [widget, engine, dims]() {
+          utils::Uuid texture = widget->draw();
+          utils::Boxf render = widget->getDrawingArea();
+
+          render.x() += (dims.w() / 2.0f);
+          render.y() = (dims.h() / 2.0f) - render.y();
+
+          engine->drawTexture(
+            texture,
+            nullptr,
+            &render
+          );
         },
         std::string("drawWidget(") + widget->getName() + ")"
        );
