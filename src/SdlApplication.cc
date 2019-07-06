@@ -394,7 +394,7 @@ namespace sdl {
       }
 
       // Cache the current size of this window.
-      m_cachedSize = utils::Boxf(0.0f, 0.0f, size.w(), size.h());
+      m_cachedSize = utils::Boxf::fromSize(size, true);
 
       // Finally create the engine decorator which will use the newly created
       // window and canvases.
@@ -485,6 +485,10 @@ namespace sdl {
       // Compute the elapsed time and return it as a floating point value.
       auto end = std::chrono::steady_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+      // auto duration2 = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+
+      // log("Rendering took " + std::to_string(duration2/1000) + " microseconds");
 
       return static_cast<float>(duration);
     }
@@ -632,6 +636,7 @@ namespace sdl {
 
           engine->drawTexture(
             texture,
+            nullptr,
             nullptr,
             &render
           );
