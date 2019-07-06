@@ -100,7 +100,7 @@ namespace sdl {
     void
     AppDecorator::drawTexture(const utils::Uuid& tex,
                               const utils::Uuid* on,
-                              utils::Boxf* where)
+                              const utils::Boxf* where)
     {
       // Check whether the `on` is null. In this case we should override
       // the settings so that we draw on the internal canvas.
