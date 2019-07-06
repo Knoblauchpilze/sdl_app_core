@@ -37,7 +37,7 @@ namespace sdl {
       }
 
       // Render the canvas onto the screen.
-      core::engine::EngineDecorator::drawTexture(m_canvas, nullptr, nullptr);
+      core::engine::EngineDecorator::drawTexture(m_canvas, nullptr, nullptr, nullptr);
 
       // Render the window.
       core::engine::EngineDecorator::renderWindow(uuid);
@@ -99,6 +99,7 @@ namespace sdl {
     inline
     void
     AppDecorator::drawTexture(const utils::Uuid& tex,
+                              const utils::Boxf* from,
                               const utils::Uuid* on,
                               const utils::Boxf* where)
     {
@@ -107,11 +108,11 @@ namespace sdl {
       // The real `m_canvas` is only used when we need to actually repaint
       // the window and make the content displayed on it visible.
       if (on == nullptr && m_canvas.valid()) {
-        core::engine::EngineDecorator::drawTexture(tex, &m_canvas, where);
+        core::engine::EngineDecorator::drawTexture(tex, from, &m_canvas, where);
         return;
       }
 
-      core::engine::EngineDecorator::drawTexture(tex, on, where);
+      core::engine::EngineDecorator::drawTexture(tex, from, on, where);
     }
 
   }
