@@ -388,7 +388,7 @@ namespace sdl {
       }
 
       // Create a basic canvas which will be used as basis for the rendering.
-      m_canvas = engine->createTexture(m_window, size, core::engine::Palette::ColorRole::Background);
+      m_canvas = engine->createTexture(m_window, size.toType<float>(), core::engine::Palette::ColorRole::Background);
       if (!m_canvas.valid()) {
         error(std::string("Could not create window's canvas with size " + size.toString()));
       }
@@ -596,12 +596,7 @@ namespace sdl {
       }
 
       // Creata a new texture with the required dimensions.
-      utils::Sizei size(
-        static_cast<int>(e.getSize().w()),
-        static_cast<int>(e.getSize().h())
-      );
-
-      m_canvas = m_engine->createTexture(m_window, size, core::engine::Palette::ColorRole::Background);
+      m_canvas = m_engine->createTexture(m_window, e.getSize(), core::engine::Palette::ColorRole::Background);
       if (!m_canvas.valid()) {
         error(std::string("Could not create window's canvas with size " + e.getSize().toString()));
       }
@@ -610,7 +605,7 @@ namespace sdl {
       m_engine->setDrawingCanvas(m_canvas);
 
       // Assign the cached size.
-      m_cachedSize = utils::Boxf::fromSize(size);
+      m_cachedSize = utils::Boxf::fromSize(e.getSize());
 
       // And request an update of the layout.
       invalidate();
