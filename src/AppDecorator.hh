@@ -29,11 +29,11 @@ namespace sdl {
 
         utils::Uuid
         createTexture(const utils::Uuid& win,
-                      const utils::Sizei& size,
+                      const utils::Sizef& size,
                       const core::engine::Palette::ColorRole& role) override;
 
         utils::Uuid
-        createTexture(const utils::Sizei& size,
+        createTexture(const utils::Sizef& size,
                       const core::engine::Palette::ColorRole& role) override;
 
         utils::Uuid

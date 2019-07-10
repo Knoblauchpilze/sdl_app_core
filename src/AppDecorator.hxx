@@ -46,7 +46,7 @@ namespace sdl {
     inline
     utils::Uuid
     AppDecorator::createTexture(const utils::Uuid& /*win*/,
-                                const utils::Sizei& size,
+                                const utils::Sizef& size,
                                 const core::engine::Palette::ColorRole& role)
     {
       return core::engine::EngineDecorator::createTexture(m_window, size, role);
@@ -54,7 +54,7 @@ namespace sdl {
 
     inline
     utils::Uuid
-    AppDecorator::createTexture(const utils::Sizei& size,
+    AppDecorator::createTexture(const utils::Sizef& size,
                                 const core::engine::Palette::ColorRole& role)
     {
       return core::engine::EngineDecorator::createTexture(m_window, size, role);
