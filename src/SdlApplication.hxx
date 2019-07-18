@@ -162,13 +162,6 @@ namespace sdl {
 
     inline
     bool
-    SdlApplication::refreshEvent(const core::engine::Event& e) {
-      log(std::string("Should handle refresh event"), utils::Level::Warning);
-      return core::engine::EngineObject::refreshEvent(e);
-    }
-
-    inline
-    bool
     SdlApplication::quitEvent(const core::engine::QuitEvent& e) {
       // Stop rendering.
       stopRendering();

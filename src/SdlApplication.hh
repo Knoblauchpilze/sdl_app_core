@@ -143,9 +143,6 @@ namespace sdl {
         geometryUpdateEvent(const core::engine::Event& e) override;
 
         bool
-        refreshEvent(const core::engine::Event& e) override;
-
-        bool
         repaintEvent(const core::engine::PaintEvent& e) override;
 
         bool
