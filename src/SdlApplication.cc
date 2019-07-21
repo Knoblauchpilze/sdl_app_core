@@ -622,8 +622,8 @@ namespace sdl {
 
       // Surround with safety net and proceed to draw the widget.
       withSafetyNet(
-        [widget, engine, dims]() {
-          utils::Uuid texture = widget->draw();
+        [widget, engine, &dims]() {
+          utils::Uuid texture = widget->getContentUuid();
           utils::Boxf render = widget->getDrawingArea();
 
           render.x() += (dims.w() / 2.0f);
