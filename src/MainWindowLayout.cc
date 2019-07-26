@@ -82,6 +82,55 @@ namespace sdl {
       removeItem(item);
     }
 
+    bool
+    MainWindowLayout::filterEvent(core::engine::EngineObject* watched,
+                                  core::engine::EventShPtr e)
+    {
+      // The main goal of this method is to filter mouse event so that they
+      // only arrive to the suited widget.
+
+      // Check whether the input event is an instance of a mouse event: if
+      // this is not the case we won't filter it.
+      core::engine::MouseEventShPtr me = std::dynamic_pointer_cast<core::engine::MouseEvent>(e);
+      if (me == nullptr) {
+        return false;
+      }
+
+      // This layout being associated directly to the main window layout it
+      // means that the widgets registered in here are top level items, i.e.
+      // do not have any parent.
+      // This is important because it means that their box retrieved using
+      // the `getRenderingArea` can be used directly with no conversion.
+      //
+      // To determine whether the `watched` event is the most suited widget
+      // to be used to transmit the input mouse event we traverse the list
+      // of information and determine whether a widget with higher z order
+      // or with more relevant position can be found: if this is the case
+      // we won't transmit the event to the input `watched` object.
+      core::SdlWidget* best = nullptr;
+      int zOrder = -1;
+
+      bool contained = false;
+      InfosMap::const_iterator child = m_infos.cbegin();
+      while (child != m_infos.cend()) {
+        // Check whether the widget contains the mouse position.
+        contained = child->second.widget->getRenderingArea().contains(me->getMousePosition());
+
+        // If this is the case check the z order compared to the
+        // best one found so far.
+        if (contained && child->second.widget->getZOrder() > zOrder) {
+          best = child->second.widget;
+          zOrder = child->second.widget->getZOrder();
+        }
+
+        ++child;
+      }
+
+      // The event is filtered if the best candidate is not the input `watched`
+      // object.
+      return best != watched;
+    }
+
     void
     MainWindowLayout::computeGeometry(const utils::Boxf& window) {
       // To fully build the layout we need to compute the repartition in both direction (horizontal and

@@ -276,6 +276,9 @@ namespace sdl {
         m_vLayout.addItem(item.get(), box.x(), box.y(), box.w(), box.h());
       }
 
+      // Install this layout as event filter for the widget.
+      widget->installEventFilter(this);
+
       // Register this item in the internal table of information if a valid index
       // was generated.
       m_infos[index] = ItemInfo{

@@ -57,6 +57,18 @@ namespace sdl {
         removeDockWidget(core::SdlWidget* item);
 
         /**
+         * @brief - Reimplementation of the base `EngineObject` method which allows to
+         *          filter out events for children widgets.
+         * @param watched - the object for which the filter should be applied.
+         * @param e - the event to filter.
+         * @return - true if the event should be filtered (i.e. not transmitted to the
+         *           `watched` object) and false otherwise.
+         */
+        bool
+        filterEvent(core::engine::EngineObject* watched,
+                    core::engine::EventShPtr e) override;
+
+        /**
          * @brief - Reimplementation of the `EngineObject` method which allows this
          *          class to not only register itself to the provided events queue
          *          but also its chidlren layouts.
