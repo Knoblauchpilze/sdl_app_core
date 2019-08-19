@@ -86,49 +86,27 @@ namespace sdl {
     MainWindowLayout::filterEvent(core::engine::EngineObject* watched,
                                   core::engine::EventShPtr e)
     {
-      // The main goal of this method is to filter mouse event so that they
-      // only arrive to the suited widget.
+      // Check whether the widget is not visible or not active.
+      if(!isVisible() || !isActive()) {
+        return true;
+      }
 
-      // Check whether the input event is an instance of a mouse event: if
-      // this is not the case we won't filter it.
+      // Handle mouse events filtering if the event is actually
+      // a mouse event.
       core::engine::MouseEventShPtr me = std::dynamic_pointer_cast<core::engine::MouseEvent>(e);
-      if (me == nullptr) {
-        return false;
+      if (me != nullptr && filterMouseEvents(watched, me)) {
+        return true;
       }
 
-      // This layout being associated directly to the main window layout it
-      // means that the widgets registered in here are top level items, i.e.
-      // do not have any parent.
-      // This is important because it means that their box retrieved using
-      // the `getRenderingArea` can be used directly with no conversion.
-      //
-      // To determine whether the `watched` event is the most suited widget
-      // to be used to transmit the input mouse event we traverse the list
-      // of information and determine whether a widget with higher z order
-      // or with more relevant position can be found: if this is the case
-      // we won't transmit the event to the input `watched` object.
-      core::SdlWidget* best = nullptr;
-      int zOrder = -1;
-
-      bool contained = false;
-      InfosMap::const_iterator child = m_infos.cbegin();
-      while (child != m_infos.cend()) {
-        // Check whether the widget contains the mouse position.
-        contained = child->second.widget->getRenderingArea().contains(me->getMousePosition());
-
-        // If this is the case check the z order compared to the
-        // best one found so far.
-        if (contained && child->second.widget->getZOrder() > zOrder) {
-          best = child->second.widget;
-          zOrder = child->second.widget->getZOrder();
-        }
-
-        ++child;
+      // Handle keyboard events filtering if the event is actually
+      // a keyboard event.
+      core::engine::KeyEventShPtr ke = std::dynamic_pointer_cast<core::engine::KeyEvent>(e);
+      if (ke != nullptr && filterKeyboardEvents(watched, ke)) {
+        return true;
       }
 
-      // The event is filtered if the best candidate is not the input `watched`
-      // object.
-      return best != watched;
+      // The event is not filtered.
+      return false;
     }
 
     void
@@ -361,6 +339,70 @@ namespace sdl {
 
       // Assign the areas using the dedicated handler.
       assignRenderingAreas(boxes, window);
+    }
+
+    bool
+    MainWindowLayout::filterMouseEvents(const core::engine::EngineObject* watched,
+                                        const core::engine::MouseEventShPtr e) const noexcept
+    {
+      // This layout being associated directly to the main window layout it
+      // means that the widgets registered in here are top level items, i.e.
+      // do not have any parent.
+      // This is important because it means that their box retrieved using
+      // the `getRenderingArea` can be used directly with no conversion.
+      //
+      // To determine whether the `watched` event is the most suited widget
+      // to be used to transmit the input mouse event we traverse the list
+      // of information and determine whether a widget with higher z order
+      // or with more relevant position can be found: if this is the case
+      // we won't transmit the event to the input `watched` object.
+      core::SdlWidget* best = nullptr;
+      int zOrder = -1;
+
+      bool contained = false;
+      InfosMap::const_iterator child = m_infos.cbegin();
+      while (child != m_infos.cend()) {
+        // Check whether the widget contains the mouse position.
+        contained = child->second.widget->getRenderingArea().contains(e->getMousePosition());
+
+        // If this is the case check the z order compared to the
+        // best one found so far.
+        if (contained && child->second.widget->getZOrder() > zOrder) {
+          best = child->second.widget;
+          zOrder = child->second.widget->getZOrder();
+        }
+
+        ++child;
+      }
+
+      // The event is filtered if the best candidate is not the input `watched`
+      // object.
+      return best != watched;
+    }
+
+    bool
+    MainWindowLayout::filterKeyboardEvents(const core::engine::EngineObject* watched,
+                                           const core::engine::KeyEventShPtr /*e*/) const noexcept
+    {
+      // We need to check whether the child corresponding to the input `watched` item
+      // has the keyboard focus. If this is the case we can transmit the key event to
+      // it otherwise we need to filter it.
+      // If the watched object cannot be found in the internal array, we consider that
+      // the event is not filtered.
+
+      // Traverse the internal list of items and stop as soon as we find the input
+      // `watched` object.
+      InfosMap::const_iterator child = m_infos.cbegin();
+      while (child != m_infos.cend()) {
+        if (child->second.widget == watched) {
+          return !child->second.widget->hasKeyboardFocus();
+        }
+
+        ++child;
+      }
+
+      // No child matches the input `watched` object: consider the event as not filtered.
+      return false;
     }
 
     void
