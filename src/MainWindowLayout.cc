@@ -31,10 +31,7 @@ namespace sdl {
       registerToSameQueue(&m_vLayout);
 
       // Update properties of layouts.
-      setNeedsConvert(false);
-
-      m_hLayout.setVirtual(true);
-      m_vLayout.setVirtual(true);
+      setBoxesFormat(core::Layout::BoxesFormat::Window);
 
       m_hLayout.allowLog(false);
       m_vLayout.allowLog(false);
