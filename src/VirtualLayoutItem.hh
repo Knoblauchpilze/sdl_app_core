@@ -17,6 +17,19 @@ namespace sdl {
                           const core::SizePolicy& policy = core::SizePolicy());
 
         virtual ~VirtualLayoutItem();
+        
+        /**
+         * @brief - Reimplementation of the base `EngineObject` method which allows to
+         *          filter out all the events apart from the `Resize` events which have
+         *          a special meaning for this type of item.
+         * @param watched - the object for which the filter should be applied.
+         * @param e - the event to filter.
+         * @return - true if the event should be filtered (i.e. not transmitted to the
+         *           `watched` object) and false otherwise.
+         */
+        bool
+        filterEvent(core::engine::EngineObject* watched,
+                    core::engine::EventShPtr e) override;
 
         /**
          * @brief - Indicates that this item should manage the width of another item.

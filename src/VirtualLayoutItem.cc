@@ -10,14 +10,37 @@ namespace sdl {
                                          const utils::Sizef& hint,
                                          const utils::Sizef& max,
                                          const core::SizePolicy& policy):
-      core::LayoutItem(name, hint, false, true),
+      core::LayoutItem(name, hint),
       m_manageWidth(false),
       m_manageHeight(false),
       m_box()
     {
+      // Assign size hints.
       setMinSize(min);
       setMaxSize(max);
       setSizePolicy(policy);
+
+      // Register this object as a filter event for itself: it allows to
+      // filter any event which is not of type `Resize`.
+      installEventFilter(this);
+    }
+
+    bool
+    VirtualLayoutItem::filterEvent(core::engine::EngineObject* watched,
+                                   core::engine::EventShPtr e)
+    {
+      // We want to filter any event which is not of type `Resize` so let's proceed.
+      // As an additional security measure, we also check that the `watched` object
+      // corresponds to `this` object so that we don't filter events for somebody
+      // else without even noticing.
+
+      // No filtering for other object than `this`.
+      if (watched != this) {
+        return false;
+      }
+
+      // No filtering of event with type `Resize`.
+      return e->getType() != core::engine::Event::Type::Resize;
     }
 
     void
