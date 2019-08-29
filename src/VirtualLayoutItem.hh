@@ -88,8 +88,9 @@ namespace sdl {
         setY(const float& y) noexcept;
 
         /**
-         * @brief - Used to assign a height for this virtual layout item. Note that this function
-         *          doesn't have any effect if the height of this item is set to managed.
+         * @brief - Used to assign a height for this virtual layout item. Note that this
+         *          function doesn't have any effect if the height of this item is set
+         *          to managed.
          * @param height - the height to assign to this layout item.
          */
         void
@@ -108,6 +109,18 @@ namespace sdl {
          */
         utils::Boxf
         getRenderingArea() const noexcept override;
+
+        /**
+         * @brief - Reimplementation of the base `LayoutItem` method in order to provide
+         *          a direct application of the visible status. Indeed as the virtual
+         *          layout item does not process events at all we wouldn't get notified
+         *          of the change in case we relied on the basic process.
+         *          For this item calling `isVisible` right after calling this method
+         *          does return the value set by `visible` in here.
+         * @param visible - the visibility status to apply to this layout item.
+         */
+        void
+        setVisible(bool visible) noexcept override;
 
         /**
          * @brief - Used to update the internal maximum size based on the value provided in

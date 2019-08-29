@@ -69,6 +69,19 @@ namespace sdl {
       return m_box;
     }
 
+    inline
+    void
+    VirtualLayoutItem::setVisible(bool visible) noexcept {
+      // We wil trigger directly the `showEvent` or `hideEvent` handler based
+      // on the input `visible` value.
+      if (visible) {
+        showEvent(core::engine::Event(core::engine::Event::Type::Show));
+      }
+      else {
+        hideEvent(core::engine::Event(core::engine::Event::Type::Hide));
+      }
+    }
+
   }
 }
 
