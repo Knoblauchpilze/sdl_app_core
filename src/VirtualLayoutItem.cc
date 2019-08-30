@@ -20,27 +20,11 @@ namespace sdl {
       setMaxSize(max);
       setSizePolicy(policy);
 
-      // Register this object as a filter event for itself: it allows to
-      // filter any event which is not of type `Resize`.
-      installEventFilter(this);
-    }
+      // Register the filtering of all events except `Resize` ones.
+      core::engine::Event::Types filter = core::engine::Event::getAllEvents();
+      filter.erase(core::engine::Event::Type::Resize);
 
-    bool
-    VirtualLayoutItem::filterEvent(core::engine::EngineObject* watched,
-                                   core::engine::EventShPtr e)
-    {
-      // We want to filter any event which is not of type `Resize` so let's proceed.
-      // As an additional security measure, we also check that the `watched` object
-      // corresponds to `this` object so that we don't filter events for somebody
-      // else without even noticing.
-
-      // No filtering for other object than `this`.
-      if (watched != this) {
-        return false;
-      }
-
-      // No filtering of event with type `Resize`.
-      return e->getType() != core::engine::Event::Type::Resize;
+      disableEventsProcessing(filter);
     }
 
     void
