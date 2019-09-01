@@ -75,10 +75,16 @@ namespace sdl {
       // We wil trigger directly the `showEvent` or `hideEvent` handler based
       // on the input `visible` value.
       if (visible) {
-        showEvent(core::engine::Event(core::engine::Event::Type::Show));
+        core::engine::Event s(core::engine::Event::Type::Show, this);
+        s.setEmitter(this);
+
+        showEvent(s);
       }
       else {
-        hideEvent(core::engine::Event(core::engine::Event::Type::Hide));
+        core::engine::Event h(core::engine::Event::Type::Hide, this);
+        h.setEmitter(this);
+
+        hideEvent(h);
       }
     }
 
