@@ -83,11 +83,6 @@ namespace sdl {
     MainWindowLayout::filterEvent(core::engine::EngineObject* watched,
                                   core::engine::EventShPtr e)
     {
-      // Check whether the widget is not visible or not active.
-      if(!isVisible() || !isActive(e->getType())) {
-        return true;
-      }
-
       // Handle mouse events filtering if the event is actually
       // a mouse event.
       core::engine::MouseEventShPtr me = std::dynamic_pointer_cast<core::engine::MouseEvent>(e);
