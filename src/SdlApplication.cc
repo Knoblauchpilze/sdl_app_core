@@ -200,14 +200,17 @@ namespace sdl {
       }
 
       m_toolBar->insertTab(m_toolBar->getTabsCount(), item);
-      // Make the tab widget visible if needed.
-      if (!m_toolBar->isVisible()) {
-        m_toolBar->setVisible(true);
 
-        // Trigger a layout recomputation.
-        if (m_layout != nullptr) {
-          m_layout->invalidate();
-        }
+      // Make the tool bar visible if needed. As we may
+      // have hidden the tab before hand we need to make
+      // sure that it becomes visible. So let's trigger
+      // an event no matter what: the system will discard
+      // it if it's not needed.
+      m_toolBar->setVisible(true);
+
+      // Trigger a layout recomputation.
+      if (m_layout != nullptr) {
+        m_layout->invalidate();
       }
     }
 
@@ -257,14 +260,17 @@ namespace sdl {
       }
 
       tab->insertTab(tab->getTabsCount(), item);
-      // Make the tab widget visible if needed.
-      if (!tab->isVisible()) {
-        tab->setVisible(true);
 
-        // Trigger a layout recomputation.
-        if (m_layout != nullptr) {
-          m_layout->invalidate();
-        }
+      // Make the tab widget visible if needed. As we may
+      // have hidden the tab before hand we need to make
+      // sure that it becomes visible. So let's trigger an
+      // event no matter what: the system will discard it
+      // if it's not needed.
+      tab->setVisible(true);
+
+      // Trigger a layout recomputation.
+      if (m_layout != nullptr) {
+        m_layout->invalidate();
       }
 
       m_widgets[item->getName()] = area;
