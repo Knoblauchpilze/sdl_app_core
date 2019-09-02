@@ -20,11 +20,10 @@ namespace sdl {
       setMaxSize(max);
       setSizePolicy(policy);
 
-      // Register the filtering of all events except `Resize` ones.
-      core::engine::Event::Types filter = core::engine::Event::getAllEvents();
-      filter.erase(core::engine::Event::Type::Resize);
-
-      disableEventsProcessing(filter);
+      // Register the filtering of all events except `Resize` ones: this
+      // is automatically handled by the reimplementation of the method
+      // provided by the `EngineObject` interface.
+      disableEventsProcessing();
     }
 
     void

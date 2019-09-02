@@ -122,6 +122,19 @@ namespace sdl {
         void
         updateMaxSize(const utils::Sizef& upperBound);
 
+      protected:
+
+        /**
+         * @brief - Reimplementation of the base `EngineObject` method. A virtual layout item
+         *          is not meant to process any events apart from resize ones, which will be
+         *          reflected in the return value of this method.
+         * @param type - the event type which should be checked for activation.
+         * @return - `true` if the event type should be kept inactive when the object becomes
+         *           active and `false` otherwise.
+         */
+        bool
+        staysInactiveWhileEnabled(const core::engine::Event::Type& type) const noexcept override;
+
       private:
 
         bool m_manageWidth;
