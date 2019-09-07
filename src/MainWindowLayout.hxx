@@ -222,6 +222,12 @@ namespace sdl {
     }
 
     inline
+    std::string
+    MainWindowLayout::getVirtualLayoutNamePrefix() noexcept {
+      return "virtual_";
+    }
+
+    inline
     void
     MainWindowLayout::addItemWithRoleAndArea(core::SdlWidget* widget,
                                              const WidgetRole& role,
@@ -255,7 +261,7 @@ namespace sdl {
       // `computeGeometry` call is processed.
 
       VirtualLayoutItemShPtr item = std::make_shared<VirtualLayoutItem>(
-        widget->getName(),
+        getVirtualLayoutNamePrefix() + widget->getName(),
         widget->getMinSize(),
         widget->getSizeHint(),
         widget->getMaxSize(),
