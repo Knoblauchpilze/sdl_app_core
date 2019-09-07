@@ -92,8 +92,7 @@ namespace sdl {
     bool
     VirtualLayoutItem::staysInactiveWhileEnabled(const core::engine::Event::Type& type) const noexcept {
       // We keep hide events active while enabled.
-      return
-        type != core::engine::Event::Type::Resize;
+      return type != core::engine::Event::Type::Resize;
     }
 
   }
