@@ -89,6 +89,14 @@ namespace sdl {
     }
 
     inline
+    const core::LayoutItem*
+    VirtualLayoutItem::getItemAt(const utils::Vector2f& /*pos*/) const noexcept {
+      // Retrieve the area and check it against the input position.
+      // TODO: Implement this.
+      return nullptr;
+    }
+
+    inline
     bool
     VirtualLayoutItem::staysInactiveWhileEnabled(const core::engine::Event::Type& type) const noexcept {
       // We keep hide events active while enabled.

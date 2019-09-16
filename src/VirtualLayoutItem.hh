@@ -34,7 +34,7 @@ namespace sdl {
         isWidthManaged() const noexcept;
 
         /**
-         * @brief - Used to assign a position along the x cooridnate for this virtual layout
+         * @brief - Used to assign a position along the x coordinate for this virtual layout
          *          item. Note that this function doesn't have any effect if the width of this
          *          item is set to managed.
          * @param x - the x coordinate to assign to this layout item.
@@ -66,7 +66,7 @@ namespace sdl {
         isHeightManaged() const noexcept;
 
         /**
-         * @brief - Used to assign a position along the y cooridnate for this virtual layout
+         * @brief - Used to assign a position along the y coordinate for this virtual layout
          *          item. Note that this function doesn't have any effect if the height of this
          *          item is set to managed.
          * @param y - the y coordinate to assign to this layout item.
@@ -121,6 +121,21 @@ namespace sdl {
          */
         void
         updateMaxSize(const utils::Sizef& upperBound);
+
+        /**
+         * @brief - Reimplementation of the base `LayoutItem` method which allows to provide
+         *          the deepest item spanning the input position. In the case of virtual items
+         *          we will just return either null or this widget: indeed for now this type
+         *          of item is not meant to be used in really complex hierarchy and so should
+         *          not be too heavily rely upon.
+         *          Note that the position is supposed to be expressed in window's coordinate
+         *          frame.
+         * @param pos - a vector describing the position which should be spanned by the items.
+         * @return - a valid pointer if any of the children items spans the input position and
+         *           `null` otherwise.
+         */
+        const core::LayoutItem*
+        getItemAt(const utils::Vector2f& pos) const noexcept override;
 
       protected:
 
