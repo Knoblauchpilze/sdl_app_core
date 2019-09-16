@@ -83,22 +83,30 @@ namespace sdl {
     MainWindowLayout::filterEvent(core::engine::EngineObject* watched,
                                   core::engine::EventShPtr e)
     {
-      // Handle mouse events filtering if the event is actually
-      // a mouse event.
-      core::engine::MouseEventShPtr me = std::dynamic_pointer_cast<core::engine::MouseEvent>(e);
-      if (me != nullptr && filterMouseEvents(watched, me)) {
-        return true;
-      }
+      // TODO: Find a way to integrate this method in the `getItemAt` semantic.
+      // In theory it should not be too complicated once we handle the contains
+      // and the `z ordering` which should be done anyway in the `Layout` class.
+      // This class adds nothing more.
+      // TODO: Also maybe find a clean way to integrate the `filterMouseEvents`
+      // and `filterKeyboardEvents` as part of the `EngineObject` interface ?
+      return core::Layout::filterEvent(watched, e);
 
-      // Handle keyboard events filtering if the event is actually
-      // a keyboard event.
-      core::engine::KeyEventShPtr ke = std::dynamic_pointer_cast<core::engine::KeyEvent>(e);
-      if (ke != nullptr && filterKeyboardEvents(watched, ke)) {
-        return true;
-      }
+      // // Handle mouse events filtering if the event is actually
+      // // a mouse event.
+      // core::engine::MouseEventShPtr me = std::dynamic_pointer_cast<core::engine::MouseEvent>(e);
+      // if (me != nullptr && filterMouseEvents(watched, me)) {
+      //   return true;
+      // }
 
-      // The event is not filtered.
-      return false;
+      // // Handle keyboard events filtering if the event is actually
+      // // a keyboard event.
+      // core::engine::KeyEventShPtr ke = std::dynamic_pointer_cast<core::engine::KeyEvent>(e);
+      // if (ke != nullptr && filterKeyboardEvents(watched, ke)) {
+      //   return true;
+      // }
+
+      // // The event is not filtered.
+      // return false;
     }
 
     void
