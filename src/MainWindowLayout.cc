@@ -79,36 +79,6 @@ namespace sdl {
       removeItem(item);
     }
 
-    bool
-    MainWindowLayout::filterEvent(core::engine::EngineObject* watched,
-                                  core::engine::EventShPtr e)
-    {
-      // TODO: Find a way to integrate this method in the `getItemAt` semantic.
-      // In theory it should not be too complicated once we handle the contains
-      // and the `z ordering` which should be done anyway in the `Layout` class.
-      // This class adds nothing more.
-      // TODO: Also maybe find a clean way to integrate the `filterMouseEvents`
-      // and `filterKeyboardEvents` as part of the `EngineObject` interface ?
-      return core::Layout::filterEvent(watched, e);
-
-      // // Handle mouse events filtering if the event is actually
-      // // a mouse event.
-      // core::engine::MouseEventShPtr me = std::dynamic_pointer_cast<core::engine::MouseEvent>(e);
-      // if (me != nullptr && filterMouseEvents(watched, me)) {
-      //   return true;
-      // }
-
-      // // Handle keyboard events filtering if the event is actually
-      // // a keyboard event.
-      // core::engine::KeyEventShPtr ke = std::dynamic_pointer_cast<core::engine::KeyEvent>(e);
-      // if (ke != nullptr && filterKeyboardEvents(watched, ke)) {
-      //   return true;
-      // }
-
-      // // The event is not filtered.
-      // return false;
-    }
-
     void
     MainWindowLayout::computeGeometry(const utils::Boxf& window) {
       // To fully build the layout we need to compute the repartition in both direction (horizontal and
@@ -378,31 +348,6 @@ namespace sdl {
       // The event is filtered if the best candidate is not the input `watched`
       // object.
       return best != watched;
-    }
-
-    bool
-    MainWindowLayout::filterKeyboardEvents(const core::engine::EngineObject* watched,
-                                           const core::engine::KeyEventShPtr /*e*/) const noexcept
-    {
-      // We need to check whether the child corresponding to the input `watched` item
-      // has the keyboard focus. If this is the case we can transmit the key event to
-      // it otherwise we need to filter it.
-      // If the watched object cannot be found in the internal array, we consider that
-      // the event is not filtered.
-
-      // Traverse the internal list of items and stop as soon as we find the input
-      // `watched` object.
-      InfosMap::const_iterator child = m_infos.cbegin();
-      while (child != m_infos.cend()) {
-        if (child->second.widget == watched) {
-          return !child->second.widget->hasKeyboardFocus();
-        }
-
-        ++child;
-      }
-
-      // No child matches the input `watched` object: consider the event as not filtered.
-      return false;
     }
 
     void

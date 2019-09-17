@@ -57,18 +57,6 @@ namespace sdl {
         removeDockWidget(core::SdlWidget* item);
 
         /**
-         * @brief - Reimplementation of the base `EngineObject` method which allows to
-         *          filter out events for children widgets.
-         * @param watched - the object for which the filter should be applied.
-         * @param e - the event to filter.
-         * @return - true if the event should be filtered (i.e. not transmitted to the
-         *           `watched` object) and false otherwise.
-         */
-        bool
-        filterEvent(core::engine::EngineObject* watched,
-                    core::engine::EventShPtr e) override;
-
-        /**
          * @brief - Reimplementation of the `EngineObject` method which allows this
          *          class to not only register itself to the provided events queue
          *          but also its chidlren layouts.
@@ -111,43 +99,6 @@ namespace sdl {
         utils::Boxi
         getGridCoordinatesFromRole(const WidgetRole& role,
                                    const bool hRole) const;
-
-        /**
-         * @brief - Used as a specialization of the `filterEvent` method in order to
-         *          process mouse events. Will be used to determine whether some child
-         *          block the mouse events for another child of this layout.
-         *          It is much easier for the layout to determine if a child is covering
-         *          another one or somehow obstruct the transmission of events as it has
-         *          intuitive notion of the siblings of an item.
-         * @param watched - the element for which the mouse event should be filtered. If
-         *                  this method returns  `false` the event `e` will be transmitted
-         *                  to the `watched` object.
-         * @param e - the mouse event which should be filtered. If it is not the case this
-         *            method returns false.
-         * @return - `true` if this event should be filtered and `false` otherwise.
-         */
-        virtual bool
-        filterMouseEvents(const core::engine::EngineObject* watched,
-                          const core::engine::MouseEventShPtr e) const noexcept;
-
-        /**
-         * @brief - Used as a specialization of the `filterEvent` method in order to
-         *          process keyboard events. Will be used to determine whether some child
-         *          block the mouse events for another child of this layout.
-         *          It is much easier for the layout to determine if a child is covering
-         *          another one or somehow obstruct the transmission of events as it has
-         *          intuitive notion of the siblings of an item.
-         * @param watched - the element for which the keyboard event should be filtered.
-         *                  If this method returns `false` the event `e` is not filtered
-         *                  by this method and can be transmitted to the `watched` object
-         *                  if all other checks passes.
-         * @param e - the keyboard event which should be filtered. If the event is filtered
-         *            by this method the return value is `true`.
-         * @return - `true` if this event should be filtered and `false` otherwise.
-         */
-        virtual bool
-        filterKeyboardEvents(const core::engine::EngineObject* watched,
-                             const core::engine::KeyEventShPtr e) const noexcept;
 
       private:
 
