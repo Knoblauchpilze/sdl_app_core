@@ -311,45 +311,6 @@ namespace sdl {
       assignRenderingAreas(boxes, window);
     }
 
-    bool
-    MainWindowLayout::filterMouseEvents(const core::engine::EngineObject* watched,
-                                        const core::engine::MouseEventShPtr e) const noexcept
-    {
-      // This layout being associated directly to the main window layout it
-      // means that the widgets registered in here are top level items, i.e.
-      // do not have any parent.
-      // This is important because it means that their box retrieved using
-      // the `getRenderingArea` can be used directly with no conversion.
-      //
-      // To determine whether the `watched` event is the most suited widget
-      // to be used to transmit the input mouse event we traverse the list
-      // of information and determine whether a widget with higher z order
-      // or with more relevant position can be found: if this is the case
-      // we won't transmit the event to the input `watched` object.
-      core::SdlWidget* best = nullptr;
-      int zOrder = -1;
-
-      bool contained = false;
-      InfosMap::const_iterator child = m_infos.cbegin();
-      while (child != m_infos.cend()) {
-        // Check whether the widget contains the mouse position.
-        contained = child->second.widget->getRenderingArea().contains(e->getMousePosition());
-
-        // If this is the case check the z order compared to the
-        // best one found so far.
-        if (contained && child->second.widget->getZOrder() > zOrder) {
-          best = child->second.widget;
-          zOrder = child->second.widget->getZOrder();
-        }
-
-        ++child;
-      }
-
-      // The event is filtered if the best candidate is not the input `watched`
-      // object.
-      return best != watched;
-    }
-
     void
     MainWindowLayout::removeAll(const WidgetRole& role) {
       // Traverse the internal table of content and remove each one which role matches
