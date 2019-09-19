@@ -174,7 +174,7 @@ namespace sdl {
       // to not manage the height of these widgets because of the following:
       //
       // Imagine a situation where we have a left dock widget and a central widget. We will only
-      // consider the heigth aspect of the problem (as the width part works just fine).
+      // consider the height aspect of the problem (as the width part works just fine).
       // The representation in terms of grid coordinates in the vertical layout is as below:
       //
       //  +------+-------------------+
