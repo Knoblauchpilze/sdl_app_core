@@ -91,8 +91,9 @@ namespace sdl {
     inline
     const core::LayoutItem*
     VirtualLayoutItem::getItemAt(const utils::Vector2f& /*pos*/) const noexcept {
-      // Retrieve the area and check it against the input position.
-      // TODO: Implement this.
+      // The virtual layout item is by definition not visible so we should
+      // act as if nothing was occupying the area. So we should always return
+      // null as if no item where here.
       return nullptr;
     }
 
