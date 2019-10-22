@@ -28,8 +28,8 @@ namespace sdl {
                        const std::string& icon,
                        const utils::Sizei& size = utils::Sizei(640, 480),
                        const bool resizable = true,
-                       const float& framerate = 60.0f,
-                       const float& eventsFramerate = 30.0f);
+                       float framerate = 60.0f,
+                       float eventsFramerate = 30.0f);
 
         virtual ~SdlApplication();
 

@@ -15,8 +15,8 @@ namespace sdl {
                                    const std::string& icon,
                                    const utils::Sizei& size,
                                    const bool resizable,
-                                   const float& framerate,
-                                   const float& eventsFramerate):
+                                   float framerate,
+                                   float eventsFramerate):
       core::engine::EngineObject(name),
 
       m_title(title),

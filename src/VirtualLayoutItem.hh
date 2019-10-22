@@ -40,7 +40,7 @@ namespace sdl {
          * @param x - the x coordinate to assign to this layout item.
          */
         void
-        setX(const float& x) noexcept;
+        setX(float x) noexcept;
 
         /**
          * @brief - Used to assign a width for this virtual layout item. Note that this function
@@ -48,7 +48,7 @@ namespace sdl {
          * @param width - the width to assign to this layout item.
          */
         void
-        setWidth(const float& width) noexcept;
+        setWidth(float width) noexcept;
 
         /**
          * @brief - Indicates that this item should manage the height of another item.
@@ -72,7 +72,7 @@ namespace sdl {
          * @param y - the y coordinate to assign to this layout item.
          */
         void
-        setY(const float& y) noexcept;
+        setY(float y) noexcept;
 
         /**
          * @brief - Used to assign a height for this virtual layout item. Note that this
@@ -81,7 +81,7 @@ namespace sdl {
          * @param height - the height to assign to this layout item.
          */
         void
-        setHeight(const float& height) noexcept;
+        setHeight(float height) noexcept;
 
         void
         postLocalEvent(core::engine::EventShPtr e) override;

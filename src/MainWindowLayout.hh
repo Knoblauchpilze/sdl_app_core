@@ -29,7 +29,7 @@ namespace sdl {
          *                            total area and `1` meaning that it occupies all the available
          *                            space.
          */
-        MainWindowLayout(const float& margin = 1.0f,
+        MainWindowLayout(float margin = 1.0f,
                          const utils::Sizef& centralWidgetSize = utils::Sizef(0.7f, 0.5f));
 
         virtual ~MainWindowLayout();
