@@ -143,7 +143,6 @@ namespace sdl {
         computeMaxSizeForRole(const utils::Sizef& window,
                               const WidgetRole& role) const;
 
-
         /**
          * @brief - Used to return a prefix which can be used to provide a name slightly
          *          different from the initial item name when creating a virtual layout

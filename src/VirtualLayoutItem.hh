@@ -152,6 +152,46 @@ namespace sdl {
 
       private:
 
+        /**
+         * @brief - Update the input `min`, `hint` and `max` values with the new provided maximum
+         *          value. Note that we only do something if the `newMax` is larger than the input
+         *          `max` value.
+         *          Only the `hint` and `max` value are supposed to be updated, the minimum value
+         *          cannot be modified by this function. If the new maximum value provided cannot
+         *          be conciled with the `min` value an error is raised.
+         * @param min - the minimum bound to update if needed.
+         * @param hint - the size hint to update.
+         * @param max - the current maximum bound to be updated.
+         * @param newMax - the new upper bound to assign to the `max` value.
+         * @return - `true` if at least one value was updated, `false` otherwise.
+         */
+        bool
+        extendDim(float& min,
+                  float& hint,
+                  float& max,
+                  float newMax) const;
+
+        /**
+         * @brief - Update the input `min`, `hint` and `max` values with the new provided maximum
+         *          value. Note that we only do something if the `newMax` is smaller than the input
+         *          `max` value.
+         *          Only the `hint` and `max` value are supposed to be updated, the minimum value
+         *          cannot be modified by this function. If the new maximum value provided cannot
+         *          be conciled with the `min` value an error is raised.
+         * @param min - the minimum bound to update if needed.
+         * @param hint - the size hint to update.
+         * @param max - the current maximum bound to be updated.
+         * @param newMax - the new upper bound to assign to the `max` value.
+         * @return - `true` if at least one value was updated, `false` otherwise.
+         */
+        bool
+        contractDim(float& min,
+                    float& hint,
+                    float& max,
+                    float newMax) const;
+
+      private:
+
         bool m_manageWidth;
         bool m_manageHeight;
 

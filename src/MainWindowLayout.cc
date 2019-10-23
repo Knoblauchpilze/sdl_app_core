@@ -129,11 +129,7 @@ namespace sdl {
         std::pair<bool, bool> manageDims = dimensionManagedForRole(widgetInfo->second.role);
         widgetInfo->second.item->setManageWidth(manageDims.first);
 
-        if (manageDims.first) {
-          utils::Sizef maxFromLayout = computeMaxSizeForRole(internalSize, widgetInfo->second.role);
-          widgetInfo->second.item->updateMaxSize(maxFromLayout);
-        }
-        else {
+        if (!manageDims.first) {
           // The role do not support width management, we thus need to assign the total width
           // available to the virtual layout item.
           widgetInfo->second.item->setX(0.0f);
@@ -154,11 +150,7 @@ namespace sdl {
         widgetInfo->second.item->setManageHeight(manageDims.second);
         widgetInfo->second.item->setManageWidth(false);
 
-        if (manageDims.second) {
-          utils::Sizef maxFromLayout = computeMaxSizeForRole(internalSize, widgetInfo->second.role);
-          widgetInfo->second.item->updateMaxSize(maxFromLayout);
-        }
-        else {
+        if (!manageDims.second) {
           // The role do not support height management, we thus need to assign the total height
           // available to the virtual layout item.
           widgetInfo->second.item->setY(0.0f);
