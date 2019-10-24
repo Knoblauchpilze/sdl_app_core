@@ -591,9 +591,17 @@ namespace sdl {
     SdlApplication::windowResizeEvent(const core::engine::WindowEvent& e) {
       // We need to handle the resize of the canvas, and possibly the size of the
       // inserted widgets.
+      utils::Sizef size = e.getSize();
 
       // Acquire the lock on this application.
       std::lock_guard<std::mutex> guard(m_renderLocker);
+
+      // Check whether the size is actually different from the current one.
+      if (size == m_cachedSize.toSize()) {
+        // No need to do anything, the window has not been resized or has
+        // already handled the event.
+        return core::engine::EngineObject::windowResizeEvent(e);
+      }
 
       // Update the size of the internal canvas if any.
       if (m_canvas.valid()) {
@@ -602,16 +610,22 @@ namespace sdl {
       }
 
       // Creata a new texture with the required dimensions.
-      m_canvas = m_engine->createTexture(m_window, e.getSize(), core::engine::Palette::ColorRole::Background);
+      m_canvas = m_engine->createTexture(m_window, size, core::engine::Palette::ColorRole::Background);
       if (!m_canvas.valid()) {
-        error(std::string("Could not create window's canvas with size " + e.getSize().toString()));
+        error(std::string("Could not create window's canvas with size " + size.toString()));
       }
 
       // Assign the new canvas texture.
       m_engine->setDrawingCanvas(m_canvas);
 
+      // Update the viewport of the renderer associated to this window.
+      m_engine->updateViewport(
+        m_window,
+        utils::Boxf(size.w() / 2.0f, size.h() / 2.0f, size.w(), size.h())
+      );
+
       // Assign the cached size.
-      m_cachedSize = utils::Boxf::fromSize(e.getSize());
+      m_cachedSize = utils::Boxf::fromSize(size);
 
       // And request an update of the layout.
       invalidate();
