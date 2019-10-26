@@ -486,7 +486,13 @@ namespace sdl {
 
       // Perform the rendering for the widgets registered as children of
       // this application.
-      repaintEvent(core::engine::PaintEvent(getCachedSize(), this));
+      repaintEvent(
+        core::engine::PaintEvent(
+          getCachedSize(),
+          core::engine::update::Frame::Global,
+          this
+        )
+      );
 
       // Compute the elapsed time and return it as a floating point value.
       auto end = std::chrono::steady_clock::now();
