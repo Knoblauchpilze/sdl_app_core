@@ -81,7 +81,7 @@ namespace sdl {
         showEvent(s);
       }
       else {
-        core::engine::HideEvent h(getRenderingArea(), this);
+        core::engine::HideEvent h(getDrawingArea(), this);
         h.setEmitter(this);
 
         hideEvent(h);
