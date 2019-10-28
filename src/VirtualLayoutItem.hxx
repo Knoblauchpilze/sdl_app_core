@@ -72,7 +72,7 @@ namespace sdl {
     inline
     void
     VirtualLayoutItem::setVisible(bool visible) noexcept {
-      // We wil trigger directly the `showEvent` or `hideEvent` handler based
+      // We will trigger directly the `showEvent` or `hideEvent` handler based
       // on the input `visible` value.
       if (visible) {
         core::engine::Event s(core::engine::Event::Type::Show, this);
@@ -93,7 +93,7 @@ namespace sdl {
     VirtualLayoutItem::getItemAt(const utils::Vector2f& /*pos*/) const noexcept {
       // The virtual layout item is by definition not visible so we should
       // act as if nothing was occupying the area. So we should always return
-      // null as if no item where here.
+      // `null` as if no item where there.
       return nullptr;
     }
 
