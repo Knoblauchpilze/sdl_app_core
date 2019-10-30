@@ -157,7 +157,21 @@ namespace sdl {
       // been started and the only solution for ending up here is that
       // the infinite loop started for the rendering has been stopped by
       // some other means (typically through a user request).
-      // So nothing to be done in here.
+      // However we have to unregister ourselves from the events queue.
+      // Indeed as the queue is owned by this widget if we don't do that
+      // here's what will happen:
+      // - the destructor of the `SdlApplication` will be called.
+      // - each attribute will be destroyed.
+      // - including the events queue itself.
+      // - we will destroy this object.
+      // - this object inherits from `EngineObject` so its destructor will
+      //   be called.
+      // - this object has a valid queue and the destructor will try to
+      //   unregister from it.
+      // - segfault.
+      //
+      // So let's unregister right now so that we don't go in trouble.
+      unregisterFromQueue();
     }
 
     inline
