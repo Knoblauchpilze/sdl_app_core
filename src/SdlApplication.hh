@@ -89,9 +89,6 @@ namespace sdl {
         graphic::TabWidget*
         getTabFromArea(const DockWidgetArea& area);
 
-        utils::Boxf
-        getCachedSize() noexcept;
-
         void
         setLayout(MainWindowLayoutShPtr layout);
 
@@ -142,6 +139,13 @@ namespace sdl {
         bool
         geometryUpdateEvent(const core::engine::Event& e) override;
 
+        /**
+         * @brief - Performs a repaint of the content of this application while
+         *          assuming that the locker to prevent concurrent access to the
+         *          canvas is already locked.
+         * @param e - the event to be interpreted.
+         * @return - `true` if the event was recognized, `đalse` otherwise.
+         */
         bool
         repaintEvent(const core::engine::PaintEvent& e) override;
 

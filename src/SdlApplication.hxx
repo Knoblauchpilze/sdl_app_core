@@ -114,13 +114,6 @@ namespace sdl {
     }
 
     inline
-    utils::Boxf
-    SdlApplication::getCachedSize() noexcept {
-      std::lock_guard<std::mutex> guard(m_renderLocker);
-      return m_cachedSize;
-    }
-
-    inline
     void
     SdlApplication::setLayout(MainWindowLayoutShPtr layout) {
       // Lock this application.

@@ -484,15 +484,22 @@ namespace sdl {
       // this function.
       auto start = std::chrono::steady_clock::now();
 
-      // Perform the rendering for the widgets registered as children of
-      // this application.
-      repaintEvent(
-        core::engine::PaintEvent(
-          getCachedSize(),
-          core::engine::update::Frame::Global,
-          this
-        )
-      );
+      {
+        // Acquire the lock protecting the canvas so that we can guarantee that no other
+        // rendering will take place simultaneously.
+        std::lock_guard<std::mutex> guard(m_renderLocker);
+
+        // Perform the rendering for the widgets registered as children of
+        // this application.
+
+        repaintEvent(
+          core::engine::PaintEvent(
+            m_cachedSize,
+            core::engine::update::Frame::Global,
+            this
+          )
+        );
+      }
 
       // Compute the elapsed time and return it as a floating point value.
       auto end = std::chrono::steady_clock::now();
@@ -522,20 +529,13 @@ namespace sdl {
 
     bool
     SdlApplication::repaintEvent(const core::engine::PaintEvent& e) {
-      // Rendering widgets include building a valid `m_canvas` textures by successfully
-      // drawing each child widget onto it.
+      // Rendering widgets includes building a valid `m_canvas` texture by
+      // successfully drawing each child widget onto it.
       // Building the `m_canvas` relies on 4 operations:
       // 1) Clear the canvas from existing content.
       // 2) Render each child widget on the `m_canvas`.
       // 3) Render the `m_canvas` to the screen.
       // 4) Update the windows to reveal the modifications.
-
-      // Acquire the lock protecting the canvas so that we can guarantee that no other
-      // rendering will take place simultaneously.
-      std::lock_guard<std::mutex> guard(m_renderLocker);
-
-      // Keep a local reference to the engine to be able to pass it through the
-      // lambda expression.
       std::shared_ptr<core::engine::Engine> engine = m_engine;
       utils::Sizef dims = m_cachedSize.toSize();
 
