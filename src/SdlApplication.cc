@@ -587,6 +587,8 @@ namespace sdl {
     SdlApplication::windowLeaveEvent(const core::engine::WindowEvent& e) {
       // We need to trigger a global leave event so that no widget stays selected
       // or in highlight mode when the mouse is not in the window anymore.
+      // TODO: We should post a focus out event probably. Or check whether the leave
+      // works correctly.
       postEvent(std::make_shared<core::engine::Event>(core::engine::Event::Type::Leave));
 
       // Use base handle to determine whether the event was recognized.
