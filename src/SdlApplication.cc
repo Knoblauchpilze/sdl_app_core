@@ -498,9 +498,8 @@ namespace sdl {
       auto end = std::chrono::steady_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-      // auto duration2 = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-
-      // log("Rendering took " + std::to_string(duration2/1000) + " microseconds");
+      auto nanoDuration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+      log("Rendering took " + std::to_string(nanoDuration/1000) + "µs", utils::Level::Verbose);
 
       return static_cast<float>(duration);
     }
@@ -587,9 +586,44 @@ namespace sdl {
     SdlApplication::windowLeaveEvent(const core::engine::WindowEvent& e) {
       // We need to trigger a global leave event so that no widget stays selected
       // or in highlight mode when the mouse is not in the window anymore.
-      // TODO: We should post a focus out event probably. Or check whether the leave
-      // works correctly.
-      postEvent(std::make_shared<core::engine::Event>(core::engine::Event::Type::Leave));
+      // As we have a sophisticated focus mechanism we can rather send a focus out
+      // event to all the top level widgets so that it gets transmitted to all
+      // children in time.
+      // Note that we will consider that the focus reason is a hover over case as
+      // the mouse left (most likely through motion).
+      core::engine::FocusEvent::Reason focus = core::engine::FocusEvent::Reason::HoverFocus;
+
+      if (m_menuBar != nullptr) {
+        postEvent(core::engine::FocusEvent::createFocusOutEvent(focus, false, m_menuBar));
+      }
+
+      if (m_toolBar != nullptr) {
+        postEvent(core::engine::FocusEvent::createFocusOutEvent(focus, false, m_toolBar));
+      }
+
+      if (m_topArea != nullptr) {
+        postEvent(core::engine::FocusEvent::createFocusOutEvent(focus, false, m_topArea));
+      }
+
+      if (m_leftArea != nullptr) {
+        postEvent(core::engine::FocusEvent::createFocusOutEvent(focus, false, m_leftArea));
+      }
+
+      if (m_centralWidget != nullptr) {
+        postEvent(core::engine::FocusEvent::createFocusOutEvent(focus, false, m_centralWidget));
+      }
+
+      if (m_rightArea != nullptr) {
+        postEvent(core::engine::FocusEvent::createFocusOutEvent(focus, false, m_rightArea));
+      }
+
+      if (m_bottomArea != nullptr) {
+        postEvent(core::engine::FocusEvent::createFocusOutEvent(focus, false, m_bottomArea));
+      }
+
+      if (m_statusBar != nullptr) {
+        postEvent(core::engine::FocusEvent::createFocusOutEvent(focus, false, m_statusBar));
+      }
 
       // Use base handle to determine whether the event was recognized.
       return core::engine::EngineObject::windowLeaveEvent(e);
