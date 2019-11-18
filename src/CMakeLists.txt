@@ -7,7 +7,6 @@ set (SOURCES
   SdlApplication.cc
   AppDecorator.cc
   MainWindowLayout.cc
-  VirtualLayoutItem.cc
   )
 
 add_library (sdl_app_core SHARED

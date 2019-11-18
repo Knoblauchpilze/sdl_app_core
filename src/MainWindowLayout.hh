@@ -8,8 +8,8 @@
 # include <sdl_core/Layout.hh>
 # include <sdl_core/SizePolicy.hh>
 # include <sdl_graphic/GridLayout.hh>
+# include <sdl_graphic/VirtualLayoutItem.hh>
 # include "WidgetRole.hh"
-# include "VirtualLayoutItem.hh"
 
 namespace sdl {
   namespace app {
@@ -124,7 +124,7 @@ namespace sdl {
           WidgetRole role;
           DockWidgetArea area;
           core::SdlWidget* widget;
-          VirtualLayoutItemShPtr item;
+          graphic::VirtualLayoutItemShPtr item;
         };
 
         using InfosMap = std::unordered_map<int, ItemInfo>;

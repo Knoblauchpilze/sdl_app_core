@@ -259,7 +259,7 @@ namespace sdl {
       // the one which will be used during the optimization process. We will use
       // the maximum size of the `widget` for now and update it when the relevant
       // `computeGeometry` call is processed.
-      VirtualLayoutItemShPtr item = std::make_shared<VirtualLayoutItem>(
+      graphic::VirtualLayoutItemShPtr item = std::make_shared<graphic::VirtualLayoutItem>(
         getVirtualLayoutNamePrefix() + widget->getName(),
         widget->getMinSize(),
         widget->getSizeHint(),
