@@ -115,27 +115,34 @@ namespace sdl {
         }
 
         // We need to perform the rendering to display the content of the window
-        // to the user. Most API prevents GUI operations to be performed into the
+        // to the user. Most APIs prevents GUI operations to be performed into the
         // main thread.
-        // In order to do this, we use the `m_offscreenCanvas` as an offscreen
-        // buffer to perform children widgets rendering. This canvas is then
-        // preiodically copied to the real `m_canvas` in the main thread so that
-        // the API detect this as a valid call.
-        // We have to use a locker to perform the copy as another asynchronous
-        // loop is running (the one started by launching the `m_eventsDispatcher->run()`
+        // This includes the events processing, which should be performed here as
+        // well. Note that in order to guarantee that the bulk of the available
+        // time is allocated to the rendering we only fetch the system events here
+        // and proceed to posting them into the events dispatcher: this allows to
+        // defer as much as possible the processing of events to the dedicated thread.
+        //
+        // In order to keep the repaint operation inside the main thread we use the
+        // `m_offscreenCanvas` as an offscreen buffer to perform children widgets
+        // rendering. This canvas is then periodically copied to the real `m_canvas`
+        // in the main thread so that the API detect this as a valid call.
+        // We have to use a locker to perform the copy as another asynchronous loop
+        // is running (the one started by launching the `m_eventsDispatcher->run()`
         // method) and could trigger conflicts while accessing to the texture.
-        // This is not really a problem though because the offscreen canvas is
-        // not locked during extensive periods of time: it is only unavailable
-        // whenever a children widget is actually performing a rendering onto it.
+        // This is not really a problem though because the offscreen canvas is not
+        // locked during extensive periods of time: it is only unavailable whenever
+        // a children widget is actually performing a rendering onto it.
         // In addition to that, we have to keep track of time in this method as
         // we only want to perform a certain amount of repaint every second.
+        const float eventsPump = fetchSystemEvents();
 
-        // Actually perform the copy of the offscreen canvas into the one displayed
-        // on screen.
+        // Perform the copy of the offscreen canvas into the one displayed on screen.
         const float frameDuration = renderCanvas();
 
         // Check whether the rendering time is compatible with the desired framerate.
-        if (frameDuration > m_frameDuration) {
+        const float total = eventsPump + frameDuration;
+        if (total > m_frameDuration) {
           // Log this problem.
           log(
             std::string("Repaint took ") + std::to_string(frameDuration) + "ms " +

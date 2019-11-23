@@ -177,6 +177,28 @@ namespace sdl {
       return core::engine::EngineObject::quitEvent(e);
     }
 
+    inline
+    float
+    SdlApplication::fetchSystemEvents() {
+      // Use the engine to fetch the events: this allows for easy modification
+      // of the actual API used to fetch system events. Note that as we assume
+      // that the locker for this application is already locked we can safely
+      // go ahead and use the `m_engine` pointer.
+      auto start = std::chrono::steady_clock::now();
+
+      std::vector<core::engine::EventShPtr> events = m_engine->pollEvents();
+
+      // Populate the events dispatcher with the events.
+      m_eventsDispatcher->pumpEvents(events);
+
+      auto end = std::chrono::steady_clock::now();
+
+      auto nanoDuration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+      log("Events pumping took " + std::to_string(nanoDuration/1000) + "µs", utils::Level::Verbose);
+
+      return std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    }
+
   }
 }
 

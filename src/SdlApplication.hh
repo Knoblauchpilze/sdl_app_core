@@ -167,6 +167,19 @@ namespace sdl {
         void
         drawWidget(core::SdlWidget* widget);
 
+          /**
+           * @brief - Internal method allowing to fetch system events using the dedicated
+           *          API handler. This method must be called from the main thread which is
+           *          a limitation of the engine.
+           *          It will populate the events dispatcher with the fetched events.
+           *          Note that the rate at which events are consumed is independent from
+           *          the rate at which they are fetched.
+           * @return - a floating point value representing the elapsed time to perform render
+           *           of the offscreen canvas onto the visible one.
+           */
+          float
+          fetchSystemEvents();
+
       private:
 
         using WidgetsMap = std::unordered_map<std::string, DockWidgetArea>;
