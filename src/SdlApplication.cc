@@ -168,7 +168,7 @@ namespace sdl {
     void
     SdlApplication::setMenuBar(core::SdlWidget* item) {
       // Lock this app to prevent data races.
-      std::lock_guard<std::mutex> guard(m_renderLocker);
+      Guard guard(m_renderLocker);
 
       // Share data with this widget.
       shareDataWithWidget(item);
@@ -190,7 +190,7 @@ namespace sdl {
     void
     SdlApplication::addToolBar(core::SdlWidget* item) {
       // Lock this app to prevent data races.
-      std::lock_guard<std::mutex> guard(m_renderLocker);
+      Guard guard(m_renderLocker);
 
       // Share data with this widget.
       shareDataWithWidget(item);
@@ -224,7 +224,7 @@ namespace sdl {
     void
     SdlApplication::setCentralWidget(core::SdlWidget* item) {
       // Lock this app to prevent data races.
-      std::lock_guard<std::mutex> guard(m_renderLocker);
+      Guard guard(m_renderLocker);
 
       // Share data with this widget.
       shareDataWithWidget(item);
@@ -248,7 +248,7 @@ namespace sdl {
                                   const DockWidgetArea& area)
     {
       // Lock this app to prevent data races.
-      std::lock_guard<std::mutex> guard(m_renderLocker);
+      Guard guard(m_renderLocker);
 
       // Share data with this widget.
       shareDataWithWidget(item);
@@ -286,7 +286,7 @@ namespace sdl {
     void
     SdlApplication::setStatusBar(core::SdlWidget* item) {
       // Lock this app to prevent data races.
-      std::lock_guard<std::mutex> guard(m_renderLocker);
+      Guard guard(m_renderLocker);
 
       // Share data with this widget.
       shareDataWithWidget(item);
@@ -308,7 +308,7 @@ namespace sdl {
     void
     SdlApplication::removeToolBar(core::SdlWidget* item) {
       // Lock this app to prevent data races.
-      std::lock_guard<std::mutex> guard(m_renderLocker);
+      Guard guard(m_renderLocker);
 
       if (item == nullptr) {
         error(
@@ -342,7 +342,7 @@ namespace sdl {
     void
     SdlApplication::removeDockWidget(core::SdlWidget* item) {
       // Lock this app to prevent data races.
-      std::lock_guard<std::mutex> guard(m_renderLocker);
+      Guard guard(m_renderLocker);
 
       if (item == nullptr) {
         error(
@@ -494,7 +494,7 @@ namespace sdl {
       {
         // Acquire the lock protecting the canvas so that we can guarantee that no other
         // rendering will take place simultaneously.
-        std::lock_guard<std::mutex> guard(m_renderLocker);
+        Guard guard(m_renderLocker);
 
         // Perform the rendering for the widgets registered as children of
         // this application.
@@ -523,7 +523,7 @@ namespace sdl {
       // We need to handle the recomputation of the internal layout if any.
 
       // Acquire the lock on this application.
-      std::lock_guard<std::mutex> guard(m_renderLocker);
+      Guard guard(m_renderLocker);
 
       // Assign the cached size to the internal layout if any.
       if (m_layout != nullptr) {
@@ -643,7 +643,7 @@ namespace sdl {
       utils::Sizef size = e.getSize();
 
       // Acquire the lock on this application.
-      std::lock_guard<std::mutex> guard(m_renderLocker);
+      Guard guard(m_renderLocker);
 
       // Check whether the size is actually different from the current one.
       if (size == m_cachedSize.toSize()) {

@@ -63,18 +63,18 @@ namespace sdl {
     inline
     utils::Uuid
     AppDecorator::createTextureFromFile(const utils::Uuid& /*win*/,
-                                        const std::string& file,
+                                        core::engine::ImageShPtr img,
                                         const core::engine::Palette::ColorRole& role)
     {
-      return core::engine::EngineDecorator::createTextureFromFile(m_window, file, role);
+      return core::engine::EngineDecorator::createTextureFromFile(m_window, img, role);
     }
 
     inline
     utils::Uuid
-    AppDecorator::createTextureFromFile(const std::string& file,
+    AppDecorator::createTextureFromFile(core::engine::ImageShPtr img,
                                         const core::engine::Palette::ColorRole& role)
     {
-      return core::engine::EngineDecorator::createTextureFromFile(m_window, file, role);
+      return core::engine::EngineDecorator::createTextureFromFile(m_window, img, role);
     }
 
     inline

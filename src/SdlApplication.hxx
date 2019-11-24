@@ -53,14 +53,14 @@ namespace sdl {
     inline
     void
     SdlApplication::startRendering() noexcept {
-      std::lock_guard<std::mutex> guard(m_executionLocker);
+      Guard guard(m_executionLocker);
       m_renderingRunning = true;
     }
 
     inline
     bool
     SdlApplication::isRendering() noexcept {
-      std::lock_guard<std::mutex> guard(m_executionLocker);
+      Guard guard(m_executionLocker);
       return m_renderingRunning;
     }
 
@@ -68,7 +68,7 @@ namespace sdl {
     void
     SdlApplication::stopRendering() noexcept {
       // Stop events processing.
-      std::lock_guard<std::mutex> guard(m_executionLocker);
+      Guard guard(m_executionLocker);
       m_renderingRunning = false;
     }
 
@@ -117,7 +117,7 @@ namespace sdl {
     void
     SdlApplication::setLayout(MainWindowLayoutShPtr layout) {
       // Lock this application.
-      std::lock_guard<std::mutex> guard(m_renderLocker);
+      Guard guard(m_renderLocker);
 
       // Assign the new layout.
       m_layout = layout;
