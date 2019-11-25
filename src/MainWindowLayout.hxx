@@ -73,8 +73,8 @@ namespace sdl {
 
     inline
     bool
-    MainWindowLayout::onIndexRemoved(const int logicID,
-                                     const int /*physID*/)
+    MainWindowLayout::onIndexRemoved(int logicID,
+                                     int /*physID*/)
     {
       // Erase the corresponding entry in the internal table.
       const std::size_t count = m_infos.erase(logicID);

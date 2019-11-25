@@ -14,7 +14,8 @@ namespace sdl {
                                    const std::string& title,
                                    const std::string& icon,
                                    const utils::Sizei& size,
-                                   const bool resizable,
+                                   bool resizable,
+                                   const utils::Sizef& centralSize,
                                    float framerate,
                                    float eventsFramerate):
       core::engine::EngineObject(name),
@@ -52,7 +53,7 @@ namespace sdl {
       setService("app");
 
       // Create the engine and the window.
-      create(size, eventsFramerate, resizable);
+      create(size, eventsFramerate, resizable, centralSize);
 
       // Assign the desired icon.
       setIcon(icon);
@@ -387,8 +388,9 @@ namespace sdl {
 
     void
     SdlApplication::create(const utils::Sizei& size,
-                           const float eventsFramerate,
-                           const bool resizable)
+                           float eventsFramerate,
+                           bool resizable,
+                           const utils::Sizef& centralSize)
     {
       // Create the engine to use to perform rendering.
       core::engine::SdlEngineShPtr engine = std::make_shared<core::engine::SdlEngine>();
@@ -419,14 +421,14 @@ namespace sdl {
       // Set the queue for this application so that it can post events.
       setEventsQueue(m_eventsDispatcher.get());
 
-      // Trigger the `build`method so that dock widgets are created.
-      build();
+      // Trigger the `build` method so that dock widgets are created.
+      build(centralSize);
     }
 
     void
-    SdlApplication::build() {
+    SdlApplication::build(const utils::Sizef& centralSize) {
       // Create the layout for this window and assign it.
-      setLayout(std::make_shared<MainWindowLayout>(5.0f));
+      setLayout(std::make_shared<MainWindowLayout>(5.0f, centralSize));
 
       // Create dock widget for relevant areas and add them to the
       // layout as non visible items.

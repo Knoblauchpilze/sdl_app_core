@@ -27,7 +27,8 @@ namespace sdl {
                        const std::string& title,
                        const std::string& icon,
                        const utils::Sizei& size = utils::Sizei(640, 480),
-                       const bool resizable = true,
+                       bool resizable = true,
+                       const utils::Sizef& centralSize = utils::Sizef(0.7f, 0.5f),
                        float framerate = 60.0f,
                        float eventsFramerate = 30.0f);
 
@@ -106,13 +107,16 @@ namespace sdl {
          * @param size - the size of the window to create.
          * @param eventsFramerate - the framrerate to maintain while processing
          *                          events, expressed in fps.
-         * @param resizable - true if the window should be made resizable, false
+         * @param resizable - `true` if the window should be made resizable, `false`
          *                    otherwise.
+         * @param centralSize - a vector describing for each axis the percentage of
+         *                      the total area occupied by the central widget.
          */
         void
         create(const utils::Sizei& size,
-               const float eventsFramerate,
-               const bool resizable);
+               float eventsFramerate,
+               bool resizable,
+               const utils::Sizef& centralSize);
 
         /**
          * @brief - Creates the dock widgets related to each area and hide each one
@@ -120,9 +124,11 @@ namespace sdl {
          *          inside them along the way.
          *          It also creates the layout to use to position widgets inside the
          *          area available for this application.
+         * @param centralSize - a vector describing for each axis the percentage of
+         *                      the total area occupied by the central widget.
          */
         void
-        build();
+        build(const utils::Sizef& centralSize);
 
         /**
          * @brief - Used to perform the rendering of the offscreen canvas to the
@@ -167,18 +173,18 @@ namespace sdl {
         void
         drawWidget(core::SdlWidget* widget);
 
-          /**
-           * @brief - Internal method allowing to fetch system events using the dedicated
-           *          API handler. This method must be called from the main thread which is
-           *          a limitation of the engine.
-           *          It will populate the events dispatcher with the fetched events.
-           *          Note that the rate at which events are consumed is independent from
-           *          the rate at which they are fetched.
-           * @return - a floating point value representing the elapsed time to perform render
-           *           of the offscreen canvas onto the visible one.
-           */
-          float
-          fetchSystemEvents();
+        /**
+         * @brief - Internal method allowing to fetch system events using the dedicated
+         *          API handler. This method must be called from the main thread which is
+         *          a limitation of the engine.
+         *          It will populate the events dispatcher with the fetched events.
+         *          Note that the rate at which events are consumed is independent from
+         *          the rate at which they are fetched.
+         * @return - a floating point value representing the elapsed time to perform render
+         *           of the offscreen canvas onto the visible one.
+         */
+        float
+        fetchSystemEvents();
 
       private:
 
