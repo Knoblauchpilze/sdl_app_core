@@ -97,6 +97,20 @@ namespace sdl {
     }
 
     inline
+    utils::Uuid
+    AppDecorator::createTextureFromBrush(core::engine::BrushShPtr brush) {
+      return core::engine::EngineDecorator::createTextureFromBrush(m_window, brush);
+    }
+
+    inline
+    utils::Uuid
+    AppDecorator::createTextureFromBrush(const utils::Uuid& /*win*/,
+                                         core::engine::BrushShPtr brush)
+    {
+      return core::engine::EngineDecorator::createTextureFromBrush(m_window, brush);
+    }
+
+    inline
     void
     AppDecorator::drawTexture(const utils::Uuid& tex,
                               const utils::Boxf* from,

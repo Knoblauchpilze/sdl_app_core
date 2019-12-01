@@ -56,6 +56,13 @@ namespace sdl {
                               const utils::Uuid& font,
                               const core::engine::Palette::ColorRole& role) override;
 
+        utils::Uuid
+        createTextureFromBrush(core::engine::BrushShPtr brush) override;
+
+        utils::Uuid
+        createTextureFromBrush(const utils::Uuid& win,
+                               core::engine::BrushShPtr brush) override;
+
         void
         drawTexture(const utils::Uuid& tex,
                     const utils::Boxf* from = nullptr,
