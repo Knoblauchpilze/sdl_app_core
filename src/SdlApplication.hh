@@ -54,7 +54,8 @@ namespace sdl {
 
         void
         addDockWidget(core::SdlWidget* item,
-                      const DockWidgetArea& area);
+                      const DockWidgetArea& area,
+                      const std::string& title = std::string());
 
         void
         setStatusBar(core::SdlWidget* item);

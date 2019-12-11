@@ -246,7 +246,8 @@ namespace sdl {
 
     void
     SdlApplication::addDockWidget(core::SdlWidget* item,
-                                  const DockWidgetArea& area)
+                                  const DockWidgetArea& area,
+                                  const std::string& title)
     {
       // Lock this app to prevent data races.
       Guard guard(m_renderLocker);
@@ -267,7 +268,7 @@ namespace sdl {
         );
       }
 
-      tab->insertTab(tab->getTabsCount(), item);
+      tab->insertTab(tab->getTabsCount(), item, title);
 
       // Make the tab widget visible if needed. As we may
       // have hidden the tab before hand we need to make
