@@ -145,11 +145,10 @@ namespace sdl {
         const float total = eventsPump + frameDuration;
         if (total > m_frameDuration) {
           // Log this problem.
-          log(
+          warn(
             std::string("Repaint took ") + std::to_string(frameDuration) + "ms " +
             "which is greater than the " + std::to_string(m_frameDuration) + "ms " +
-            " authorized to maintain " + std::to_string(m_framerate) + "fps",
-            utils::Level::Warning
+            " authorized to maintain " + std::to_string(m_framerate) + "fps"
           );
 
           // Move on to the next frame.
@@ -163,13 +162,13 @@ namespace sdl {
         }
       }
 
-      log(std::string("Exiting rendering thread"), utils::Level::Notice);
+      notice("Exiting rendering thread");
     }
 
     void
     SdlApplication::setMenuBar(core::SdlWidget* item) {
       // Lock this app to prevent data races.
-      Guard guard(m_renderLocker);
+      const std::lock_guard guard(m_renderLocker);
 
       // Share data with this widget.
       shareDataWithWidget(item);
@@ -191,7 +190,7 @@ namespace sdl {
     void
     SdlApplication::addToolBar(core::SdlWidget* item) {
       // Lock this app to prevent data races.
-      Guard guard(m_renderLocker);
+      const std::lock_guard guard(m_renderLocker);
 
       // Share data with this widget.
       shareDataWithWidget(item);
@@ -225,7 +224,7 @@ namespace sdl {
     void
     SdlApplication::setCentralWidget(core::SdlWidget* item) {
       // Lock this app to prevent data races.
-      Guard guard(m_renderLocker);
+      const std::lock_guard guard(m_renderLocker);
 
       // Share data with this widget.
       shareDataWithWidget(item);
@@ -250,7 +249,7 @@ namespace sdl {
                                   const std::string& title)
     {
       // Lock this app to prevent data races.
-      Guard guard(m_renderLocker);
+      const std::lock_guard guard(m_renderLocker);
 
       // Share data with this widget.
       shareDataWithWidget(item);
@@ -288,7 +287,7 @@ namespace sdl {
     void
     SdlApplication::setStatusBar(core::SdlWidget* item) {
       // Lock this app to prevent data races.
-      Guard guard(m_renderLocker);
+      const std::lock_guard guard(m_renderLocker);
 
       // Share data with this widget.
       shareDataWithWidget(item);
@@ -310,7 +309,7 @@ namespace sdl {
     void
     SdlApplication::removeToolBar(core::SdlWidget* item) {
       // Lock this app to prevent data races.
-      Guard guard(m_renderLocker);
+      const std::lock_guard guard(m_renderLocker);
 
       if (item == nullptr) {
         error(
@@ -344,7 +343,7 @@ namespace sdl {
     void
     SdlApplication::removeDockWidget(core::SdlWidget* item) {
       // Lock this app to prevent data races.
-      Guard guard(m_renderLocker);
+      const std::lock_guard guard(m_renderLocker);
 
       if (item == nullptr) {
         error(
@@ -497,7 +496,7 @@ namespace sdl {
       {
         // Acquire the lock protecting the canvas so that we can guarantee that no other
         // rendering will take place simultaneously.
-        Guard guard(m_renderLocker);
+        const std::lock_guard guard(m_renderLocker);
 
         // Perform the rendering for the widgets registered as children of
         // this application.
@@ -516,7 +515,7 @@ namespace sdl {
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
       auto nanoDuration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-      log("Rendering took " + std::to_string(nanoDuration/1000) + "µs", utils::Level::Verbose);
+      verbose("Rendering took " + std::to_string(nanoDuration/1000) + "µs");
 
       return static_cast<float>(duration);
     }
@@ -526,7 +525,7 @@ namespace sdl {
       // We need to handle the recomputation of the internal layout if any.
 
       // Acquire the lock on this application.
-      Guard guard(m_renderLocker);
+      const std::lock_guard guard(m_renderLocker);
 
       // Assign the cached size to the internal layout if any.
       if (m_layout != nullptr) {
@@ -646,7 +645,7 @@ namespace sdl {
       utils::Sizef size = e.getSize();
 
       // Acquire the lock on this application.
-      Guard guard(m_renderLocker);
+      const std::lock_guard guard(m_renderLocker);
 
       // Check whether the size is actually different from the current one.
       if (size == m_cachedSize.toSize()) {

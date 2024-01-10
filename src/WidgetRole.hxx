@@ -76,9 +76,10 @@ namespace sdl {
       }
 
       throw utils::CoreException(
-        std::string("Could not determine widget role for area ") + areaToName(area),
-        std::string("app_utils"),
-        std::string("Invalid dock area")
+        "Could not determine widget role for area " + areaToName(area),
+        "app_utils",
+        "app_core",
+        "Invalid dock area"
       );
     }
 

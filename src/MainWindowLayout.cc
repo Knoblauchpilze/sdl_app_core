@@ -33,8 +33,8 @@ namespace sdl {
       // Update properties of layouts.
       setBoxesFormat(core::Layout::BoxesFormat::Window);
 
-      m_hLayout.allowLog(false);
-      m_vLayout.allowLog(false);
+      m_hLayout.setAllowLog(false);
+      m_vLayout.setAllowLog(false);
     }
 
     MainWindowLayout::~MainWindowLayout() {}
@@ -137,7 +137,7 @@ namespace sdl {
         }
       }
 
-      log("Updating h layout", utils::Level::Notice);
+      notice("Updating h layout");
       m_hLayout.update(window);
 
       // Activate height management for each widget role. Also, deactivate width management for each widget.
@@ -158,7 +158,7 @@ namespace sdl {
         }
       }
 
-      log("Updating v layout", utils::Level::Notice);
+      notice("Updating v layout");
       m_vLayout.update(window);
 
       // Now build the area to assign to each widget based on the internal virtual items. There are

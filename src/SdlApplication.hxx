@@ -2,7 +2,6 @@
 # define   SDL_APPLICATION_HXX
 
 # include "SdlApplication.hh"
-# include <core_utils/CoreWrapper.hh>
 
 namespace sdl {
   namespace app {
@@ -53,14 +52,14 @@ namespace sdl {
     inline
     void
     SdlApplication::startRendering() noexcept {
-      Guard guard(m_executionLocker);
+      const std::lock_guard guard(m_executionLocker);
       m_renderingRunning = true;
     }
 
     inline
     bool
     SdlApplication::isRendering() noexcept {
-      Guard guard(m_executionLocker);
+      const std::lock_guard guard(m_executionLocker);
       return m_renderingRunning;
     }
 
@@ -68,7 +67,7 @@ namespace sdl {
     void
     SdlApplication::stopRendering() noexcept {
       // Stop events processing.
-      Guard guard(m_executionLocker);
+      const std::lock_guard guard(m_executionLocker);
       m_renderingRunning = false;
     }
 
@@ -117,7 +116,7 @@ namespace sdl {
     void
     SdlApplication::setLayout(MainWindowLayoutShPtr layout) {
       // Lock this application.
-      Guard guard(m_renderLocker);
+      const std::lock_guard guard(m_renderLocker);
 
       // Assign the new layout.
       m_layout = layout;
@@ -194,7 +193,7 @@ namespace sdl {
       auto end = std::chrono::steady_clock::now();
 
       auto nanoDuration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-      log("Events pumping took " + std::to_string(nanoDuration/1000) + "µs", utils::Level::Verbose);
+      verbose("Events pumping took " + std::to_string(nanoDuration/1000) + "µs");
 
       return std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     }

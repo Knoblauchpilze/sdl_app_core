@@ -81,10 +81,9 @@ namespace sdl {
 
       // Check whether we could remove the input item.
       if (count != 1) {
-        log(
+        warn(
           std::string("Invalid removed item count while deleting item ") + std::to_string(logicID) +
-          std::string("(removed ") + std::to_string(count) + " item(s))",
-          utils::Level::Warning
+          std::string("(removed ") + std::to_string(count) + " item(s))"
         );
       }
 
